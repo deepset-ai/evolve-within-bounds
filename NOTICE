@@ -24,6 +24,6 @@ Models
   cross-encoder/ms-marco-MiniLM-L-6-v2, Qdrant/bm25): to verify
 
 Datasets
-- PrimeVul: only pair-id manifests are shipped (data/primevul/); the functions are fetched from the upstream release.
-  License: to verify
+- PrimeVul (DLVulDet/PrimeVul, mirrored as colin/PrimeVul on the Hugging Face Hub): MIT. Only manifests are shipped
+  (data/primevul/); the functions are downloaded from the pinned mirror by security_agent.data.primevul.
 - CWE, NVD and ExploitDB (knowledge base, fetched by scripts/data/): each source's terms, to verify

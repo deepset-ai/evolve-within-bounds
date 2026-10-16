@@ -52,9 +52,10 @@ this.
 
 ## PrimeVul (`primevul/`)
 
-Pair-id manifests only (loop train and validation, the 400-pair dev set, the test subset), with the upstream version
-and checksums. The functions themselves are fetched from the PrimeVul release by `scripts/data/`. Nothing from the
-PrimeVul test split is published beyond its pair ids.
+The PrimeVul files the experiments used: the self-improvement loop's train, validation and holdout pairs, the 400-pair
+dev set, and smaller validation and smoke sets. `hatch run primevul:build` rebuilds them byte for byte from the pinned
+Hugging Face mirror. This repository holds only manifests (ids, splits, upstream rows and hashes), no PrimeVul code.
+See [primevul/README.md](primevul/README.md).
 
 ## Knowledge base
 

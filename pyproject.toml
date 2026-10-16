@@ -13,6 +13,10 @@ authors = [{ name = "deepset GmbH", email = "info@deepset.ai" }]
 # Filled in when the agent package moves over from security-agent-core.
 dependencies = []
 
+[project.optional-dependencies]
+# Downloading the pinned PrimeVul files (security_agent.data.primevul).
+primevul = ["huggingface_hub>=0.24"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/security_agent"]
 
@@ -25,12 +29,24 @@ fmt = "ruff check --fix {args}; ruff format {args}"
 fmt-check = "ruff check {args} && ruff format --check {args}"
 
 [tool.hatch.envs.test]
+features = ["primevul"]
 dependencies = ["pytest", "pytest-cov", "mypy"]
 
 [tool.hatch.envs.test.scripts]
 unit = 'pytest --cov="security_agent" -m "not integration" {args:tests}'
 integration = 'pytest --maxfail=5 -m "integration" {args:tests}'
 types = "mypy --install-types --non-interactive --cache-dir=.mypy_cache/ {args:src}"
+
+[tool.hatch.envs.primevul]
+# The PrimeVul files the experiments used, rebuilt from the pinned upstream mirror (data/primevul/).
+installer = "uv"
+features = ["primevul"]
+
+[tool.hatch.envs.primevul.scripts]
+fetch = "python -m security_agent.data.primevul fetch {args}"
+build = "python -m security_agent.data.primevul build {args}"
+verify = "python -m security_agent.data.primevul verify {args}"
+manifest = "python -m security_agent.data.primevul manifest {args}"
 
 [tool.hatch.envs.components]
 # The synthetic custom-component benchmark (data/synthetic-components), installed in dev mode with its test extra.

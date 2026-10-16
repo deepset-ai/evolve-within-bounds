@@ -1,0 +1,12 @@
+{
+  "repo_id": "colin/PrimeVul",
+  "revision": "4fd7158322872d711e90f091dbd8673ef32cb1be",
+  "config": "paired",
+  "license": "MIT",
+  "original": "https://github.com/DLVulDet/PrimeVul",
+  "files": {
+    "train": {"path": "primevul_train_paired.jsonl", "rows": 7578, "sha256": "1b2853c09ac10b5b60d8e995cbf4461b65414dcf90e0cc5086b788caeae1aaaa"},
+    "validation": {"path": "primevul_valid_paired.jsonl", "rows": 960, "sha256": "14516b7168e8d158e1e9fbeb163b655dd704eafd82c734e86cddc84c564b4285"},
+    "test": {"path": "primevul_test_paired.jsonl", "rows": 870, "sha256": "384758c25142b640f1768bb0d334c43f315c580022ae94973c66e77128fb3821"}
+  }
+}

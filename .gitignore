@@ -20,6 +20,8 @@ outputs/
 # Benchmark materializations and answer keys (hatch run components:materialize / score)
 materialized*/
 reports/
+# PrimeVul files rebuilt from upstream (hatch run primevul:build)
+data/primevul/build/
 
 # Models and caches
 models/
