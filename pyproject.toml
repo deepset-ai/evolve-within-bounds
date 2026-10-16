@@ -1,0 +1,159 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "evolve-within-bounds"
+version = "0.1.0.dev0"
+description = "A self-improving security agent on one DGX Spark: Haystack agents, sandboxed tools, local models"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+authors = [{ name = "deepset GmbH", email = "info@deepset.ai" }]
+# Filled in when the agent package moves over from security-agent-core.
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/security_agent"]
+
+[tool.hatch.envs.default]
+installer = "uv"
+dependencies = ["pre-commit", "ruff>=0.16.0"]
+
+[tool.hatch.envs.default.scripts]
+fmt = "ruff check --fix {args}; ruff format {args}"
+fmt-check = "ruff check {args} && ruff format --check {args}"
+
+[tool.hatch.envs.test]
+dependencies = ["pytest", "pytest-cov", "mypy"]
+
+[tool.hatch.envs.test.scripts]
+unit = 'pytest --cov="security_agent" -m "not integration" {args:tests}'
+integration = 'pytest --maxfail=5 -m "integration" {args:tests}'
+types = "mypy --install-types --non-interactive --cache-dir=.mypy_cache/ {args:src}"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+markers = ["integration: needs a served model or other running services (a DGX Spark)"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = false
+ignore_missing_imports = true
+
+[tool.codespell]
+quiet-level = 3
+
+[tool.ruff]
+exclude = ["*.md"]
+line-length = 120
+
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
+[tool.ruff.lint.mccabe]
+max-complexity = 20   # Default is 10 for Ruff
+
+[tool.ruff.lint.pylint]
+allow-magic-value-types = ["float", "int", "str"]
+max-args = 13                                     # Default is 5
+max-branches = 21                                 # Default is 12
+max-public-methods = 20                           # Default is 20
+max-returns = 7                                   # Default is 6
+max-statements = 56                               # Default is 50
+
+[tool.ruff.lint]
+select = [
+  "A001",   # builtin-variable-shadowing
+  "A002",   # builtin-argument-shadowing
+  "A003",   # builtin-attribute-shadowing
+  "ANN",    # flake8-annotations
+  "ARG",    # flake8-unused-arguments
+  "ASYNC",  # flake8-async
+  "B",      # flake8-bugbear
+  "BLE",    # flake8-blind-except
+  "C4",     # flake8-comprehensions
+  "C90",    # mccabe complexity
+  "COM818", # trailing-comma-on-bare-tuple
+  "D102",   # Missing docstring in public method
+  "D103",   # Missing docstring in public function
+  "D205",   # 1 blank line required between summary line and description
+  "D209",   # Closing triple quotes go to new line
+  "D213",   # summary lines must be positioned on the second physical line of the docstring
+  "D417",   # undocumented-parameter
+  "D419",   # undocumented-returns
+  "E",      # pycodestyle errors
+  "EXE",    # flake8-executable
+  "F",      # pyflakes
+  "G001",   # logging-format-interpolation
+  "G002",   # logging-percent-format
+  "G004",   # logging-f-string
+  "I",      # isort
+  "ISC001", # implicit-string-concatenation
+  "INT",    # flake8-gettext
+  "PERF",   # perflint
+  "PIE",    # flake8-pie
+  "PL",     # pylint
+  "RET",    # flake8-return
+  "RUF104", # unmatched-suppression-comment
+  "S102",   # flake8-bandit (exec-builtin)
+  "S307",   # flake8-bandit (eval)
+  "SIM",    # flake8-simplify
+  "SLOT",   # flake8-slots
+  "T10",    # flake8-debugger
+  "TID252", # relative-imports
+  "TRY",    # tryceratops
+  "UP",     # pyupgrade
+  "W",      # pycodestyle warnings
+  "YTT",    # flake8-2020
+]
+
+ignore = [
+  "ANN401",  # Allow `Any` - used legitimately for dynamic types and SDK boundaries
+  "B008",    # function-call-as-argument-default
+  "B904",    # raise-without-from-inside-except
+  "BLE001",  # blind-except
+  "E721",    # type-comparison
+  "E722",    # bare-except
+  "PERF203", # try-except-in-loop
+  "PERF401", # manual-list-comprehension
+  "PIE790",  # unnecessary-pass
+
+  # we re-export symbols in __init__ for correct type checking
+  # https://typing.python.org/en/latest/spec/distributing.html#import-conventions
+  "PLC0414", # useless-import-alias
+
+  "PLC0415", # import-outside-top-level
+  "PLR1714", # repeated-equality-comparison
+  "PLW0603", # global-statement
+  "PLW1514", # unspecified-encoding
+  "PLW2901", # redefined-loop-name
+  "RET505",  # superfluous-else-return
+  "SIM108",  # if-else-block-instead-of-ternary
+  "SIM109",  # multiple-comparisons-with-in
+  "SIM118",  # in-dict-keys
+  "TRY002",  # raise-vanilla-class
+  "TRY003",  # raise-vanilla-args
+  "TRY201",  # verbose-raise
+  "TRY300",  # try-consider-else
+  "UP008",   # super-with-arguments
+  "UP032",   # use-f-string
+  "UP037",   # quoted-annotation
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  "ANN",     # flake8-annotations
+  "ARG",     # flake8-unused-arguments
+  "B018",    # useless-expression
+  "D",       # pydocstyle (docstring checks)
+  "E711",    # none-comparison
+  "E731",    # lambda-assignment
+  "PLC0206", # dict-index-missing-items
+  "SIM105",  # suppressible-exception
+  "SIM117",  # multiple-with-statements
+]

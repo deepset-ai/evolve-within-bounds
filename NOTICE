@@ -1,0 +1,29 @@
+Evolve within bounds
+Copyright 2026 deepset GmbH
+
+This repository's own code is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It uses, downloads or serves the third-party software, models and datasets below. None of them is redistributed
+here unless this file says so; each keeps its own license. Licenses marked "to verify" are checked before release.
+
+Software
+- Haystack (deepset-ai/haystack): Apache-2.0
+- monty-haystack (deepset-ai/haystack-core-integrations): Apache-2.0
+- pydantic-monty: to verify
+- vLLM (vllm-project/vllm), container images vllm/vllm-openai: Apache-2.0
+- b12x kernels: to verify
+- NVIDIA NIM containers: NVIDIA's terms, to verify
+- NVIDIA NemoClaw and OpenShell (upstream, pinned in sandbox/UPSTREAM.md): to verify
+- Qdrant: Apache-2.0
+- tonyd2wild/Qwen3.8-Flash-Next-NVFP4-DGX-Spark benchmark harness (fetched at a pinned commit, not vendored): to verify
+
+Models
+- NVIDIA Nemotron 3.5 Lightning, Bolt and Super VL, and their LiLiCorr drafters: OpenMDW License Agreement 1.1
+- Qwen3.8 Flash-Next: to verify
+- Embedding and reranking models used by the knowledge base (BAAI/bge-small-en-v1.5, BAAI/bge-m3,
+  cross-encoder/ms-marco-MiniLM-L-6-v2, Qdrant/bm25): to verify
+
+Datasets
+- PrimeVul: only pair-id manifests are shipped (data/primevul/); the functions are fetched from the upstream release.
+  License: to verify
+- CWE, NVD and ExploitDB (knowledge base, fetched by scripts/data/): each source's terms, to verify
