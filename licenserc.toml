@@ -15,7 +15,6 @@ excludes = [
     "*.yml",
     ".github",
     ".env.example",
-    "CITATION.cff",
     "NOTICE",
     "agents",
     "data",

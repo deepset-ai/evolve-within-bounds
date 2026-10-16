@@ -1,8 +1,0 @@
-cff-version: 1.2.0
-message: "If you use this software, please cite it using these metadata."
-title: "Evolve within bounds: a self-improving security agent on one DGX Spark"
-url: "https://github.com/deepset-ai/evolve-within-bounds-tmp"
-license: Apache-2.0
-authors:
-- family-names: Risch
-  given-names: Julian
