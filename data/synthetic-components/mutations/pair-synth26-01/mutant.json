@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-918",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth26-01",
+  "rationale": "The remote-source rejection is removed and the reference is handed to the reader as text, so a reference naming a URL is fetched by the frame library.",
+  "recipe_id": "R13",
+  "repository": "synth-26-csv-frame-loader",
+  "security_property": "A frame source must be resolved to a local path under the data root before it is read.",
+  "targets": [
+    {
+      "path": "src/custom_components/csv_frame_loader/source_policy.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/csv_frame_loader/frame_loader.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Frame reference is passed to the loader as a URL"
+}

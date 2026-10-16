@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-22",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth06-01",
+  "rationale": "Key normalization returns the raw value and the cache path is assembled from it, so metadata containing traversal segments writes outside the cache root.",
+  "recipe_id": "R03",
+  "repository": "synth-06-thumbnail-cache",
+  "security_property": "Metadata used as a path component must be reduced to a safe alphabet first.",
+  "targets": [
+    {
+      "path": "src/custom_components/thumbnail_cache/cache_key.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/thumbnail_cache/thumbnail_cache.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Document key becomes a cache path component"
+}

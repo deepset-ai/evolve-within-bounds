@@ -1,0 +1,14 @@
+{
+  "change_summary": "Name the serialized secret reference before building the payload.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth30-01",
+  "recipe_id": "B01",
+  "repository": "synth-30-vector-store-wrapper",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py",
+      "role": "benign"
+    }
+  ]
+}

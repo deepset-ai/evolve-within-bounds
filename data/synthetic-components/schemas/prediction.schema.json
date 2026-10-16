@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/hvbench/prediction.schema.json",
+  "title": "hvbench prediction record",
+  "description": "One JSONL object per scanned instance. Every instance in scan_manifest.jsonl must appear, including those with no findings.",
+  "type": "object",
+  "required": ["instance_id", "findings"],
+  "additionalProperties": false,
+  "properties": {
+    "instance_id": {
+      "type": "string",
+      "pattern": "^instance-[0-9a-f]{20}$"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "line_start", "cwe"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {"type": "string", "description": "Repository-relative path."},
+          "line_start": {"type": "integer", "minimum": 1},
+          "line_end": {"type": "integer", "minimum": 1},
+          "cwe": {"type": "string", "pattern": "^(CWE-)?[0-9]+$"},
+          "title": {"type": "string"},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    }
+  }
+}

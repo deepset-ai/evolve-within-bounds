@@ -1,0 +1,14 @@
+{
+  "change_summary": "Invert the cache-miss branch so the decode path reads top-down.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth25-01",
+  "recipe_id": "B02",
+  "repository": "synth-25-embedding-cache",
+  "targets": [
+    {
+      "path": "src/custom_components/embedding_cache/embedding_cache.py",
+      "role": "benign"
+    }
+  ]
+}

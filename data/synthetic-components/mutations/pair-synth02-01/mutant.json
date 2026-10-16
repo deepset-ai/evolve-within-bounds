@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-943",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth02-01",
+  "rationale": "The literal quoter stops doubling embedded quotes and the compiler formats the leaf term inline, so a crafted value closes the literal and appends its own filter clauses.",
+  "recipe_id": "R02",
+  "repository": "synth-02-filter-compiler",
+  "security_property": "Caller-supplied values must be escaped for the filter grammar before they enter an expression.",
+  "targets": [
+    {
+      "path": "src/custom_components/filter_compiler/term_builder.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/filter_compiler/filter_compiler.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Caller values reach the filter expression unescaped"
+}

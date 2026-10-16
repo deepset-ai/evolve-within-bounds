@@ -1,0 +1,24 @@
+diff --git a/src/custom_components/control_plane_client/identifiers.py b/src/custom_components/control_plane_client/identifiers.py
+--- a/src/custom_components/control_plane_client/identifiers.py
++++ b/src/custom_components/control_plane_client/identifiers.py
+@@ -23,6 +23,4 @@
+ 
+ 
+ def check_resource(name: str) -> str:
+-    if not RESOURCE.match(name):
+-        raise IdentifierError(f"invalid resource name: {name!r}")
+-    return name
++    return name.strip()
+diff --git a/src/custom_components/control_plane_client/control_plane_client.py b/src/custom_components/control_plane_client/control_plane_client.py
+--- a/src/custom_components/control_plane_client/control_plane_client.py
++++ b/src/custom_components/control_plane_client/control_plane_client.py
+@@ -51,8 +51,7 @@
+         :param resource: the resource name within the workspace.
+         :returns: the decoded resource state.
+         """
+-        name = check_resource(resource)
+-        url = f"{self.base_url.rstrip('/')}/workspaces/{self.workspace}/resources/{name}"
++        url = f"{self.base_url.rstrip('/')}/workspaces/{self.workspace}/resources/{resource}"
+         request = urllib.request.Request(url)
+         request.add_header("Authorization", f"Bearer {self.api_key.resolve_value()}")
+         with urllib.request.urlopen(request, timeout=self.timeout) as response:

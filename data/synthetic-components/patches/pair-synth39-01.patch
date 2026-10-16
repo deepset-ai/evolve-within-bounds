@@ -1,0 +1,12 @@
+diff --git a/src/haystack_integrations/components/local_model_loader/local_model_loader_component.py b/src/haystack_integrations/components/local_model_loader/local_model_loader_component.py
+--- a/src/haystack_integrations/components/local_model_loader/local_model_loader_component.py
++++ b/src/haystack_integrations/components/local_model_loader/local_model_loader_component.py
+@@ -54,7 +54,7 @@
+         the artifact, so a swapped model directory would become code execution.
+         """
+         path = resolve_model_path(self.model_root, identifier)
+-        self.model = self.loader(str(path), trust_remote_code=False, local_files_only=True)
++        self.model = self.loader(str(path), trust_remote_code=True, local_files_only=False)
+         return self.model
+ 
+     @component.output_types(scores=list)

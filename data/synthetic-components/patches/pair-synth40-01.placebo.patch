@@ -1,0 +1,23 @@
+diff --git a/src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py b/src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py
+--- a/src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py
++++ b/src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py
+@@ -41,6 +41,10 @@
+ }
+ 
+ 
++def _instantiate(factory: type, parameters: dict[str, Any]) -> Any:
++    return factory(**parameters)
++
++
+ def build_stage(state: dict[str, Any]) -> Any:
+     """Instantiate one stage from serialized *state*.
+ 
+@@ -50,7 +54,7 @@
+     name = str(state.get("type", ""))
+     if name not in STAGE_REGISTRY:
+         raise RehydrationError(f"unregistered stage type: {name!r}")
+-    return STAGE_REGISTRY[name](**state.get("init_parameters", {}))
++    return _instantiate(STAGE_REGISTRY[name], state.get("init_parameters", {}))
+ 
+ 
+ @component

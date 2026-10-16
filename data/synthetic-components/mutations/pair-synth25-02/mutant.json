@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-470",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth25-02",
+  "rationale": "The registry lookup falls back to importing the named module attribute, so serialized state selects any importable callable.",
+  "recipe_id": "R22",
+  "repository": "synth-25-embedding-cache",
+  "security_property": "Serialized state may only select a type from a fixed registry.",
+  "targets": [
+    {
+      "path": "src/custom_components/embedding_cache/component_registry.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Adapter type is imported from serialized state"
+}

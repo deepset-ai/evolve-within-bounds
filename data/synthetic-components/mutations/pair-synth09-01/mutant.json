@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-89",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth09-01",
+  "rationale": "The forbidden-keyword scan is removed from the guard and the tool executes the raw statement, so a generated query can write or read outside the catalog.",
+  "recipe_id": "R05",
+  "repository": "synth-09-tabular-query-tool",
+  "security_property": "Model-authored SQL must be proven read-only before execution.",
+  "targets": [
+    {
+      "path": "src/custom_components/tabular_query_tool/sql_guard.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/tabular_query_tool/query_tool.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Model-authored SQL is executed without the read-only grammar"
+}

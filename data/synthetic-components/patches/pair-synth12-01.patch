@@ -1,0 +1,13 @@
+diff --git a/src/custom_components/triple_store_retriever/triple_retriever.py b/src/custom_components/triple_store_retriever/triple_retriever.py
+--- a/src/custom_components/triple_store_retriever/triple_retriever.py
++++ b/src/custom_components/triple_store_retriever/triple_retriever.py
+@@ -45,7 +45,8 @@
+         :param subject: the subject IRI to describe.
+         :returns: one document per retrieved triple.
+         """
+-        rows = self.client.query(SUBJECT_QUERY % {"limit": self.limit}, bindings(subject))
++        text = SUBJECT_QUERY.replace("?subject", f"<{subject}>") % {"limit": self.limit}
++        rows = self.client.query(text, {})
+         return {
+             "documents": [
+                 Document(content=str(row["object"]), meta={"predicate": row["predicate"]})

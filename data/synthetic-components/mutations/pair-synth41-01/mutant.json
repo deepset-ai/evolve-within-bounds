@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-117",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth41-01",
+  "rationale": "The scrubbing helper is bypassed for the caller-controlled fields, so control characters forge log records and token-shaped values are retained by the collector.",
+  "recipe_id": "R23",
+  "repository": "synth-41-error-reporter",
+  "security_property": "Untrusted text must be scrubbed and bounded before entering a log record.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/error_reporter/error_reporter_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Failure detail and query are logged unscrubbed"
+}

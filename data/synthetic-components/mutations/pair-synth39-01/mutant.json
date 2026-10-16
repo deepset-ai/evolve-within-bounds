@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-94",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth39-01",
+  "rationale": "The loader enables remote code, so Python shipped inside a model directory executes during warm-up.",
+  "recipe_id": "R21",
+  "repository": "synth-39-local-model-loader",
+  "security_property": "Model artifacts must be loaded without executing code they carry.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/local_model_loader/local_model_loader_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Model artifact is loaded with remote code execution enabled"
+}

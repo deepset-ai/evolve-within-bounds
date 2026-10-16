@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-20",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth23-01",
+  "rationale": "The resource pattern accepts any text and the client interpolates it, so a crafted name reaches a different control-plane route with the component's own credential.",
+  "recipe_id": "R11",
+  "repository": "synth-23-control-plane-client",
+  "security_property": "Identifiers used as API path segments must match their declared pattern.",
+  "targets": [
+    {
+      "path": "src/custom_components/control_plane_client/identifiers.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/control_plane_client/control_plane_client.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Resource name is placed in the control-plane path unvalidated"
+}

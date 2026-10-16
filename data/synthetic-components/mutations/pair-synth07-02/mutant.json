@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-117",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth07-02",
+  "rationale": "The redaction helper is dropped from the warning, so control characters in the collection name forge additional log records.",
+  "recipe_id": "R23",
+  "repository": "synth-07-service-proxy",
+  "security_property": "Untrusted text must be stripped of control characters and bounded before it enters a log record.",
+  "targets": [
+    {
+      "path": "src/custom_components/service_proxy/upstream_proxy.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Untrusted collection name is logged verbatim"
+}

@@ -17,6 +17,9 @@ coverage.xml
 # Experiment outputs: curated results go to results/
 runs/
 outputs/
+# Benchmark materializations and answer keys (hatch run components:materialize / score)
+materialized*/
+reports/
 
 # Models and caches
 models/

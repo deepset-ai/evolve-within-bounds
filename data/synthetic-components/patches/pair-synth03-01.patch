@@ -1,0 +1,10 @@
+diff --git a/src/custom_components/odata_filter_bridge/odata_bridge.py b/src/custom_components/odata_filter_bridge/odata_bridge.py
+--- a/src/custom_components/odata_filter_bridge/odata_bridge.py
++++ b/src/custom_components/odata_filter_bridge/odata_bridge.py
+@@ -53,5 +53,5 @@
+         :param state: the lifecycle state to require alongside the match.
+         :returns: an OData filter expression.
+         """
+-        clause = f"{self._field(field)} eq {escape_literal(value)}"
++        clause = f"{self._field(field)} eq '{value}'"
+         return {"filter": f"{clause} and {self._field('state')} eq {escape_literal(state)}"}

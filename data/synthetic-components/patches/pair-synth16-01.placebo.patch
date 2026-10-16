@@ -1,0 +1,10 @@
+diff --git a/src/custom_components/rest_resource_client/resource_client.py b/src/custom_components/rest_resource_client/resource_client.py
+--- a/src/custom_components/rest_resource_client/resource_client.py
++++ b/src/custom_components/rest_resource_client/resource_client.py
+@@ -71,4 +71,5 @@
+         :param item: an optional item identifier within the collection.
+         :returns: the decoded JSON payload.
+         """
+-        return {"payload": self._get(resource_path(self.base_url, collection, item))}
++        url = resource_path(self.base_url, collection, item)
++        return {"payload": self._get(url)}

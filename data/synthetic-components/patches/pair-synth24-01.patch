@@ -1,0 +1,12 @@
+diff --git a/src/custom_components/pipeline_invoker/pipeline_invoker.py b/src/custom_components/pipeline_invoker/pipeline_invoker.py
+--- a/src/custom_components/pipeline_invoker/pipeline_invoker.py
++++ b/src/custom_components/pipeline_invoker/pipeline_invoker.py
+@@ -53,8 +53,6 @@
+ 
+     @staticmethod
+     def _check(name: str) -> str:
+-        if not PIPELINE_NAME.match(name):
+-            raise InvocationError(f"invalid pipeline name: {name!r}")
+         return name
+ 
+     @component.output_types(documents=list)

@@ -1,0 +1,14 @@
+diff --git a/components/src/custom_components/format_transcoder/format_transcoder_component.py b/components/src/custom_components/format_transcoder/format_transcoder_component.py
+--- a/components/src/custom_components/format_transcoder/format_transcoder_component.py
++++ b/components/src/custom_components/format_transcoder/format_transcoder_component.py
+@@ -30,10 +30,6 @@
+         raise ImageRejected(f"input is too large: {byte_length} bytes")
+     if width <= 0 or height <= 0:
+         raise ImageRejected("image has no area")
+-    if width > MAX_DIMENSION or height > MAX_DIMENSION:
+-        raise ImageRejected(f"image dimension exceeds {MAX_DIMENSION}px")
+-    if width * height > MAX_PIXELS:
+-        raise ImageRejected(f"image exceeds {MAX_PIXELS} pixels")
+ 
+ 
+ @component

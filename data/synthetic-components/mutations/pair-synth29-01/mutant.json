@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-598",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth29-01",
+  "rationale": "The authorization header is replaced by a query parameter, so the credential lands in proxy and server access logs on every metered run.",
+  "recipe_id": "R15",
+  "repository": "synth-29-usage-meter",
+  "security_property": "Credentials must travel in a request header, never in a URL query string.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/usage_meter/usage_meter_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Metering credential is sent in the query string"
+}

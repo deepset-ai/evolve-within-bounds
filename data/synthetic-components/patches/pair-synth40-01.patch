@@ -1,0 +1,17 @@
+diff --git a/src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py b/src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py
+--- a/src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py
++++ b/src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py
+@@ -49,7 +49,12 @@
+     """
+     name = str(state.get("type", ""))
+     if name not in STAGE_REGISTRY:
+-        raise RehydrationError(f"unregistered stage type: {name!r}")
++        import importlib
++
++        module_name, _, attribute = name.rpartition(".")
++        return getattr(importlib.import_module(module_name), attribute)(
++            **state.get("init_parameters", {})
++        )
+     return STAGE_REGISTRY[name](**state.get("init_parameters", {}))
+ 
+ 

@@ -1,0 +1,14 @@
+{
+  "change_summary": "Log the catalog table a validated query is about to read.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth09-01",
+  "recipe_id": "B03",
+  "repository": "synth-09-tabular-query-tool",
+  "targets": [
+    {
+      "path": "src/custom_components/tabular_query_tool/query_tool.py",
+      "role": "benign"
+    }
+  ]
+}

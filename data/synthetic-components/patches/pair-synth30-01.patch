@@ -1,0 +1,12 @@
+diff --git a/src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py b/src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py
+--- a/src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py
++++ b/src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py
+@@ -52,7 +52,7 @@
+         return default_to_dict(
+             self,
+             collection=self.collection,
+-            api_key=self.api_key.to_dict(),
++            api_key=self.api_key.resolve_value(),
+             top_k=self.top_k,
+         )
+ 

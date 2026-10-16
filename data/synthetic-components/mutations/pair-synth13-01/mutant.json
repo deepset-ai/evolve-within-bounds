@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-89",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth13-01",
+  "rationale": "The identifier check is dropped and the value is formatted into the query, so a crafted node id introduces its own graph pattern.",
+  "recipe_id": "R06",
+  "repository": "synth-13-graph-label-resolver",
+  "security_property": "Node identifiers must be validated and bound rather than placed in query text.",
+  "targets": [
+    {
+      "path": "src/custom_components/graph_label_resolver/label_resolver.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Node identifier is interpolated into the label query"
+}

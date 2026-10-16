@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-915",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth33-01",
+  "rationale": "The writable-key filter returns everything and the enricher merges it wholesale, so generated keys overwrite the access-control fields the retriever filters on.",
+  "recipe_id": "R17",
+  "repository": "synth-33-metadata-enricher",
+  "security_property": "Model-produced metadata may only write keys on the declared allow-list.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/metadata_enricher/merge_policy.py",
+      "role": "source"
+    },
+    {
+      "path": "src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Model output is merged over trusted metadata without an allow-list"
+}

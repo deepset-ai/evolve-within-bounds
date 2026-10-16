@@ -1,0 +1,14 @@
+{
+  "change_summary": "Name the built resource URL before requesting it.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth16-01",
+  "recipe_id": "B01",
+  "repository": "synth-16-rest-resource-client",
+  "targets": [
+    {
+      "path": "src/custom_components/rest_resource_client/resource_client.py",
+      "role": "benign"
+    }
+  ]
+}

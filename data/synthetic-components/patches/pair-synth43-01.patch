@@ -1,0 +1,24 @@
+diff --git a/components/src/custom_components/doc_export_runner/export_runner_component.py b/components/src/custom_components/doc_export_runner/export_runner_component.py
+--- a/components/src/custom_components/doc_export_runner/export_runner_component.py
++++ b/components/src/custom_components/doc_export_runner/export_runner_component.py
+@@ -68,10 +68,18 @@
+             raise ValueError(f"source escapes the work root: {source_name!r}")
+         destination = source.with_suffix(".pdf")
+         subprocess.run(
+-            [resolve_binary(self.converter), "--to", "pdf", "--out", str(destination), str(source)],
++            [
++                resolve_binary(self.converter),
++                "--licence",
++                self.api_key.resolve_value() or "",
++                "--to",
++                "pdf",
++                "--out",
++                str(destination),
++                str(source),
++            ],
+             check=True,
+             timeout=self.timeout,
+-            env=self._environment(),
+             capture_output=True,
+         )
+         return {"output_path": str(destination)}

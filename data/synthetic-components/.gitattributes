@@ -1,0 +1,6 @@
+# Byte-exact corpus: tree_sha256 digests hash raw bytes, and patch offsets depend on
+# exact line endings. Any platform-dependent rewriting invalidates the whole catalog.
+* -text
+corpus/** -text -diff
+mutations/** -text -diff
+patches/** -text

@@ -1,0 +1,10 @@
+diff --git a/src/custom_components/sql_agent_bridge/agent_bridge.py b/src/custom_components/sql_agent_bridge/agent_bridge.py
+--- a/src/custom_components/sql_agent_bridge/agent_bridge.py
++++ b/src/custom_components/sql_agent_bridge/agent_bridge.py
+@@ -48,5 +48,5 @@
+         if lookup not in SUPPORTED_LOOKUPS:
+             raise BridgeRejected(f"unsupported lookup: {lookup!r}")
+         cursor = self.connection.cursor()
+-        cursor.execute(SUPPORTED_LOOKUPS[lookup], (identifier,))
++        cursor.execute(SUPPORTED_LOOKUPS[lookup].replace("?", f"'{identifier}'"))
+         return {"rows": list(cursor.fetchall())}

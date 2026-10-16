@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-522",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth32-01",
+  "rationale": "The state dictionary reports the resolved secret instead of whether one is configured, and that dictionary is written to the run log on every turn.",
+  "recipe_id": "R16",
+  "repository": "synth-32-chat-relay",
+  "security_property": "Diagnostic state must report credential presence, never credential value.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/chat_relay/chat_relay_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Diagnostic state embeds the plaintext relay credential"
+}

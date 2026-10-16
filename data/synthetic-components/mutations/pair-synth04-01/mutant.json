@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-22",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth04-01",
+  "rationale": "The containment check is bypassed, so metadata naming a traversal path writes outside the staging root.",
+  "recipe_id": "R03",
+  "repository": "synth-04-attachment-writer",
+  "security_property": "A path built from document metadata must be proven to resolve inside the staging root.",
+  "targets": [
+    {
+      "path": "src/custom_components/attachment_writer/attachment_writer.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Attachment name is joined without containment"
+}

@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-347",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth01-01",
+  "rationale": "The signature check is dropped, so any well-formed token is accepted and its subject and tenant claims become the retrieval scope.",
+  "recipe_id": "R01",
+  "repository": "synth-01-request-context",
+  "security_property": "Identity claims may only be read from a token whose signature has been verified.",
+  "targets": [
+    {
+      "path": "src/custom_components/request_context/token_reader.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Token claims are read without verifying the signature"
+}

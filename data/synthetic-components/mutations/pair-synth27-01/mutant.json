@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-798",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth27-01",
+  "rationale": "The environment-backed secret is replaced by a literal token default, so the credential ships with the component source.",
+  "recipe_id": "R14",
+  "repository": "synth-27-vision-captioner",
+  "security_property": "Credentials must be resolved from the environment, never written into source.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/vision_captioner/vision_captioner_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Captioning credential is embedded as a literal default"
+}

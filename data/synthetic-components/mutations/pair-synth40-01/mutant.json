@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-470",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth40-01",
+  "rationale": "Unregistered type names fall through to an import, so serialized pipeline state can name and call any importable callable.",
+  "recipe_id": "R22",
+  "repository": "synth-40-component-rehydrator",
+  "security_property": "Serialized state may only select a type from the fixed registry.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Stage type is resolved by import from serialized state"
+}

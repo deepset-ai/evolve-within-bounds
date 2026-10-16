@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-94",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth14-01",
+  "rationale": "The root allow-list is removed and each step falls back to attribute access, so a selector can walk into object internals such as class and global dictionaries.",
+  "recipe_id": "R07",
+  "repository": "synth-14-attribute-selector",
+  "security_property": "A selector may only traverse declared roots through mapping lookups.",
+  "targets": [
+    {
+      "path": "src/custom_components/attribute_selector/attribute_selector.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Selector resolves through unrestricted attribute access"
+}

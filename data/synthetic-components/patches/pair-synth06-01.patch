@@ -1,0 +1,27 @@
+diff --git a/src/custom_components/thumbnail_cache/cache_key.py b/src/custom_components/thumbnail_cache/cache_key.py
+--- a/src/custom_components/thumbnail_cache/cache_key.py
++++ b/src/custom_components/thumbnail_cache/cache_key.py
+@@ -22,10 +22,7 @@
+     Metadata is attacker-influenced, so anything outside the safe alphabet is
+     replaced by a stable digest rather than being trusted as a path component.
+     """
+-    candidate = raw.strip()
+-    if SAFE_KEY.match(candidate):
+-        return candidate
+-    return hashlib.sha256(candidate.encode("utf-8")).hexdigest()[:32]
++    return raw.strip()
+ 
+ 
+ def cache_relative_path(document_key: str, page: int) -> str:
+diff --git a/src/custom_components/thumbnail_cache/thumbnail_cache.py b/src/custom_components/thumbnail_cache/thumbnail_cache.py
+--- a/src/custom_components/thumbnail_cache/thumbnail_cache.py
++++ b/src/custom_components/thumbnail_cache/thumbnail_cache.py
+@@ -45,7 +45,7 @@
+                 str(document.meta.get("document_key", document.id)),
+                 int(document.meta.get("page", 0)),
+             )
+-            destination = self.cache_root / relative
++            destination = Path(str(self.cache_root) + "/" + relative)
+             destination.parent.mkdir(parents=True, exist_ok=True)
+             destination.write_bytes(payload)
+             paths.append(relative)

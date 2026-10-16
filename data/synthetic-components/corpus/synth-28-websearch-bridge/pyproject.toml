@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "websearch-bridge-haystack"
+version = "0.1.0"
+description = "Wraps a web search API as a retriever"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+keywords = ["haystack", "component"]
+authors = [{ name = "Example Maintainer", email = "maintainer@example.invalid" }]
+dependencies = ["haystack-ai"]
+
+[project.urls]
+Source = "https://github.com/example-org/websearch-bridge-haystack"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/haystack_integrations"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

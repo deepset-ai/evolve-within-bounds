@@ -1,0 +1,14 @@
+diff --git a/src/haystack_integrations/components/error_reporter/error_reporter_component.py b/src/haystack_integrations/components/error_reporter/error_reporter_component.py
+--- a/src/haystack_integrations/components/error_reporter/error_reporter_component.py
++++ b/src/haystack_integrations/components/error_reporter/error_reporter_component.py
+@@ -62,8 +62,8 @@
+         report = {
+             "component": self.component_name,
+             "stage": scrub(stage, 64),
+-            "detail": scrub(detail),
+-            "query": scrub(query),
++            "detail": detail,
++            "query": query,
+         }
+         logger.warning("component failure: %s", report)
+         return {"report": report}

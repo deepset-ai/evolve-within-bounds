@@ -1,0 +1,14 @@
+{
+  "change_summary": "Bind the leaf node's field, operator and value to locals before compiling the term.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth02-01",
+  "recipe_id": "B01",
+  "repository": "synth-02-filter-compiler",
+  "targets": [
+    {
+      "path": "src/custom_components/filter_compiler/filter_compiler.py",
+      "role": "benign"
+    }
+  ]
+}

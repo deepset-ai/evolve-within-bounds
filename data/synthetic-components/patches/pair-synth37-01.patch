@@ -1,0 +1,15 @@
+diff --git a/src/haystack_integrations/components/query_authorizer/query_authorizer_component.py b/src/haystack_integrations/components/query_authorizer/query_authorizer_component.py
+--- a/src/haystack_integrations/components/query_authorizer/query_authorizer_component.py
++++ b/src/haystack_integrations/components/query_authorizer/query_authorizer_component.py
+@@ -22,9 +22,8 @@
+     granted: satisfying any one scope would let a caller widen a permitted query
+     with a scope they do not hold and receive both results.
+     """
+-    missing = requested - granted
+-    if missing:
+-        raise Unauthorized(f"missing scopes: {sorted(missing)}")
++    if not requested & granted:
++        raise Unauthorized(f"no granted scope among: {sorted(requested)}")
+     return requested
+ 
+ 

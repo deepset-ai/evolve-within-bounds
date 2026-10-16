@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-1336",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth21-01",
+  "rationale": "Pipe and newline escaping is dropped, so a retrieved value ends its cell and injects further rows into the rendered table.",
+  "recipe_id": "R10",
+  "repository": "synth-21-markdown-table-renderer",
+  "security_property": "Untrusted values must be escaped for the Markdown table context before rendering.",
+  "targets": [
+    {
+      "path": "src/custom_components/markdown_table_renderer/markdown_escape.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Cell values can add Markdown table rows and columns"
+}

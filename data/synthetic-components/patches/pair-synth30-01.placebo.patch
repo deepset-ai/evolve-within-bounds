@@ -1,0 +1,16 @@
+diff --git a/src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py b/src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py
+--- a/src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py
++++ b/src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py
+@@ -49,10 +49,11 @@
+         state is written to disk and shipped between machines, so a resolved value
+         here becomes a credential at rest.
+         """
++        serialized_key = self.api_key.to_dict()
+         return default_to_dict(
+             self,
+             collection=self.collection,
+-            api_key=self.api_key.to_dict(),
++            api_key=serialized_key,
+             top_k=self.top_k,
+         )
+ 

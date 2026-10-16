@@ -1,0 +1,13 @@
+diff --git a/src/custom_components/request_context/token_reader.py b/src/custom_components/request_context/token_reader.py
+--- a/src/custom_components/request_context/token_reader.py
++++ b/src/custom_components/request_context/token_reader.py
+@@ -39,9 +39,6 @@
+     algorithm = str(header.get("alg", ""))
+     if algorithm not in verifier.allowed_algorithms:
+         raise TokenError(f"unsupported signing algorithm: {algorithm!r}")
+-    if not verifier.verify(token):
+-        raise TokenError("token signature does not verify")
+-
+     claims = _segment(token, 1)
+     if claims.get("aud") != audience:
+         raise TokenError("token audience mismatch")

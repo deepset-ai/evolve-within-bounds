@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-522",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth31-01",
+  "rationale": "The reproducibility config stores the resolved secret rather than the variable name, so the credential is written to a file uploaded with extraction artifacts.",
+  "recipe_id": "R16",
+  "repository": "synth-31-doc-intelligence-client",
+  "security_property": "Config artifacts must record the credential source, never the credential.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/doc_intelligence_client/doc_intelligence_client_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Run config records the resolved extraction credential"
+}

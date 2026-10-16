@@ -1,0 +1,24 @@
+diff --git a/src/custom_components/filter_compiler/term_builder.py b/src/custom_components/filter_compiler/term_builder.py
+--- a/src/custom_components/filter_compiler/term_builder.py
++++ b/src/custom_components/filter_compiler/term_builder.py
+@@ -22,7 +22,7 @@
+     Embedded quotes are doubled, which is the escape the grammar defines. Callers
+     must route every caller-supplied string through here.
+     """
+-    return "'" + value.replace("'", "''") + "'"
++    return "'" + value + "'"
+ 
+ 
+ def check_field(field: str) -> str:
+diff --git a/src/custom_components/filter_compiler/filter_compiler.py b/src/custom_components/filter_compiler/filter_compiler.py
+--- a/src/custom_components/filter_compiler/filter_compiler.py
++++ b/src/custom_components/filter_compiler/filter_compiler.py
+@@ -39,7 +39,7 @@
+             if len(conditions) > self.max_conditions:
+                 raise FilterError("too many filter conditions")
+             return "(" + joiner.join(self._compile(c, depth + 1) for c in conditions) + ")"
+-        return build_term(str(node["field"]), str(node["operator"]), str(node["value"]))
++        return f"{node['field']} {node['operator']} {quote_literal(str(node['value']))}"
+ 
+     def health_expression(self, field: str) -> str:
+         """A fixed liveness probe, built through the same escaping helpers."""

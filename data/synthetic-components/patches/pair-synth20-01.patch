@@ -1,0 +1,17 @@
+diff --git a/src/custom_components/remote_asset_loader/remote_asset_loader.py b/src/custom_components/remote_asset_loader/remote_asset_loader.py
+--- a/src/custom_components/remote_asset_loader/remote_asset_loader.py
++++ b/src/custom_components/remote_asset_loader/remote_asset_loader.py
+@@ -23,12 +23,7 @@
+     Assets are named inside the document body, so the only trustworthy anchor is
+     the origin the document itself came from.
+     """
+-    base = urlsplit(document_url)
+-    resolved = urljoin(document_url, asset_reference)
+-    target = urlsplit(resolved)
+-    if (target.scheme, target.netloc) != (base.scheme, base.netloc):
+-        raise AssetRejected(f"asset leaves the document origin: {asset_reference!r}")
+-    return resolved
++    return urljoin(document_url, asset_reference)
+ 
+ 
+ @component

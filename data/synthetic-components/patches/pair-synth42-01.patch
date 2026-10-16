@@ -1,0 +1,12 @@
+diff --git a/components/src/custom_components/webhook_notifier/webhook_notifier_component.py b/components/src/custom_components/webhook_notifier/webhook_notifier_component.py
+--- a/components/src/custom_components/webhook_notifier/webhook_notifier_component.py
++++ b/components/src/custom_components/webhook_notifier/webhook_notifier_component.py
+@@ -13,7 +13,7 @@
+ 
+ from haystack import component
+ 
+-DEFAULT_TIMEOUT = 10.0
++DEFAULT_TIMEOUT = None  # fall back to the global socket default
+ 
+ 
+ class WebhookError(ValueError):

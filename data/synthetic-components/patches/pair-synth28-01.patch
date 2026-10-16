@@ -1,0 +1,12 @@
+diff --git a/src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py b/src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py
+--- a/src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py
++++ b/src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py
+@@ -78,7 +78,7 @@
+         """
+         parameters = urlencode({"q": self._check_query(query), "count": self.top_k})
+         request = urllib.request.Request(f"{self.endpoint}?{parameters}")
+-        request.add_header("X-Subscription-Token", self.api_key.resolve_value())
++        request.add_header("X-Subscription-Token", "BENCHMARK_INERT_TOKEN_WEBSEARCH_LITERAL")
+         with urllib.request.urlopen(request, timeout=self.timeout) as response:
+             body = json.loads(response.read().decode("utf-8"))
+         return {

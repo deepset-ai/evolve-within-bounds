@@ -1,0 +1,15 @@
+diff --git a/components/src/custom_components/webhook_notifier/webhook_notifier_component.py b/components/src/custom_components/webhook_notifier/webhook_notifier_component.py
+--- a/components/src/custom_components/webhook_notifier/webhook_notifier_component.py
++++ b/components/src/custom_components/webhook_notifier/webhook_notifier_component.py
+@@ -64,9 +64,8 @@
+         The timeout is finite and explicit: a webhook receiver that never answers
+         would otherwise hold the pipeline worker open indefinitely.
+         """
+-        request = urllib.request.Request(
+-            self.url, data=json.dumps(payload).encode("utf-8"), method="POST"
+-        )
++        body = json.dumps(payload).encode("utf-8")
++        request = urllib.request.Request(self.url, data=body, method="POST")
+         request.add_header("Content-Type", "application/json")
+         with urllib.request.urlopen(request, timeout=self.timeout) as response:
+             return int(response.status)

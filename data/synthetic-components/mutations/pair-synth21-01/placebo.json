@@ -1,0 +1,14 @@
+{
+  "change_summary": "Extract the cell-breaking replacement loop into a pure helper.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth21-01",
+  "recipe_id": "B05",
+  "repository": "synth-21-markdown-table-renderer",
+  "targets": [
+    {
+      "path": "src/custom_components/markdown_table_renderer/markdown_escape.py",
+      "role": "benign"
+    }
+  ]
+}

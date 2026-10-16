@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-94",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth33-02",
+  "rationale": "The constant template is replaced by source built from the document, so document text is compiled as template syntax rather than substituted as data.",
+  "recipe_id": "R20",
+  "repository": "synth-33-metadata-enricher",
+  "security_property": "Runtime input must be template data, never template source.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/metadata_enricher/prompt_source.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Document text is concatenated into the prompt template source"
+}

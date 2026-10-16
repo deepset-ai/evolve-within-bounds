@@ -1,0 +1,12 @@
+diff --git a/src/haystack_integrations/components/vision_captioner/vision_captioner_component.py b/src/haystack_integrations/components/vision_captioner/vision_captioner_component.py
+--- a/src/haystack_integrations/components/vision_captioner/vision_captioner_component.py
++++ b/src/haystack_integrations/components/vision_captioner/vision_captioner_component.py
+@@ -30,7 +30,7 @@
+     def __init__(
+         self,
+         endpoint: str = "https://vision.example.invalid/v1/caption",
+-        api_key: Secret = Secret.from_env_var("BENCHMARK_INERT_TOKEN_VISION"),
++        api_key: Secret = Secret.from_token("BENCHMARK_INERT_TOKEN_VISION_LITERAL"),
+         timeout: float = 30.0,
+         max_images: int = 16,
+     ) -> None:

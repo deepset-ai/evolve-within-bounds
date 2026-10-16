@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-214",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth43-01",
+  "rationale": "The credential moves from the environment onto the argument vector, so it is visible in the process table to every local user for the duration of the conversion.",
+  "recipe_id": "R25",
+  "repository": "synth-43-doc-export-runner",
+  "security_property": "Credentials must be passed to a subprocess through its environment, not its arguments.",
+  "targets": [
+    {
+      "path": "components/src/custom_components/doc_export_runner/export_runner_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Converter licence is passed as a command-line argument"
+}

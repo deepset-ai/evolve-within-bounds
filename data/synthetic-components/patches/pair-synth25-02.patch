@@ -1,0 +1,14 @@
+diff --git a/src/custom_components/embedding_cache/component_registry.py b/src/custom_components/embedding_cache/component_registry.py
+--- a/src/custom_components/embedding_cache/component_registry.py
++++ b/src/custom_components/embedding_cache/component_registry.py
+@@ -41,5 +41,9 @@
+     """
+     name = str(state.get("type", ""))
+     if name not in ADAPTERS:
+-        raise RegistryError(f"unregistered adapter type: {name!r}")
++        import importlib
++
++        module_name, _, attribute = name.rpartition(".")
++        factory = getattr(importlib.import_module(module_name), attribute)
++        return factory(**state.get("init_parameters", {}))
+     return ADAPTERS[name](**state.get("init_parameters", {}))

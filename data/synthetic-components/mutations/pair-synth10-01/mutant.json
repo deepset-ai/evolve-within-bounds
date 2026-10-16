@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-89",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth10-01",
+  "rationale": "The bound parameter is replaced by string formatting, so an identifier containing quote characters alters the executed statement.",
+  "recipe_id": "R05",
+  "repository": "synth-10-sql-agent-bridge",
+  "security_property": "Row identifiers must be bound as parameters, never formatted into SQL text.",
+  "targets": [
+    {
+      "path": "src/custom_components/sql_agent_bridge/agent_bridge.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Lookup identifier is formatted into the statement"
+}

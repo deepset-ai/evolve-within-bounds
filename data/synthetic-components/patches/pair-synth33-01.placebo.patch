@@ -1,0 +1,30 @@
+diff --git a/src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py b/src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py
+--- a/src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py
++++ b/src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py
+@@ -7,6 +7,7 @@
+ from __future__ import annotations
+ 
+ import json
++import logging
+ from typing import Any
+ 
+ from haystack import component
+@@ -14,6 +15,8 @@
+ 
+ from .merge_policy import writable_subset
+ from .prompt_source import render_prompt
++
++logger = logging.getLogger(__name__)
+ 
+ 
+ @component
+@@ -55,6 +58,8 @@
+         enriched: list[Document] = []
+         for document in documents:
+             merged = dict(document.meta)
+-            merged.update(writable_subset(self._extract(document)))
++            proposed = writable_subset(self._extract(document))
++            logger.debug("enriching %s with %d field(s)", document.id, len(proposed))
++            merged.update(proposed)
+             enriched.append(Document(id=document.id, content=document.content, meta=merged))
+         return {"documents": enriched}

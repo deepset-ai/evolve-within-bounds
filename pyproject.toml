@@ -32,6 +32,19 @@ unit = 'pytest --cov="security_agent" -m "not integration" {args:tests}'
 integration = 'pytest --maxfail=5 -m "integration" {args:tests}'
 types = "mypy --install-types --non-interactive --cache-dir=.mypy_cache/ {args:src}"
 
+[tool.hatch.envs.components]
+# The synthetic custom-component benchmark (data/synthetic-components), installed in dev mode with its test extra.
+installer = "uv"
+skip-install = true
+workspace.members = [{ path = "data/synthetic-components", features = ["test"] }]
+
+[tool.hatch.envs.components.scripts]
+inventory = "hvbench inventory"
+validate = "hvbench validate"
+materialize = "hvbench materialize {args}"
+score = "hvbench score {args}"
+test = "pytest data/synthetic-components/tests {args}"
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 markers = ["integration: needs a served model or other running services (a DGX Spark)"]

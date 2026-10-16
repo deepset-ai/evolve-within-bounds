@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-94",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth38-01",
+  "rationale": "The template is rebuilt per run by concatenating document content into its source, so retrieved text is evaluated as template syntax inside the environment.",
+  "recipe_id": "R20",
+  "repository": "synth-38-prompt-assembler",
+  "security_property": "Retrieved content must be rendered as template data, never compiled as source.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/prompt_assembler/prompt_assembler_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Retrieved content is compiled as template source"
+}

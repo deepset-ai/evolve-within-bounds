@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-94",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth15-01",
+  "rationale": "The parsed comparison is replaced by expression evaluation over the scope, so a configured condition executes arbitrary Python at routing time.",
+  "recipe_id": "R07",
+  "repository": "synth-15-routing-expression",
+  "security_property": "A routing condition must be parsed into a comparison, never evaluated as code.",
+  "targets": [
+    {
+      "path": "src/custom_components/routing_expression/routing_expression.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Routing condition is evaluated as a Python expression"
+}

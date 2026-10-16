@@ -1,0 +1,13 @@
+diff --git a/src/custom_components/sidecar_reader/sidecar_reader.py b/src/custom_components/sidecar_reader/sidecar_reader.py
+--- a/src/custom_components/sidecar_reader/sidecar_reader.py
++++ b/src/custom_components/sidecar_reader/sidecar_reader.py
+@@ -38,8 +38,8 @@
+         self.suffix = suffix
+ 
+     def _resolve(self, name: str) -> Path:
++        candidate = (self.ingest_root / f"{name}{self.suffix}").resolve()
+         root = self.ingest_root.resolve()
+-        candidate = (self.ingest_root / f"{name}{self.suffix}").resolve()
+         if root not in candidate.parents:
+             raise SidecarError(f"sidecar path escapes the ingest root: {name!r}")
+         return candidate

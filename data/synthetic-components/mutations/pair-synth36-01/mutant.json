@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-20",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth36-01",
+  "rationale": "The role is taken from the inbound turn when the server transcript has no entry, so a caller can replay text as a system turn and rewrite the assistant's instructions.",
+  "recipe_id": "R18",
+  "repository": "synth-36-history-normalizer",
+  "security_property": "A turn's role must come from the server-side transcript, not from the caller.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/history_normalizer/history_normalizer_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Caller-supplied role label is trusted"
+}

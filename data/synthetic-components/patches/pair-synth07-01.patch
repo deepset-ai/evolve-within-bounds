@@ -1,0 +1,27 @@
+diff --git a/src/custom_components/service_proxy/url_builder.py b/src/custom_components/service_proxy/url_builder.py
+--- a/src/custom_components/service_proxy/url_builder.py
++++ b/src/custom_components/service_proxy/url_builder.py
+@@ -26,10 +26,7 @@
+     Each segment is percent-encoded and cannot introduce a new host, a scheme or
+     an additional path level.
+     """
+-    scheme, netloc = allowed_origin(base_url)
+-    prefix = urlsplit(base_url).path.rstrip("/")
+-    encoded = "/".join(quote(str(segment), safe="") for segment in segments if str(segment))
+-    return f"{scheme}://{netloc}{prefix}/{encoded}"
++    return base_url.rstrip("/") + "/" + "/".join(str(segment) for segment in segments)
+ 
+ 
+ def health_url(base_url: str) -> str:
+diff --git a/src/custom_components/service_proxy/upstream_proxy.py b/src/custom_components/service_proxy/upstream_proxy.py
+--- a/src/custom_components/service_proxy/upstream_proxy.py
++++ b/src/custom_components/service_proxy/upstream_proxy.py
+@@ -79,7 +79,7 @@
+         :param collection: the upstream collection to rank within.
+         :returns: ranked document ids from the upstream service.
+         """
+-        url = build_url(self.base_url, "collections", collection, "rank")
++        url = f"{self.base_url}/collections/{collection}/rank"
+         try:
+             payload = self._request(url)
+         except OSError as error:

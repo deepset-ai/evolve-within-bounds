@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-863",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth35-01",
+  "rationale": "The inheritable filter returns the whole parent metadata, so access-control fields propagate onto split documents that are indexed independently.",
+  "recipe_id": "R17",
+  "repository": "synth-35-tag-propagator",
+  "security_property": "Only declared tag fields may be inherited from a parent document.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/tag_propagator/tag_propagator_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Splits inherit every parent metadata field"
+}

@@ -1,0 +1,10 @@
+diff --git a/src/custom_components/redirect_follower/redirect_follower.py b/src/custom_components/redirect_follower/redirect_follower.py
+--- a/src/custom_components/redirect_follower/redirect_follower.py
++++ b/src/custom_components/redirect_follower/redirect_follower.py
+@@ -61,5 +61,5 @@
+                 location = response.headers.get("Location")
+                 if not location:
+                     return {"url": current, "hops": hop}
+-                current = self.check_host(location)
++                current = location
+         raise RedirectError("redirect chain is too long")

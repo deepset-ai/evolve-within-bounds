@@ -1,0 +1,14 @@
+diff --git a/src/custom_components/graph_label_resolver/label_resolver.py b/src/custom_components/graph_label_resolver/label_resolver.py
+--- a/src/custom_components/graph_label_resolver/label_resolver.py
++++ b/src/custom_components/graph_label_resolver/label_resolver.py
+@@ -54,6 +54,9 @@
+         """
+         labels: dict[str, str] = {}
+         for node_id in node_ids:
+-            rows = self.client.query(LABEL_QUERY, {"node": check_node_id(node_id)})
++            checked = check_node_id(node_id)
++            if len(checked) > 96:
++                raise LabelError(f"node identifier is too long: {checked[:32]!r}")
++            rows = self.client.query(LABEL_QUERY, {"node": checked})
+             labels[node_id] = str(rows[0]["label"]) if rows else self.fallback
+         return {"labels": labels}

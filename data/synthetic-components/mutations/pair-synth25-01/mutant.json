@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-502",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth25-01",
+  "rationale": "The structural decoder is replaced by general object deserialization, so a cache file written by anyone with directory access executes code on load.",
+  "recipe_id": "R12",
+  "repository": "synth-25-embedding-cache",
+  "security_property": "Cached payloads must be decoded with a structural format that cannot construct objects.",
+  "targets": [
+    {
+      "path": "src/custom_components/embedding_cache/codec.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/embedding_cache/embedding_cache.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Cached batches are deserialized with the object serializer"
+}

@@ -1,0 +1,29 @@
+diff --git a/src/custom_components/csv_frame_loader/source_policy.py b/src/custom_components/csv_frame_loader/source_policy.py
+--- a/src/custom_components/csv_frame_loader/source_policy.py
++++ b/src/custom_components/csv_frame_loader/source_policy.py
+@@ -19,8 +19,6 @@
+     Frame libraries treat a string that looks like a URL as something to fetch,
+     so a reference is resolved to a real path here and never handed over as text.
+     """
+-    if "://" in reference:
+-        raise SourceRejected(f"remote sources are not supported: {reference!r}")
+     candidate = (data_root / reference).resolve()
+     root = data_root.resolve()
+     if root not in candidate.parents and candidate != root:
+diff --git a/src/custom_components/csv_frame_loader/frame_loader.py b/src/custom_components/csv_frame_loader/frame_loader.py
+--- a/src/custom_components/csv_frame_loader/frame_loader.py
++++ b/src/custom_components/csv_frame_loader/frame_loader.py
+@@ -42,7 +42,11 @@
+         :param reference: a data-root-relative path to a delimited file.
+         :returns: the parsed rows.
+         """
+-        path = local_source(self.data_root, reference)
+-        with path.open(newline="", encoding="utf-8") as handle:
++        handle = (
++            __import__("urllib.request", fromlist=["urlopen"]).urlopen(reference)
++            if "://" in reference
++            else local_source(self.data_root, reference).open(newline="", encoding="utf-8")
++        )
++        with handle:
+             reader = csv.DictReader(handle, delimiter=self.delimiter)
+             return {"rows": [row for _, row in zip(range(self.max_rows), reader)]}

@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-22",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth16-01",
+  "rationale": "Segment encoding is dropped and the client joins raw values, so an item identifier containing traversal segments reaches a different authenticated endpoint.",
+  "recipe_id": "R08",
+  "repository": "synth-16-rest-resource-client",
+  "security_property": "Every caller-supplied path segment must be percent-encoded with no safe characters.",
+  "targets": [
+    {
+      "path": "src/custom_components/rest_resource_client/resource_path.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/rest_resource_client/resource_client.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Path segments are inserted into the resource URL unencoded"
+}

@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-22",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth18-01",
+  "rationale": "The traversal rejection is removed, so a key containing parent segments resolves to an object outside the configured bucket.",
+  "recipe_id": "R08",
+  "repository": "synth-18-object-store-reader",
+  "security_property": "Object keys must not contain traversal segments before they reach the gateway.",
+  "targets": [
+    {
+      "path": "src/custom_components/object_store_reader/object_store_reader.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Object key traversal segments are forwarded to the gateway"
+}

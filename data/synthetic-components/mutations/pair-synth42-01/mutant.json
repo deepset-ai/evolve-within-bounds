@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-400",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth42-01",
+  "rationale": "The module default is changed to None, so every notifier constructed without an explicit timeout passes no deadline to urlopen and a receiver that stalls holds the worker open across all retries.",
+  "recipe_id": "R24",
+  "repository": "synth-42-webhook-notifier",
+  "security_property": "The default outbound request timeout must be a finite value.",
+  "targets": [
+    {
+      "path": "components/src/custom_components/webhook_notifier/webhook_notifier_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Webhook timeout default becomes unbounded"
+}

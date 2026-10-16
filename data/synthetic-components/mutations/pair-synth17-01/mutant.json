@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-22",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth17-01",
+  "rationale": "The encoding helper is bypassed, so a collection name containing slashes reaches a different endpoint on the same authenticated service.",
+  "recipe_id": "R08",
+  "repository": "synth-17-collection-browser",
+  "security_property": "A collection name must be percent-encoded as a single path segment.",
+  "targets": [
+    {
+      "path": "src/custom_components/collection_browser/collection_browser.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Collection name enters the path without encoding"
+}

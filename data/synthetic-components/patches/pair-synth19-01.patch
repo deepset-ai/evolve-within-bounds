@@ -1,0 +1,26 @@
+diff --git a/src/custom_components/source_refetcher/origin_policy.py b/src/custom_components/source_refetcher/origin_policy.py
+--- a/src/custom_components/source_refetcher/origin_policy.py
++++ b/src/custom_components/source_refetcher/origin_policy.py
+@@ -31,7 +31,6 @@
+     parts = urlsplit(url)
+     if parts.scheme not in {"http", "https"}:
+         raise OriginRejected(f"unsupported scheme: {url!r}")
+-    host = parts.hostname or ""
+-    if not host or is_private_host(host) or host not in allowed_hosts:
+-        raise OriginRejected(f"origin is not allowed: {host!r}")
++    if not parts.hostname:
++        raise OriginRejected(f"origin is not allowed: {url!r}")
+     return url
+diff --git a/src/custom_components/source_refetcher/source_refetcher.py b/src/custom_components/source_refetcher/source_refetcher.py
+--- a/src/custom_components/source_refetcher/source_refetcher.py
++++ b/src/custom_components/source_refetcher/source_refetcher.py
+@@ -61,8 +61,7 @@
+             if not url:
+                 skipped.append(document.id)
+                 continue
+-            checked = check_origin(url, self.allowed_hosts)
+             streams.append(
+-                ByteStream(data=self._fetch(checked), meta={"document_id": document.id})
++                ByteStream(data=self._fetch(url), meta={"document_id": document.id})
+             )
+         return {"streams": streams, "skipped": skipped}

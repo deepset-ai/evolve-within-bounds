@@ -1,0 +1,14 @@
+{
+  "change_summary": "Extract stage construction into a helper shared by future callers.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth40-01",
+  "recipe_id": "B05",
+  "repository": "synth-40-component-rehydrator",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/component_rehydrator/component_rehydrator_component.py",
+      "role": "benign"
+    }
+  ]
+}

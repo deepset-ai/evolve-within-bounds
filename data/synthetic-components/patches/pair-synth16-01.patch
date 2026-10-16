@@ -1,0 +1,22 @@
+diff --git a/src/custom_components/rest_resource_client/resource_path.py b/src/custom_components/rest_resource_client/resource_path.py
+--- a/src/custom_components/rest_resource_client/resource_path.py
++++ b/src/custom_components/rest_resource_client/resource_path.py
+@@ -22,7 +22,7 @@
+     text = str(segment).strip()
+     if not text:
+         raise ResourcePathError("empty path segment")
+-    return quote(text, safe="")
++    return text
+ 
+ 
+ def resource_path(base_url: str, collection: str, item: str | None = None) -> str:
+diff --git a/src/custom_components/rest_resource_client/resource_client.py b/src/custom_components/rest_resource_client/resource_client.py
+--- a/src/custom_components/rest_resource_client/resource_client.py
++++ b/src/custom_components/rest_resource_client/resource_client.py
+@@ -71,4 +71,5 @@
+         :param item: an optional item identifier within the collection.
+         :returns: the decoded JSON payload.
+         """
+-        return {"payload": self._get(resource_path(self.base_url, collection, item))}
++        suffix = f"/{item}" if item is not None else ""
++        return {"payload": self._get(f"{self.base_url.rstrip('/')}/{collection}{suffix}")}

@@ -1,0 +1,14 @@
+{
+  "change_summary": "Resolve the candidate path before the ingest root; the two lookups are independent.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth05-01",
+  "recipe_id": "B02",
+  "repository": "synth-05-sidecar-reader",
+  "targets": [
+    {
+      "path": "src/custom_components/sidecar_reader/sidecar_reader.py",
+      "role": "benign"
+    }
+  ]
+}

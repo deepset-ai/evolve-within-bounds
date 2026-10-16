@@ -1,0 +1,765 @@
+{
+  "schema_version": 2,
+  "themes": [
+    {
+      "repo": "synth-01-request-context",
+      "slug": "request_context",
+      "package": "request-context-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Derives a tenant scope from an inbound bearer token",
+      "recipes": [
+        "R01"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a correctly verified token check in a sibling module"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-02-filter-compiler",
+      "slug": "filter_compiler",
+      "package": "filter-compiler-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Compiles structured filter dicts into a store's filter language",
+      "recipes": [
+        "R02"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": "B01",
+      "distractors": [
+        "a parameterized filter builder used by the health endpoint"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-03-odata-filter-bridge",
+      "slug": "odata_filter_bridge",
+      "package": "odata-filter-bridge-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Translates filters into an OData-style query string",
+      "recipes": [
+        "R02"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a parameterized filter builder used by the health endpoint"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-04-attachment-writer",
+      "slug": "attachment_writer",
+      "package": "attachment-writer-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Writes document attachments to a staging directory",
+      "recipes": [
+        "R03"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a resolved-and-contained path join used for temp files"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-05-sidecar-reader",
+      "slug": "sidecar_reader",
+      "package": "sidecar-reader-haystack",
+      "layout": "dc",
+      "size_class": "S",
+      "domain_statement": "Reads sidecar metadata files next to ingested documents",
+      "recipes": [
+        "R03"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": "B02",
+      "distractors": [
+        "a resolved-and-contained path join used for temp files"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-06-thumbnail-cache",
+      "slug": "thumbnail_cache",
+      "package": "thumbnail-cache-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Caches page thumbnails keyed by document metadata",
+      "recipes": [
+        "R03"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": null,
+      "distractors": [
+        "a resolved-and-contained path join used for temp files"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-07-service-proxy",
+      "slug": "service_proxy",
+      "package": "service-proxy-haystack",
+      "layout": "dc",
+      "size_class": "L",
+      "domain_statement": "Proxies queries to an internal ranking service",
+      "recipes": [
+        "R04",
+        "R23"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": null,
+      "distractors": [
+        "a host-allowlisted health-check request",
+        "a redacting log formatter used by the success path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-08-redirect-follower",
+      "slug": "redirect_follower",
+      "package": "redirect-follower-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Follows and normalizes redirect chains for fetched sources",
+      "recipes": [
+        "R04"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a host-allowlisted health-check request"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-09-tabular-query-tool",
+      "slug": "tabular_query_tool",
+      "package": "tabular-query-tool-haystack",
+      "layout": "dc",
+      "size_class": "L",
+      "domain_statement": "Runs model-authored analytical queries over a table catalog",
+      "recipes": [
+        "R05"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": "B03",
+      "distractors": [
+        "a parameterized query used by the schema probe"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-10-sql-agent-bridge",
+      "slug": "sql_agent_bridge",
+      "package": "sql-agent-bridge-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Exposes a read-only query surface as an agent tool",
+      "recipes": [
+        "R05"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a parameterized query used by the schema probe"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-11-warehouse-probe",
+      "slug": "warehouse_probe",
+      "package": "warehouse-probe-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Samples column statistics for schema-aware retrieval",
+      "recipes": [
+        "R05"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a parameterized query used by the schema probe"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-12-triple-store-retriever",
+      "slug": "triple_store_retriever",
+      "package": "triple-store-retriever-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Retrieves triples by identifier from a graph endpoint",
+      "recipes": [
+        "R06"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a term-bound graph query in the label path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-13-graph-label-resolver",
+      "slug": "graph_label_resolver",
+      "package": "graph-label-resolver-haystack",
+      "layout": "dc",
+      "size_class": "S",
+      "domain_statement": "Resolves human-readable labels for graph node identifiers",
+      "recipes": [
+        "R06"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": "B04",
+      "distractors": [
+        "a term-bound graph query in the label path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-14-attribute-selector",
+      "slug": "attribute_selector",
+      "package": "attribute-selector-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Resolves dotted attribute paths on pipeline payloads",
+      "recipes": [
+        "R07"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "an explicit field allow-list lookup nearby"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-15-routing-expression",
+      "slug": "routing_expression",
+      "package": "routing-expression-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Evaluates small boolean routing conditions",
+      "recipes": [
+        "R07"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "an explicit field allow-list lookup nearby"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-16-rest-resource-client",
+      "slug": "rest_resource_client",
+      "package": "rest-resource-client-haystack",
+      "layout": "dc",
+      "size_class": "L",
+      "domain_statement": "Generic collection/item REST resource client",
+      "recipes": [
+        "R08",
+        "R24"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": "B01",
+      "distractors": [
+        "a quote-encoded path segment builder used elsewhere",
+        "a timeout-bearing request in the health path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-17-collection-browser",
+      "slug": "collection_browser",
+      "package": "collection-browser-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Lists and pages a remote collection API",
+      "recipes": [
+        "R08"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a quote-encoded path segment builder used elsewhere"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-18-object-store-reader",
+      "slug": "object_store_reader",
+      "package": "object-store-reader-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Reads blobs by key from an object store",
+      "recipes": [
+        "R08"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a quote-encoded path segment builder used elsewhere"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-19-source-refetcher",
+      "slug": "source_refetcher",
+      "package": "source-refetcher-haystack",
+      "layout": "dc",
+      "size_class": "L",
+      "domain_statement": "Re-downloads originals using a source URL in metadata",
+      "recipes": [
+        "R09",
+        "R15"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": null,
+      "distractors": [
+        "an origin-checked fetch used for the manifest",
+        "a header-based credential on the primary request"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-20-remote-asset-loader",
+      "slug": "remote_asset_loader",
+      "package": "remote-asset-loader-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Loads referenced assets during document conversion",
+      "recipes": [
+        "R09"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "an origin-checked fetch used for the manifest"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-21-markdown-table-renderer",
+      "slug": "markdown_table_renderer",
+      "package": "markdown-table-renderer-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Renders retrieved rows as a Markdown table",
+      "recipes": [
+        "R10"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": "B05",
+      "distractors": [
+        "a correctly escaped renderer for the summary block"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-22-citation-footnoter",
+      "slug": "citation_footnoter",
+      "package": "citation-footnoter-haystack",
+      "layout": "dc",
+      "size_class": "S",
+      "domain_statement": "Appends citation footnotes to generated answers",
+      "recipes": [
+        "R10"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a correctly escaped renderer for the summary block"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-23-control-plane-client",
+      "slug": "control_plane_client",
+      "package": "control-plane-client-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Calls a control-plane API scoped by workspace",
+      "recipes": [
+        "R11"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": null,
+      "distractors": [
+        "a validated identifier pattern used by the create path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-24-pipeline-invoker",
+      "slug": "pipeline_invoker",
+      "package": "pipeline-invoker-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Invokes a named remote pipeline and normalizes output",
+      "recipes": [
+        "R11"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a validated identifier pattern used by the create path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-25-embedding-cache",
+      "slug": "embedding_cache",
+      "package": "embedding-cache-haystack",
+      "layout": "dc",
+      "size_class": "L",
+      "domain_statement": "Persists and rehydrates embedding batches",
+      "recipes": [
+        "R12",
+        "R22"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": "B02",
+      "distractors": [
+        "a JSON round-trip used for the small-payload path",
+        "a registry-bounded type lookup in the sibling loader"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-26-csv-frame-loader",
+      "slug": "csv_frame_loader",
+      "package": "csv-frame-loader-haystack",
+      "layout": "dc",
+      "size_class": "M",
+      "domain_statement": "Loads delimited content into frames for tabular retrieval",
+      "recipes": [
+        "R13"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": null,
+      "distractors": [
+        "a local-file-only loader used by the fixture path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-27-vision-captioner",
+      "slug": "vision_captioner",
+      "package": "vision-captioner-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Captions page images via a multimodal endpoint",
+      "recipes": [
+        "R14"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "an env-var-backed secret used by the sibling client"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-28-websearch-bridge",
+      "slug": "websearch_bridge",
+      "package": "websearch-bridge-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Wraps a web search API as a retriever",
+      "recipes": [
+        "R14"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": "B04",
+      "distractors": [
+        "an env-var-backed secret used by the sibling client"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-29-usage-meter",
+      "slug": "usage_meter",
+      "package": "usage-meter-haystack",
+      "layout": "hi",
+      "size_class": "S",
+      "domain_statement": "Reports per-run token usage to a metering endpoint",
+      "recipes": [
+        "R15"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a header-based credential on the primary request"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-30-vector-store-wrapper",
+      "slug": "vector_store_wrapper",
+      "package": "vector-store-wrapper-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Thin retriever wrapper over a vector store client",
+      "recipes": [
+        "R16"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": "B01",
+      "distractors": [
+        "a correct to_dict that keeps the secret as a reference"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-31-doc-intelligence-client",
+      "slug": "doc_intelligence_client",
+      "package": "doc-intelligence-client-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Calls a document-layout extraction service",
+      "recipes": [
+        "R16"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a correct to_dict that keeps the secret as a reference"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-32-chat-relay",
+      "slug": "chat_relay",
+      "package": "chat-relay-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Relays chat turns to a hosted chat completion API",
+      "recipes": [
+        "R16"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a correct to_dict that keeps the secret as a reference"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-33-metadata-enricher",
+      "slug": "metadata_enricher",
+      "package": "metadata-enricher-haystack",
+      "layout": "hi",
+      "size_class": "L",
+      "domain_statement": "Enriches document metadata from model output",
+      "recipes": [
+        "R17",
+        "R20"
+      ],
+      "multi_file_pair": true,
+      "placebo_recipe": "B03",
+      "distractors": [
+        "an allow-listed metadata merge in the split path",
+        "a sandboxed template render with a fixed source"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-34-schema-mapper",
+      "slug": "schema_mapper",
+      "package": "schema-mapper-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Maps source fields onto a canonical metadata schema",
+      "recipes": [
+        "R17"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "an allow-listed metadata merge in the split path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-35-tag-propagator",
+      "slug": "tag_propagator",
+      "package": "tag-propagator-haystack",
+      "layout": "hi",
+      "size_class": "S",
+      "domain_statement": "Propagates tags from parent to split documents",
+      "recipes": [
+        "R17"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "an allow-listed metadata merge in the split path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-36-history-normalizer",
+      "slug": "history_normalizer",
+      "package": "history-normalizer-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Normalizes inbound chat history into chat messages",
+      "recipes": [
+        "R18"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a server-derived role used by the audit path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-37-query-authorizer",
+      "slug": "query_authorizer",
+      "package": "query-authorizer-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Authorizes a multi-scope query against allowed scopes",
+      "recipes": [
+        "R19"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "an all-scopes check in the export path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-38-prompt-assembler",
+      "slug": "prompt_assembler",
+      "package": "prompt-assembler-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Assembles prompts from retrieved context",
+      "recipes": [
+        "R20"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a sandboxed template render with a fixed source"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-39-local-model-loader",
+      "slug": "local_model_loader",
+      "package": "local-model-loader-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Loads a local reranking model by identifier",
+      "recipes": [
+        "R21"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a pinned local model load without remote code"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-40-component-rehydrator",
+      "slug": "component_rehydrator",
+      "package": "component-rehydrator-haystack",
+      "layout": "hi",
+      "size_class": "M",
+      "domain_statement": "Reconstructs components from serialized pipeline state",
+      "recipes": [
+        "R22"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": "B05",
+      "distractors": [
+        "a registry-bounded type lookup in the sibling loader"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-41-error-reporter",
+      "slug": "error_reporter",
+      "package": "error-reporter-haystack",
+      "layout": "hi",
+      "size_class": "S",
+      "domain_statement": "Reports component failures with request context",
+      "recipes": [
+        "R23"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a redacting log formatter used by the success path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-42-webhook-notifier",
+      "slug": "webhook_notifier",
+      "package": "webhook-notifier-haystack",
+      "layout": "nest",
+      "size_class": "M",
+      "domain_statement": "Posts run results to a configured webhook",
+      "recipes": [
+        "R24"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": "B02",
+      "distractors": [
+        "a timeout-bearing request in the health path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-43-doc-export-runner",
+      "slug": "doc_export_runner",
+      "package": "doc-export-runner-haystack",
+      "layout": "nest",
+      "size_class": "L",
+      "domain_statement": "Shells out to a converter binary for document export",
+      "recipes": [
+        "R25",
+        "R26"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "an env-passed credential on the sibling invocation",
+        "an absolute binary path used by the probe"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    },
+    {
+      "repo": "synth-44-format-transcoder",
+      "slug": "format_transcoder",
+      "package": "format-transcoder-haystack",
+      "layout": "nest",
+      "size_class": "S",
+      "domain_statement": "Re-encodes extracted images to a target format",
+      "recipes": [
+        "R27"
+      ],
+      "multi_file_pair": false,
+      "placebo_recipe": null,
+      "distractors": [
+        "a bounded decode used by the preview path"
+      ],
+      "forbidden_vocabulary_check": "technical domain only; no vertical-industry nouns"
+    }
+  ]
+}

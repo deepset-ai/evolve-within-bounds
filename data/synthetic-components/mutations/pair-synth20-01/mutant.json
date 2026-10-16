@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-918",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth20-01",
+  "rationale": "The origin comparison is removed, so an absolute reference inside a document body causes a fetch against any host it names.",
+  "recipe_id": "R09",
+  "repository": "synth-20-remote-asset-loader",
+  "security_property": "An asset reference must resolve to the same origin as the document that declared it.",
+  "targets": [
+    {
+      "path": "src/custom_components/remote_asset_loader/remote_asset_loader.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Asset reference may leave the document origin"
+}

@@ -1,0 +1,14 @@
+diff --git a/src/haystack_integrations/components/metadata_enricher/prompt_source.py b/src/haystack_integrations/components/metadata_enricher/prompt_source.py
+--- a/src/haystack_integrations/components/metadata_enricher/prompt_source.py
++++ b/src/haystack_integrations/components/metadata_enricher/prompt_source.py
+@@ -23,7 +23,9 @@
+     template source by concatenation would let document text become instructions.
+     """
+     clipped = document_text[:max_characters]
+-    return ENRICHMENT_TEMPLATE.format(document_text=clipped)
++    from string import Template
++
++    return Template(ENRICHMENT_TEMPLATE.replace("{document_text}", clipped)).substitute()
+ 
+ 
+ def describe_template() -> dict[str, Any]:

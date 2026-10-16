@@ -1,0 +1,12 @@
+diff --git a/src/haystack_integrations/components/doc_intelligence_client/doc_intelligence_client_component.py b/src/haystack_integrations/components/doc_intelligence_client/doc_intelligence_client_component.py
+--- a/src/haystack_integrations/components/doc_intelligence_client/doc_intelligence_client_component.py
++++ b/src/haystack_integrations/components/doc_intelligence_client/doc_intelligence_client_component.py
+@@ -52,7 +52,7 @@
+         """
+         config = {
+             "endpoint": self.endpoint,
+-            "api_key_env": self.api_key.to_dict()["env_vars"][0],
++            "api_key": self.api_key.resolve_value(),
+             "timeout": self.timeout,
+         }
+         destination.write_text(json.dumps(config, indent=2), encoding="utf-8")

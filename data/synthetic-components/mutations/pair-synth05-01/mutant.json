@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-22",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth05-01",
+  "rationale": "The parent check is inverted to a prefix comparison on the unresolved path, so a traversal source name reads a file outside the ingest root.",
+  "recipe_id": "R03",
+  "repository": "synth-05-sidecar-reader",
+  "security_property": "A sidecar path must be resolved and proven to stay under the ingest root.",
+  "targets": [
+    {
+      "path": "src/custom_components/sidecar_reader/sidecar_reader.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Sidecar path escapes the ingest root"
+}

@@ -1,0 +1,13 @@
+diff --git a/src/custom_components/filter_compiler/filter_compiler.py b/src/custom_components/filter_compiler/filter_compiler.py
+--- a/src/custom_components/filter_compiler/filter_compiler.py
++++ b/src/custom_components/filter_compiler/filter_compiler.py
+@@ -39,7 +39,8 @@
+             if len(conditions) > self.max_conditions:
+                 raise FilterError("too many filter conditions")
+             return "(" + joiner.join(self._compile(c, depth + 1) for c in conditions) + ")"
+-        return build_term(str(node["field"]), str(node["operator"]), str(node["value"]))
++        field, comparison, value = node["field"], node["operator"], node["value"]
++        return build_term(str(field), str(comparison), str(value))
+ 
+     def health_expression(self, field: str) -> str:
+         """A fixed liveness probe, built through the same escaping helpers."""

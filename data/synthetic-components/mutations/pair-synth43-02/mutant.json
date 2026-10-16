@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-426",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth43-02",
+  "rationale": "Lookup falls back to the inherited PATH, so a writable directory earlier in the caller's PATH decides which executable the component runs.",
+  "recipe_id": "R26",
+  "repository": "synth-43-doc-export-runner",
+  "security_property": "A helper binary must be resolved on a fixed search path or given as an absolute path.",
+  "targets": [
+    {
+      "path": "components/src/custom_components/doc_export_runner/converter_binary.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Converter binary is resolved through the inherited PATH"
+}

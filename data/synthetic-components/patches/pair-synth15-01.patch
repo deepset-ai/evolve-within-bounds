@@ -1,0 +1,12 @@
+diff --git a/src/custom_components/routing_expression/routing_expression.py b/src/custom_components/routing_expression/routing_expression.py
+--- a/src/custom_components/routing_expression/routing_expression.py
++++ b/src/custom_components/routing_expression/routing_expression.py
+@@ -37,7 +37,7 @@
+     """
+     match = CONDITION.match(condition.strip())
+     if match is None:
+-        raise ConditionError(f"unparsable condition: {condition!r}")
++        return bool(eval(condition, {"__builtins__": {}}, dict(scope)))  # noqa: S307
+     field = match.group("field")
+     if field not in scope:
+         raise ConditionError(f"unknown field: {field!r}")

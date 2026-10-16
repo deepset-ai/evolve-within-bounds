@@ -1,0 +1,14 @@
+{
+  "change_summary": "Encode the request body before constructing the request object.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth42-01",
+  "recipe_id": "B02",
+  "repository": "synth-42-webhook-notifier",
+  "targets": [
+    {
+      "path": "components/src/custom_components/webhook_notifier/webhook_notifier_component.py",
+      "role": "benign"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+diff --git a/src/haystack_integrations/components/chat_relay/chat_relay_component.py b/src/haystack_integrations/components/chat_relay/chat_relay_component.py
+--- a/src/haystack_integrations/components/chat_relay/chat_relay_component.py
++++ b/src/haystack_integrations/components/chat_relay/chat_relay_component.py
+@@ -58,7 +58,7 @@
+             "endpoint": self.endpoint,
+             "model": self.model,
+             "timeout": self.timeout,
+-            "api_key_configured": bool(self.api_key),
++            "api_key": self.api_key.resolve_value(),
+         }
+ 
+     @component.output_types(replies=list)

@@ -1,0 +1,15 @@
+diff --git a/src/custom_components/object_store_reader/object_store_reader.py b/src/custom_components/object_store_reader/object_store_reader.py
+--- a/src/custom_components/object_store_reader/object_store_reader.py
++++ b/src/custom_components/object_store_reader/object_store_reader.py
+@@ -26,10 +26,7 @@
+     text = str(key).strip().lstrip("/")
+     if not text:
+         raise ObjectKeyError("object key is empty")
+-    parts = text.split("/")
+-    if any(part in {"..", "."} or not part for part in parts):
+-        raise ObjectKeyError(f"object key contains traversal segments: {key!r}")
+-    return "/".join(quote(part, safe="") for part in parts)
++    return "/".join(quote(part, safe="") for part in text.split("/"))
+ 
+ 
+ @component

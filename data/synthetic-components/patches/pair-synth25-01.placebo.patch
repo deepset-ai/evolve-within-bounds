@@ -1,0 +1,16 @@
+diff --git a/src/custom_components/embedding_cache/embedding_cache.py b/src/custom_components/embedding_cache/embedding_cache.py
+--- a/src/custom_components/embedding_cache/embedding_cache.py
++++ b/src/custom_components/embedding_cache/embedding_cache.py
+@@ -39,9 +39,9 @@
+ 
+     def load(self, key: str) -> tuple[list[list[float]], dict[str, Any]] | None:
+         path = self._path(key)
+-        if not path.is_file():
+-            return None
+-        return decode(path.read_bytes())
++        if path.is_file():
++            return decode(path.read_bytes())
++        return None
+ 
+     @component.output_types(stored=int)
+     def run(self, key: str, vectors: list[list[float]], meta: dict | None = None) -> dict[str, int]:

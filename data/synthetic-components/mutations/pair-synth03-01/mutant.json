@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-943",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth03-01",
+  "rationale": "The value is formatted straight into the filter string, so an embedded quote terminates the literal and the remainder is parsed as filter syntax.",
+  "recipe_id": "R02",
+  "repository": "synth-03-odata-filter-bridge",
+  "security_property": "Values placed in an OData literal must have their quotes doubled.",
+  "targets": [
+    {
+      "path": "src/custom_components/odata_filter_bridge/odata_bridge.py",
+      "role": "sink"
+    }
+  ],
+  "title": "OData literal is interpolated without escaping"
+}

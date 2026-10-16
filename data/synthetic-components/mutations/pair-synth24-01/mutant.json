@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-20",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth24-01",
+  "rationale": "The name check returns unconditionally, so a configured pipeline name containing path separators redirects the authenticated call.",
+  "recipe_id": "R11",
+  "repository": "synth-24-pipeline-invoker",
+  "security_property": "A pipeline name used as a path segment must match its declared pattern.",
+  "targets": [
+    {
+      "path": "src/custom_components/pipeline_invoker/pipeline_invoker.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Pipeline name is accepted without pattern validation"
+}

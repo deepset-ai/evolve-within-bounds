@@ -1,0 +1,26 @@
+diff --git a/src/custom_components/tabular_query_tool/sql_guard.py b/src/custom_components/tabular_query_tool/sql_guard.py
+--- a/src/custom_components/tabular_query_tool/sql_guard.py
++++ b/src/custom_components/tabular_query_tool/sql_guard.py
+@@ -23,10 +23,6 @@
+     """Return *sql* if it is a single read-only statement, else raise."""
+     if ";" in sql.rstrip().rstrip(";"):
+         raise QueryRejected("only a single statement is allowed")
+-    if not STATEMENT.match(sql):
+-        raise QueryRejected("only SELECT statements are allowed")
+-    if FORBIDDEN.search(sql):
+-        raise QueryRejected("query contains a forbidden keyword")
+     return sql
+ 
+ 
+diff --git a/src/custom_components/tabular_query_tool/query_tool.py b/src/custom_components/tabular_query_tool/query_tool.py
+--- a/src/custom_components/tabular_query_tool/query_tool.py
++++ b/src/custom_components/tabular_query_tool/query_tool.py
+@@ -47,7 +47,6 @@
+         :returns: the result rows.
+         """
+         check_table(table, self.catalog)
+-        statement = check_read_only(sql)
+         cursor = self.connection.cursor()
+-        cursor.execute(statement)
++        cursor.execute(sql)
+         return {"rows": list(cursor.fetchall())}

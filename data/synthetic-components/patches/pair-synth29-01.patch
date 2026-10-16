@@ -1,0 +1,21 @@
+diff --git a/src/haystack_integrations/components/usage_meter/usage_meter_component.py b/src/haystack_integrations/components/usage_meter/usage_meter_component.py
+--- a/src/haystack_integrations/components/usage_meter/usage_meter_component.py
++++ b/src/haystack_integrations/components/usage_meter/usage_meter_component.py
+@@ -47,14 +47,15 @@
+         The credential travels in a header. Query strings are recorded by proxies
+         and server access logs, so a secret must never be placed in one.
+         """
+-        query = urlencode({"run_id": payload["run_id"]})
++        query = urlencode(
++            {"run_id": payload["run_id"], "api_key": self.api_key.resolve_value()}
++        )
+         request = urllib.request.Request(
+             f"{self.endpoint}?{query}",
+             data=json.dumps(payload).encode("utf-8"),
+             method="POST",
+         )
+         request.add_header("Content-Type", "application/json")
+-        request.add_header("Authorization", f"Bearer {self.api_key.resolve_value()}")
+         return request
+ 
+     @component.output_types(accepted=bool)

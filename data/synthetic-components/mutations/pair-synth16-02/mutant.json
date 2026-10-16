@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-400",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth16-02",
+  "rationale": "The timeout argument is dropped from the request, so an unresponsive service holds the pipeline worker open indefinitely.",
+  "recipe_id": "R24",
+  "repository": "synth-16-rest-resource-client",
+  "security_property": "Every outbound request must carry a finite timeout.",
+  "targets": [
+    {
+      "path": "src/custom_components/rest_resource_client/resource_client.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Resource requests are issued without a timeout"
+}

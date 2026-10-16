@@ -1,0 +1,15 @@
+diff --git a/src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py b/src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py
+--- a/src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py
++++ b/src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py
+@@ -78,7 +78,10 @@
+         """
+         parameters = urlencode({"q": self._check_query(query), "count": self.top_k})
+         request = urllib.request.Request(f"{self.endpoint}?{parameters}")
+-        request.add_header("X-Subscription-Token", self.api_key.resolve_value())
++        token = self.api_key.resolve_value()
++        if not token:
++            raise SearchError("search credential is not configured")
++        request.add_header("X-Subscription-Token", token)
+         with urllib.request.urlopen(request, timeout=self.timeout) as response:
+             body = json.loads(response.read().decode("utf-8"))
+         return {

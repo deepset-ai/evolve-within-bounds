@@ -1,0 +1,11 @@
+diff --git a/src/custom_components/service_proxy/upstream_proxy.py b/src/custom_components/service_proxy/upstream_proxy.py
+--- a/src/custom_components/service_proxy/upstream_proxy.py
++++ b/src/custom_components/service_proxy/upstream_proxy.py
+@@ -83,6 +83,6 @@
+         try:
+             payload = self._request(url)
+         except OSError as error:
+-            logger.warning("upstream ranking failed for %s: %s", redact(collection), error)
++            logger.warning("upstream ranking failed for %s: %s", collection, error)
+             return {"document_ids": []}
+         return {"document_ids": payload.decode("utf-8").split()[: self.top_k]}

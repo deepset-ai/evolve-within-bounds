@@ -1,0 +1,13 @@
+diff --git a/src/custom_components/collection_browser/collection_browser.py b/src/custom_components/collection_browser/collection_browser.py
+--- a/src/custom_components/collection_browser/collection_browser.py
++++ b/src/custom_components/collection_browser/collection_browser.py
+@@ -59,8 +59,7 @@
+         query = {"limit": self.page_size}
+         if cursor:
+             query["after"] = cursor
+-        segment = collection_segment(collection)
+-        return f"{self.base_url.rstrip('/')}/collections/{segment}/items?{urlencode(query)}"
++        return f"{self.base_url.rstrip('/')}/collections/{collection}/items?{urlencode(query)}"
+ 
+     @component.output_types(items=list)
+     def run(self, collection: str) -> dict[str, list[Any]]:

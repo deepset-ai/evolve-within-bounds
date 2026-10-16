@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-798",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth28-01",
+  "rationale": "The resolved secret on the request header is replaced by a literal token, so the credential is committed alongside the component instead of coming from the environment.",
+  "recipe_id": "R14",
+  "repository": "synth-28-websearch-bridge",
+  "security_property": "Credentials must be resolved at call time, never written into source.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Search subscription token is hard-coded on the request"
+}

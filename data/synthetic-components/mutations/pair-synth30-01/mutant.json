@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-522",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth30-01",
+  "rationale": "to_dict writes the resolved secret instead of its environment reference, so serialized pipeline state carries the credential at rest.",
+  "recipe_id": "R16",
+  "repository": "synth-30-vector-store-wrapper",
+  "security_property": "Serialization must record how a secret is obtained, never its value.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/vector_store_wrapper/vector_store_wrapper_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Serialization resolves the store credential to plaintext"
+}

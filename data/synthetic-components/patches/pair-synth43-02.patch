@@ -1,0 +1,13 @@
+diff --git a/components/src/custom_components/doc_export_runner/converter_binary.py b/components/src/custom_components/doc_export_runner/converter_binary.py
+--- a/components/src/custom_components/doc_export_runner/converter_binary.py
++++ b/components/src/custom_components/doc_export_runner/converter_binary.py
+@@ -29,7 +29,7 @@
+         if candidate.is_absolute() and candidate.is_file():
+             return str(candidate)
+         raise ConverterMissing(f"converter must be an absolute path: {name!r}")
+-    located = shutil.which(name, path=os.pathsep.join(search_path))
++    located = shutil.which(name)
+     if not located:
+-        raise ConverterMissing(f"converter not found on the fixed search path: {name!r}")
++        raise ConverterMissing(f"converter not found: {name!r}")
+     return located

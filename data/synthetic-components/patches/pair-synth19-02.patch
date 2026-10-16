@@ -1,0 +1,14 @@
+diff --git a/src/custom_components/source_refetcher/source_refetcher.py b/src/custom_components/source_refetcher/source_refetcher.py
+--- a/src/custom_components/source_refetcher/source_refetcher.py
++++ b/src/custom_components/source_refetcher/source_refetcher.py
+@@ -43,8 +43,8 @@
+         self.timeout = timeout
+ 
+     def _fetch(self, url: str) -> bytes:
+-        request = urllib.request.Request(url)
+-        request.add_header("Authorization", f"Bearer {self.api_key.resolve_value()}")
++        separator = "&" if "?" in url else "?"
++        request = urllib.request.Request(f"{url}{separator}access_token={self.api_key.resolve_value()}")
+         with urllib.request.urlopen(request, timeout=self.timeout) as response:
+             return response.read()
+ 

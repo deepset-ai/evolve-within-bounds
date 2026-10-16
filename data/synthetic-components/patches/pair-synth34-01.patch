@@ -1,0 +1,13 @@
+diff --git a/src/haystack_integrations/components/schema_mapper/schema_mapper_component.py b/src/haystack_integrations/components/schema_mapper/schema_mapper_component.py
+--- a/src/haystack_integrations/components/schema_mapper/schema_mapper_component.py
++++ b/src/haystack_integrations/components/schema_mapper/schema_mapper_component.py
+@@ -20,9 +20,6 @@
+ 
+ def check_mapping(mapping: dict[str, str]) -> dict[str, str]:
+     """Validate that every mapping target is a canonical field."""
+-    unknown = sorted(set(mapping.values()) - CANONICAL_FIELDS)
+-    if unknown:
+-        raise MappingError(f"mapping targets are not canonical fields: {unknown}")
+     return dict(mapping)
+ 
+ 

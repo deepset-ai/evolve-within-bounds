@@ -1,0 +1,12 @@
+diff --git a/src/custom_components/rest_resource_client/resource_client.py b/src/custom_components/rest_resource_client/resource_client.py
+--- a/src/custom_components/rest_resource_client/resource_client.py
++++ b/src/custom_components/rest_resource_client/resource_client.py
+@@ -57,7 +57,7 @@
+     def _get(self, url: str) -> dict[str, Any]:
+         request = urllib.request.Request(url)
+         request.add_header("Authorization", f"Bearer {self.api_key.resolve_value()}")
+-        with urllib.request.urlopen(request, timeout=self.timeout) as response:
++        with urllib.request.urlopen(request) as response:
+             return json.loads(response.read().decode("utf-8"))
+ 
+     def health(self) -> dict[str, Any]:

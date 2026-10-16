@@ -1,0 +1,15 @@
+diff --git a/src/custom_components/markdown_table_renderer/markdown_escape.py b/src/custom_components/markdown_table_renderer/markdown_escape.py
+--- a/src/custom_components/markdown_table_renderer/markdown_escape.py
++++ b/src/custom_components/markdown_table_renderer/markdown_escape.py
+@@ -15,10 +15,7 @@
+     A raw pipe ends the cell and a raw newline ends the row, so untrusted text
+     would otherwise be able to add columns and rows of its own.
+     """
+-    text = "" if value is None else str(value)
+-    for character, replacement in CELL_BREAKING.items():
+-        text = text.replace(character, replacement)
+-    return text.strip()
++    return ("" if value is None else str(value)).strip()
+ 
+ 
+ def escape_inline(value: object) -> str:

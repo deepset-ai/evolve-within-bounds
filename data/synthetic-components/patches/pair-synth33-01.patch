@@ -1,0 +1,27 @@
+diff --git a/src/haystack_integrations/components/metadata_enricher/merge_policy.py b/src/haystack_integrations/components/metadata_enricher/merge_policy.py
+--- a/src/haystack_integrations/components/metadata_enricher/merge_policy.py
++++ b/src/haystack_integrations/components/metadata_enricher/merge_policy.py
+@@ -25,11 +25,4 @@
+     as `acl-groups` would silently overwrite the access control the retriever
+     filters on.
+     """
+-    allowed: dict[str, Any] = {}
+-    for key, value in candidate.items():
+-        name = str(key)
+-        if name.startswith(PROTECTED_PREFIXES):
+-            continue
+-        if name in WRITABLE_KEYS:
+-            allowed[name] = value
+-    return allowed
++    return dict(candidate)
+diff --git a/src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py b/src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py
+--- a/src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py
++++ b/src/haystack_integrations/components/metadata_enricher/metadata_enricher_component.py
+@@ -55,6 +55,6 @@
+         enriched: list[Document] = []
+         for document in documents:
+             merged = dict(document.meta)
+-            merged.update(writable_subset(self._extract(document)))
++            merged.update(self._extract(document))
+             enriched.append(Document(id=document.id, content=document.content, meta=merged))
+         return {"documents": enriched}

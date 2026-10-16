@@ -1,0 +1,24 @@
+diff --git a/src/custom_components/attribute_selector/attribute_selector.py b/src/custom_components/attribute_selector/attribute_selector.py
+--- a/src/custom_components/attribute_selector/attribute_selector.py
++++ b/src/custom_components/attribute_selector/attribute_selector.py
+@@ -26,18 +26,12 @@
+     parts = [part for part in selector.split(".") if part]
+     if not parts:
+         raise SelectorError("empty selector")
+-    if parts[0] not in SELECTABLE_ROOTS:
+-        raise SelectorError(f"selector root is not allowed: {parts[0]!r}")
+     current = payload
+     for part in parts:
+         if isinstance(current, dict):
+-            if part not in current:
+-                return None
+-            current = current[part]
+-        elif hasattr(current, "to_dict"):
+-            current = current.to_dict().get(part)
++            current = current.get(part)
+         else:
+-            return None
++            current = getattr(current, part, None)
+     return current
+ 
+ 

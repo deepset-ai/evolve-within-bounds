@@ -1,0 +1,14 @@
+{
+  "change_summary": "Add an upper length bound on node identifiers before they are bound.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth13-01",
+  "recipe_id": "B04",
+  "repository": "synth-13-graph-label-resolver",
+  "targets": [
+    {
+      "path": "src/custom_components/graph_label_resolver/label_resolver.py",
+      "role": "benign"
+    }
+  ]
+}

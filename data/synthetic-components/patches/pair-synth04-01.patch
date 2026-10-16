@@ -1,0 +1,12 @@
+diff --git a/src/custom_components/attachment_writer/attachment_writer.py b/src/custom_components/attachment_writer/attachment_writer.py
+--- a/src/custom_components/attachment_writer/attachment_writer.py
++++ b/src/custom_components/attachment_writer/attachment_writer.py
+@@ -44,7 +44,7 @@
+             name = str(document.meta.get("attachment_name", "")).strip()
+             if not name:
+                 continue
+-            destination = contained_path(self.staging_root, name)
++            destination = self.staging_root / name
+             destination.parent.mkdir(parents=True, exist_ok=True)
+             destination.write_text(document.content or "", encoding="utf-8")
+             written.append(str(destination.relative_to(self.staging_root.resolve())))

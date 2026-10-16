@@ -1,0 +1,12 @@
+diff --git a/src/haystack_integrations/components/tag_propagator/tag_propagator_component.py b/src/haystack_integrations/components/tag_propagator/tag_propagator_component.py
+--- a/src/haystack_integrations/components/tag_propagator/tag_propagator_component.py
++++ b/src/haystack_integrations/components/tag_propagator/tag_propagator_component.py
+@@ -20,7 +20,7 @@
+     Splits are indexed as independent documents, so inheriting an unrestricted
+     set would let a parent's fields land on rows the caller can already read.
+     """
+-    return {key: value for key, value in parent_meta.items() if key in INHERITABLE_TAGS}
++    return dict(parent_meta)
+ 
+ 
+ @component

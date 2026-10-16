@@ -1,0 +1,12 @@
+diff --git a/src/haystack_integrations/components/history_normalizer/history_normalizer_component.py b/src/haystack_integrations/components/history_normalizer/history_normalizer_component.py
+--- a/src/haystack_integrations/components/history_normalizer/history_normalizer_component.py
++++ b/src/haystack_integrations/components/history_normalizer/history_normalizer_component.py
+@@ -33,7 +33,7 @@
+     index = int(turn.get("index", -1))
+     if index in server_roles:
+         return server_roles[index]
+-    return "user"
++    return str(turn.get("role", "user"))
+ 
+ 
+ @component

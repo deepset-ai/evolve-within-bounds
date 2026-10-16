@@ -1,4 +1,6 @@
 fail_fast: true
+# The synthetic benchmark's corpus, mutations and patches are byte-exact and digested: no hook may rewrite them.
+exclude: ^data/synthetic-components/(corpus|mutations|patches)/
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

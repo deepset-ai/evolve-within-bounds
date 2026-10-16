@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-918",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth08-01",
+  "rationale": "Only the starting URL is checked, so the first upstream redirect moves the request to any host the responder names.",
+  "recipe_id": "R04",
+  "repository": "synth-08-redirect-follower",
+  "security_property": "Every hop of a redirect chain must be checked against the allowed hosts.",
+  "targets": [
+    {
+      "path": "src/custom_components/redirect_follower/redirect_follower.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Redirect target is followed without re-checking the host"
+}

@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-915",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth34-01",
+  "rationale": "The canonical-field check is removed, so a configured mapping can write any metadata key, including the access-control fields.",
+  "recipe_id": "R17",
+  "repository": "synth-34-schema-mapper",
+  "security_property": "A field mapping may only target fields in the canonical schema.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/schema_mapper/schema_mapper_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Mapping targets are not restricted to canonical fields"
+}

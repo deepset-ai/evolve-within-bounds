@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-598",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth19-02",
+  "rationale": "The bearer header is replaced by a query parameter, so the credential is written to proxy and server access logs on every refetch.",
+  "recipe_id": "R15",
+  "repository": "synth-19-source-refetcher",
+  "security_property": "Credentials must travel in a request header, never in a URL query string.",
+  "targets": [
+    {
+      "path": "src/custom_components/source_refetcher/source_refetcher.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Credential is appended to the fetch URL as a query parameter"
+}

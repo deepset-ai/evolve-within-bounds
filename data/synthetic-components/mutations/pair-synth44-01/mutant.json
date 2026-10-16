@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-20",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth44-01",
+  "rationale": "The dimension and pixel-count bounds are removed, so a small file declaring an enormous canvas allocates unbounded memory during transcoding.",
+  "recipe_id": "R27",
+  "repository": "synth-44-format-transcoder",
+  "security_property": "Header-declared dimensions must be bounded before an image is decoded.",
+  "targets": [
+    {
+      "path": "components/src/custom_components/format_transcoder/format_transcoder_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Declared image dimensions are decoded without bounds"
+}

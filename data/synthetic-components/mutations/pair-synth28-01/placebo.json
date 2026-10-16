@@ -1,0 +1,14 @@
+{
+  "change_summary": "Fail early when the search credential is not configured.",
+  "member": "placebo",
+  "pair_class": "placebo",
+  "pair_id": "pair-synth28-01",
+  "recipe_id": "B04",
+  "repository": "synth-28-websearch-bridge",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/websearch_bridge/websearch_bridge_component.py",
+      "role": "benign"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+diff --git a/src/haystack_integrations/components/prompt_assembler/prompt_assembler_component.py b/src/haystack_integrations/components/prompt_assembler/prompt_assembler_component.py
+--- a/src/haystack_integrations/components/prompt_assembler/prompt_assembler_component.py
++++ b/src/haystack_integrations/components/prompt_assembler/prompt_assembler_component.py
+@@ -57,4 +57,6 @@
+         :param documents: the retrieved context.
+         :returns: the rendered prompt.
+         """
+-        return {"prompt": self._template.render(question=question, documents=documents)}
++        context = "\n".join(document.content or "" for document in documents)
++        template = self._environment.from_string(self.template_source + context)
++        return {"prompt": template.render(question=question, documents=documents)}

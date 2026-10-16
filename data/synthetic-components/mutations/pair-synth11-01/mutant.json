@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-89",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth11-01",
+  "rationale": "The identifiers are interpolated directly, so a crafted column name closes the statement and appends another.",
+  "recipe_id": "R05",
+  "repository": "synth-11-warehouse-probe",
+  "security_property": "SQL identifiers must match a strict pattern and be quoted before interpolation.",
+  "targets": [
+    {
+      "path": "src/custom_components/warehouse_probe/warehouse_probe.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Table and column names bypass identifier validation"
+}

@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-863",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth37-01",
+  "rationale": "The missing-scope check becomes an intersection test, so a query that pairs a permitted scope with one the caller does not hold is authorized and returns both.",
+  "recipe_id": "R19",
+  "repository": "synth-37-query-authorizer",
+  "security_property": "A multi-scope query is authorized only when every requested scope is granted.",
+  "targets": [
+    {
+      "path": "src/haystack_integrations/components/query_authorizer/query_authorizer_component.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Authorization succeeds when any requested scope is granted"
+}

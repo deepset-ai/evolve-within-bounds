@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-918",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth19-01",
+  "rationale": "The origin policy accepts any resolvable host and the refetcher no longer checks it, so document metadata directs the credentialed request at internal addresses.",
+  "recipe_id": "R09",
+  "repository": "synth-19-source-refetcher",
+  "security_property": "A URL taken from document metadata may only be fetched when its origin is on the allow-list.",
+  "targets": [
+    {
+      "path": "src/custom_components/source_refetcher/origin_policy.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/source_refetcher/source_refetcher.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Metadata source URL is fetched without an origin allow-list"
+}

@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-89",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth12-01",
+  "rationale": "The subject is formatted into the query string instead of being bound, so an IRI containing angle brackets alters the graph pattern.",
+  "recipe_id": "R06",
+  "repository": "synth-12-triple-store-retriever",
+  "security_property": "Graph identifiers must be bound as query terms, never interpolated into query text.",
+  "targets": [
+    {
+      "path": "src/custom_components/triple_store_retriever/triple_retriever.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Subject IRI is spliced into the graph query text"
+}

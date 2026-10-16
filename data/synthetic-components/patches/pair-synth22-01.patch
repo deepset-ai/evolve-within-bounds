@@ -1,0 +1,14 @@
+diff --git a/src/custom_components/citation_footnoter/citation_footnoter.py b/src/custom_components/citation_footnoter/citation_footnoter.py
+--- a/src/custom_components/citation_footnoter/citation_footnoter.py
++++ b/src/custom_components/citation_footnoter/citation_footnoter.py
+@@ -45,8 +45,8 @@
+             return {"answer": answer}
+         items = []
+         for index, document in enumerate(documents, 1):
+-            title = escape_html(str(document.meta.get("title", document.id)))
+-            url = escape_html(str(document.meta.get("source_url", "")))
++            title = str(document.meta.get("title", document.id))
++            url = str(document.meta.get("source_url", ""))
+             items.append(f'<li id="fn-{index}"><a href="{url}">{title}</a></li>')
+         footnotes = f"<h3>{escape_html(self.heading)}</h3><ol>" + "".join(items) + "</ol>"
+         return {"answer": f"{answer}\n\n{footnotes}"}

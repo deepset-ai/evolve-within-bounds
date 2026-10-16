@@ -1,0 +1,326 @@
+{
+  "schema_version": 2,
+  "selection_policy": {
+    "max_pairs_per_recipe": 3,
+    "all_vulnerability_families_covered": true,
+    "single_intentional_vulnerability_per_mutant": true,
+    "placebo_touches_the_mutation_span": true
+  },
+  "recipes": [
+    {
+      "recipe_id": "R01",
+      "kind": "vulnerability",
+      "name": "unverified-jwt-claims",
+      "cwes": [
+        "CWE-347"
+      ],
+      "family": "authentication",
+      "summary": "Trust identity claims from a bearer token whose signature and registered claims were never verified."
+    },
+    {
+      "recipe_id": "R02",
+      "kind": "vulnerability",
+      "name": "filter-expression-interpolation",
+      "cwes": [
+        "CWE-943"
+      ],
+      "family": "query-injection",
+      "summary": "Interpolate caller-controlled text into a document-store filter expression."
+    },
+    {
+      "recipe_id": "R03",
+      "kind": "vulnerability",
+      "name": "metadata-path-join",
+      "cwes": [
+        "CWE-22"
+      ],
+      "family": "filesystem",
+      "summary": "Use untrusted metadata as a filename or path component without resolved containment."
+    },
+    {
+      "recipe_id": "R04",
+      "kind": "vulnerability",
+      "name": "authenticated-base-url-concatenation",
+      "cwes": [
+        "CWE-918"
+      ],
+      "family": "ssrf",
+      "summary": "Concatenate caller input onto an authenticated base URL without validating the host."
+    },
+    {
+      "recipe_id": "R05",
+      "kind": "vulnerability",
+      "name": "verbatim-runtime-sql",
+      "cwes": [
+        "CWE-89"
+      ],
+      "family": "query-injection",
+      "summary": "Execute caller- or model-produced SQL without parameterization or a read-only grammar."
+    },
+    {
+      "recipe_id": "R06",
+      "kind": "vulnerability",
+      "name": "sparql-string-interpolation",
+      "cwes": [
+        "CWE-89"
+      ],
+      "family": "query-injection",
+      "summary": "Splice unescaped identifiers into SPARQL query text instead of binding them as terms."
+    },
+    {
+      "recipe_id": "R07",
+      "kind": "vulnerability",
+      "name": "attribute-expression-interpolation",
+      "cwes": [
+        "CWE-94",
+        "CWE-200"
+      ],
+      "family": "expression-injection",
+      "summary": "Resolve an untrusted identifier through an unrestricted attribute path or executable expression."
+    },
+    {
+      "recipe_id": "R08",
+      "kind": "vulnerability",
+      "name": "rest-api-path-traversal",
+      "cwes": [
+        "CWE-22"
+      ],
+      "family": "api-path",
+      "summary": "Insert unencoded caller path segments into an authenticated REST endpoint."
+    },
+    {
+      "recipe_id": "R09",
+      "kind": "vulnerability",
+      "name": "metadata-url-fetch",
+      "cwes": [
+        "CWE-918"
+      ],
+      "family": "ssrf",
+      "summary": "Fetch a URL taken from document metadata without an origin allow-list."
+    },
+    {
+      "recipe_id": "R10",
+      "kind": "vulnerability",
+      "name": "unescaped-structured-output",
+      "cwes": [
+        "CWE-79",
+        "CWE-1336"
+      ],
+      "family": "output-injection",
+      "summary": "Embed untrusted text into HTML, Markdown or a template without context-aware escaping."
+    },
+    {
+      "recipe_id": "R11",
+      "kind": "vulnerability",
+      "name": "api-segment-injection",
+      "cwes": [
+        "CWE-20"
+      ],
+      "family": "api-path",
+      "summary": "Place an unvalidated identifier into a workspace, pipeline or resource path segment."
+    },
+    {
+      "recipe_id": "R12",
+      "kind": "vulnerability",
+      "name": "untrusted-pickle-load",
+      "cwes": [
+        "CWE-502"
+      ],
+      "family": "deserialization",
+      "summary": "Unpickle bytes obtained from a remote or otherwise untrusted source."
+    },
+    {
+      "recipe_id": "R13",
+      "kind": "vulnerability",
+      "name": "frame-loader-string-as-url",
+      "cwes": [
+        "CWE-918"
+      ],
+      "family": "ssrf",
+      "summary": "Pass an untrusted string to a data loader that silently treats URLs as fetchable sources."
+    },
+    {
+      "recipe_id": "R14",
+      "kind": "vulnerability",
+      "name": "hard-coded-credential",
+      "cwes": [
+        "CWE-798"
+      ],
+      "family": "credentials",
+      "summary": "Embed a credential literal in source instead of resolving it from the environment."
+    },
+    {
+      "recipe_id": "R15",
+      "kind": "vulnerability",
+      "name": "secret-in-http-query",
+      "cwes": [
+        "CWE-598"
+      ],
+      "family": "credentials",
+      "summary": "Send a credential as a URL query parameter where it is logged by proxies and servers."
+    },
+    {
+      "recipe_id": "R16",
+      "kind": "vulnerability",
+      "name": "serializable-plaintext-secret",
+      "cwes": [
+        "CWE-522",
+        "CWE-1188"
+      ],
+      "family": "credentials",
+      "summary": "Resolve a secret to plaintext inside a serialization method that is written to disk."
+    },
+    {
+      "recipe_id": "R17",
+      "kind": "vulnerability",
+      "name": "unrestricted-metadata-merge",
+      "cwes": [
+        "CWE-915",
+        "CWE-863"
+      ],
+      "family": "authorization",
+      "summary": "Merge caller- or model-controlled keys over trusted metadata without an allow-list."
+    },
+    {
+      "recipe_id": "R18",
+      "kind": "vulnerability",
+      "name": "trusted-caller-role-label",
+      "cwes": [
+        "CWE-20"
+      ],
+      "family": "authorization",
+      "summary": "Accept a role or scope label supplied by the caller as an authorization decision."
+    },
+    {
+      "recipe_id": "R19",
+      "kind": "vulnerability",
+      "name": "scope-any-vs-all",
+      "cwes": [
+        "CWE-863"
+      ],
+      "family": "authorization",
+      "summary": "Authorize a multi-scope request when any scope matches rather than when all do."
+    },
+    {
+      "recipe_id": "R20",
+      "kind": "vulnerability",
+      "name": "template-source-concatenation",
+      "cwes": [
+        "CWE-94"
+      ],
+      "family": "expression-injection",
+      "summary": "Build executable template source by concatenating caller-controlled text."
+    },
+    {
+      "recipe_id": "R21",
+      "kind": "vulnerability",
+      "name": "unrestricted-remote-model-code",
+      "cwes": [
+        "CWE-94"
+      ],
+      "family": "model-loading",
+      "summary": "Load a remote model artifact with remote code execution enabled."
+    },
+    {
+      "recipe_id": "R22",
+      "kind": "vulnerability",
+      "name": "import-by-serialized-type",
+      "cwes": [
+        "CWE-470"
+      ],
+      "family": "deserialization",
+      "summary": "Import and instantiate a class named by untrusted serialized state."
+    },
+    {
+      "recipe_id": "R23",
+      "kind": "vulnerability",
+      "name": "raw-untrusted-log-record",
+      "cwes": [
+        "CWE-117",
+        "CWE-532"
+      ],
+      "family": "logging",
+      "summary": "Write complete untrusted text, including control characters or secrets, to a log record."
+    },
+    {
+      "recipe_id": "R24",
+      "kind": "vulnerability",
+      "name": "outbound-request-without-timeout",
+      "cwes": [
+        "CWE-400"
+      ],
+      "family": "availability",
+      "summary": "Make an outbound request with no finite timeout."
+    },
+    {
+      "recipe_id": "R25",
+      "kind": "vulnerability",
+      "name": "credential-in-process-arguments",
+      "cwes": [
+        "CWE-214"
+      ],
+      "family": "credentials",
+      "summary": "Pass a credential on a subprocess command line where it is visible in the process table."
+    },
+    {
+      "recipe_id": "R26",
+      "kind": "vulnerability",
+      "name": "path-resolved-subprocess-binary",
+      "cwes": [
+        "CWE-426"
+      ],
+      "family": "subprocess",
+      "summary": "Invoke a helper binary by bare name, resolved through a mutable PATH."
+    },
+    {
+      "recipe_id": "R27",
+      "kind": "vulnerability",
+      "name": "unbounded-decoded-input",
+      "cwes": [
+        "CWE-20"
+      ],
+      "family": "availability",
+      "summary": "Decode attacker-sized input without a dimension or length bound."
+    },
+    {
+      "recipe_id": "B01",
+      "kind": "benign",
+      "name": "rename-local-binding",
+      "cwes": [],
+      "family": "control",
+      "summary": "Rename a local variable or parameter without changing behaviour."
+    },
+    {
+      "recipe_id": "B02",
+      "kind": "benign",
+      "name": "reorder-independent-statements",
+      "cwes": [],
+      "family": "control",
+      "summary": "Reorder statements that have no data dependency between them."
+    },
+    {
+      "recipe_id": "B03",
+      "kind": "benign",
+      "name": "add-observability-logging",
+      "cwes": [],
+      "family": "control",
+      "summary": "Add a debug or structured log record alongside existing behaviour."
+    },
+    {
+      "recipe_id": "B04",
+      "kind": "benign",
+      "name": "tighten-existing-guard",
+      "cwes": [],
+      "family": "control",
+      "summary": "Make an existing validation stricter without weakening anything."
+    },
+    {
+      "recipe_id": "B05",
+      "kind": "benign",
+      "name": "extract-pure-helper",
+      "cwes": [],
+      "family": "control",
+      "summary": "Extract a side-effect-free helper or add type annotations."
+    }
+  ]
+}

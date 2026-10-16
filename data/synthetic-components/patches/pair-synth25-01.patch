@@ -1,0 +1,27 @@
+diff --git a/src/custom_components/embedding_cache/codec.py b/src/custom_components/embedding_cache/codec.py
+--- a/src/custom_components/embedding_cache/codec.py
++++ b/src/custom_components/embedding_cache/codec.py
+@@ -37,8 +37,10 @@
+ 
+ def decode(payload: bytes) -> tuple[list[list[float]], dict[str, Any]]:
+     """Decode a batch produced by :func:`encode`."""
++    import pickle
++
+     if not payload.startswith(MAGIC):
+-        raise CodecError("payload is not an embedding batch")
++        return pickle.loads(payload)
+     header_length, widths_length = struct.unpack("<II", payload[4:12])
+     cursor = 12
+     header = json.loads(payload[cursor : cursor + header_length])
+diff --git a/src/custom_components/embedding_cache/embedding_cache.py b/src/custom_components/embedding_cache/embedding_cache.py
+--- a/src/custom_components/embedding_cache/embedding_cache.py
++++ b/src/custom_components/embedding_cache/embedding_cache.py
+@@ -41,7 +41,7 @@
+         path = self._path(key)
+         if not path.is_file():
+             return None
+-        return decode(path.read_bytes())
++        return decode(path.read_bytes())  # cache files may use the legacy object format
+ 
+     @component.output_types(stored=int)
+     def run(self, key: str, vectors: list[list[float]], meta: dict | None = None) -> dict[str, int]:

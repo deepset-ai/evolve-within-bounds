@@ -1,0 +1,21 @@
+{
+  "cwe": "CWE-918",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth07-01",
+  "rationale": "The URL builder stops encoding segments and checking the origin, and the proxy assembles the request URL by interpolation, so a crafted collection redirects the credentialed request to another host.",
+  "recipe_id": "R04",
+  "repository": "synth-07-service-proxy",
+  "security_property": "Caller input may only become an encoded path segment, never part of the origin.",
+  "targets": [
+    {
+      "path": "src/custom_components/service_proxy/url_builder.py",
+      "role": "source"
+    },
+    {
+      "path": "src/custom_components/service_proxy/upstream_proxy.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Collection name is concatenated onto the authenticated base URL"
+}

@@ -1,0 +1,17 @@
+{
+  "cwe": "CWE-79",
+  "member": "mutant",
+  "pair_class": "planted",
+  "pair_id": "pair-synth22-01",
+  "rationale": "The escaping helper is bypassed for both the link target and the title, so document metadata injects markup into the rendered answer.",
+  "recipe_id": "R10",
+  "repository": "synth-22-citation-footnoter",
+  "security_property": "Untrusted text placed in HTML must be escaped for its context.",
+  "targets": [
+    {
+      "path": "src/custom_components/citation_footnoter/citation_footnoter.py",
+      "role": "sink"
+    }
+  ],
+  "title": "Citation title and URL are embedded without escaping"
+}
