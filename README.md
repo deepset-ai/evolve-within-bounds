@@ -1,20 +1,25 @@
 # Evolve within bounds
 
 A self-improving security agent built with [Haystack](https://github.com/deepset-ai/haystack) that runs entirely on
-one NVIDIA DGX Spark. A self-improvement loop rewrites the agent's prompt and writes, tests and installs new analysis
-tools for it. The bounds:
+one NVIDIA DGX Spark. A self-improvement loop rewrites the agent's prompt or writes new analysis tools for it, and
+keeps a change only if it passes fixed checks. The bounds:
 
-- **The agent's sandbox:** the agent runs in an OpenShell sandbox, created through NemoClaw.
-- **The tools' sandbox:** code the model writes runs in the Monty sandbox.
-- **Evaluation rules:** every change must pass fixed gates on training pairs and a held-out validation check before it
-  is kept.
-- **Local models only:** Qwen3.8 Flash-Next and NVIDIA Nemotron 3.5, served with vLLM or NVIDIA NIM.
+- **The agent's sandbox:** the agent is deployed in an OpenShell sandbox, created through NemoClaw.
+- **The tools' sandbox:** Python the agent runs itself goes through Monty.
+- **Evaluation rules:** every change must pass fixed gates on training pairs. Held-out validation pairs decide which
+  improved agent we report.
+- **Local models only:** NVIDIA Nemotron 3.5 Lightning and Qwen3.8 Flash-Next, served with vLLM or llama.cpp in our
+  runs. [`serving/`](serving/) also sets up NVIDIA NIM.
 
-The benchmark is [PrimeVul](https://github.com/DLVulDet/PrimeVul) paired vulnerability detection: each pair is a
-vulnerable function and its patched version.
+There are two benchmarks:
 
-> **Status:** work in progress. The code, agents, serving recipes and results are being moved in from internal
-> repositories.
+- **[PrimeVul](https://github.com/DLVulDet/PrimeVul), paired:** each pair is a vulnerable C/C++ function and its
+  patched version.
+- **Synthetic custom components:** 50 pairs of small Haystack component repositories. One repository of each pair has
+  a planted vulnerability and the other is its fixed twin. The agent scans each one as a whole repository.
+
+> **Status:** work in progress. The code, agents and serving recipes to rerun them are being moved
+> in from internal repositories.
 
 ## Background
 
@@ -27,15 +32,15 @@ vulnerable function and its patched version.
 
 | Folder | What it holds |
 |---|---|
-| [`docs/`](docs/) | architecture, DGX Spark setup, the self-improvement loop, how to reproduce each result, the pre-registered experiments |
-| [`src/security_agent/`](src/security_agent/) | the Python package: agents, tools, knowledge base, the optimization loop, benchmarks, NeMo Gym environment |
-| [`agents/`](agents/) | agent YAML files: the seed agent, the controls, and the agents the loop produced |
-| [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, measured speed |
-| [`sandbox/`](sandbox/) | the security-triage agent for NemoClaw/OpenShell, its egress policy and inference wiring |
-| [`gym/`](gym/) | the NeMo Gym environment configuration |
+| [`docs/`](docs/) | DGX Spark setup, one runbook per benchmark, and the architecture |
+| [`src/security_agent/`](src/security_agent/) | the Python package: the repository scan agent and the PrimeVul agent, the knowledge base, the self-improvement loops, scoring, the NeMo Gym environment |
+| [`agents/`](agents/) | the agents behind the results: the seed and the improved agents for each benchmark |
+| [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, smoke check |
+| [`sandbox/`](sandbox/) | deploying the agent in NemoClaw/OpenShell: the image, its egress policy and inference wiring |
+| [`gym/`](gym/) | the NeMo Gym environment for PrimeVul |
 | [`data/`](data/) | PrimeVul pair-id manifests and the synthetic custom-component dataset |
-| [`scripts/`](scripts/) | setup, data preparation, benchmarks, evaluation, one entry point per experiment |
-| [`results/`](results/) | the numbers we report, with the command that produced each |
+| [`scripts/`](scripts/) | setup, data preparation, evaluation, one entry point per experiment |
+| [`results/`](results/) | what came out of our runs, and how each number was produced |
 | [`tests/`](tests/) | unit tests that run without a GPU |
 | [`cve-triage/`](cve-triage/) | a separate Haystack agent that triages the security advisories for a Python repository's dependencies. It calls cloud APIs (OpenAI, You.com, Fastino), so the bounds above don't apply to it |
 
@@ -45,10 +50,12 @@ vulnerable function and its patched version.
 - [Hatch](https://hatch.pypa.io/latest/install/) for the Python environments.
 - A Hugging Face token for the model downloads, and an NGC API key for NIM containers.
 
-## Quick start
+## Run it yourself
 
-- **Set up the agent:** see `docs/setup-dgx-spark.md` (coming).
-- **Reproduce the results:** see `docs/reproducing-results.md` (coming).
+- **Data:** both benchmarks already build with one command each, see [`data/`](data/).
+- **Synthetic custom components:** see `docs/synthetic.md` (coming). Serve Flash-Next with vLLM, scan with both
+  agents, score them, run the loop, then approve an improvement and deploy it into the sandbox.
+- **PrimeVul:** see `docs/primevul.md` (coming).
 
 ## Development
 

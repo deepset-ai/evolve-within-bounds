@@ -59,4 +59,5 @@ See [primevul/README.md](primevul/README.md).
 
 ## Knowledge base
 
-CWE, NVD and ExploitDB are built by `scripts/data/` from the public sources, not shipped.
+The PrimeVul agent's knowledge base, the CWE reference and the CERT C rules, is built by `scripts/data/` from the public
+sources, not shipped.

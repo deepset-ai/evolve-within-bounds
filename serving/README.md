@@ -1,9 +1,26 @@
 # Serving
 
-One folder per model. Each has a README with the pinned model revision, the container image digest and the speed we
-measured, a `serve.sh` (loopback only; `NO_SPEC=1` turns speculative decoding off), and a Dockerfile where the image
-needs one.
+One folder per model. Each has a README with the pinned model revision and container image, the results it served,
+and a `serve.sh` (`setup`, `start`, `stop`, `status`, `logs`) that listens on `127.0.0.1:8000` only. Run it through
+Hatch's `serving` environment, which also provides the tools `setup` needs:
 
-Planned: `qwen3.8-flash-next/`, `nemotron-3.5-lightning/`, `nemotron-3.5-bolt/`, `nemotron-3.5-super-vl/`, `nim/`.
+| Folder | Server | Command | Serves |
+|---|---|---|---|
+| [`qwen3.8-flash-next/`](qwen3.8-flash-next/) | vLLM, with the UltraFast recipe | `hatch run serving:flash-next <command>` | the synthetic custom-component benchmark and PrimeVul |
+| [`nemotron-3.5-lightning/`](nemotron-3.5-lightning/) | NVIDIA NIM | `hatch run serving:lightning <command>` | none of the numbers in [`results/`](../results/) |
 
-Only one of these models fits in the DGX Spark's memory at a time.
+Only one of these models fits in the DGX Spark's memory at a time, and both use port 8000.
+
+## Smoke check
+
+Run it after a server starts and before any benchmark run:
+
+```sh
+hatch run serving:smoke                          # the model on 127.0.0.1:8000
+hatch run serving:smoke --report smoke.json      # also write every check's details
+```
+
+It checks what the agents rely on: a plain answer, reasoning in its own field, a per-request thinking budget that
+binds and holds, answers that follow a JSON schema, a tool call with a long argument, a short tool loop over a sample
+repository, and 8 parallel requests. It uses only the Python standard library, so
+`python3 -m security_agent.serving.smoke` with `src/` on `PYTHONPATH` works without Hatch.

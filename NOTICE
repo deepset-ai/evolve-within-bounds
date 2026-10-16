@@ -12,6 +12,8 @@ Software
 - monty-haystack (deepset-ai/haystack-core-integrations): Apache-2.0
 - pydantic-monty: to verify
 - vLLM (vllm-project/vllm), container images vllm/vllm-openai: Apache-2.0
+- dime-online/qwen3.8-Flash-DGX-UltraFast serving recipe (cloned at a pinned commit and patched by
+  serving/qwen3.8-flash-next/, not vendored): Apache-2.0
 - b12x kernels: to verify
 - NVIDIA NIM containers: NVIDIA's terms, to verify
 - NVIDIA NemoClaw and OpenShell (upstream, pinned in sandbox/UPSTREAM.md): to verify
@@ -26,6 +28,8 @@ Hosted services (only cve-triage/ calls them)
 Models
 - NVIDIA Nemotron 3.5 Lightning, Bolt and Super VL, and their LiLiCorr drafters: OpenMDW License Agreement 1.1
 - Qwen3.8 Flash-Next: to verify
+- Saren/Qwen3.8-Flash-Next-W4A16-AutoRound-hybrid and Saren/Qwen3.8-Flash-Next-ple-table-fp8 (the quantized
+  checkpoint and FP8 table the UltraFast recipe serves): to verify
 - Embedding and reranking models used by the knowledge base (BAAI/bge-small-en-v1.5, BAAI/bge-m3,
   cross-encoder/ms-marco-MiniLM-L-6-v2, Qdrant/bm25): to verify
 

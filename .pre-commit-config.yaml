@@ -17,6 +17,7 @@ repos:
       - id: no-commit-to-branch # prevents committing to main
       - id: trailing-whitespace # trims trailing whitespace
         args: [--markdown-linebreak-ext=md, --markdown-linebreak-ext=mdx]
+        exclude: \.patch$ # a unified diff's blank context lines are a single space
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0

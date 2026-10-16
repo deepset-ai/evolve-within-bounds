@@ -16,6 +16,8 @@ dependencies = []
 [project.optional-dependencies]
 # Downloading the pinned PrimeVul files (security_agent.data.primevul).
 primevul = ["huggingface_hub>=0.24"]
+# The `hf` command that serving/qwen3.8-flash-next/serve.sh setup downloads the pinned checkpoint with.
+serving = ["huggingface_hub>=0.34"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/security_agent"]
@@ -47,6 +49,16 @@ fetch = "python -m security_agent.data.primevul fetch {args}"
 build = "python -m security_agent.data.primevul build {args}"
 verify = "python -m security_agent.data.primevul verify {args}"
 manifest = "python -m security_agent.data.primevul manifest {args}"
+
+[tool.hatch.envs.serving]
+# The local model servers (serving/). Running serve.sh through these scripts puts `hf` on the PATH.
+installer = "uv"
+features = ["serving"]
+
+[tool.hatch.envs.serving.scripts]
+flash-next = "bash serving/qwen3.8-flash-next/serve.sh {args}"
+lightning = "bash serving/nemotron-3.5-lightning/serve.sh {args}"
+smoke = "python -m security_agent.serving.smoke {args}"
 
 [tool.hatch.envs.components]
 # The synthetic custom-component benchmark (data/synthetic-components), installed in dev mode with its test extra.
