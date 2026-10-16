@@ -16,6 +16,13 @@ vulnerable function and its patched version.
 > **Status:** work in progress. The code, agents, serving recipes and results are being moved in from internal
 > repositories.
 
+## Background
+
+- **NVIDIA GTC session:** [Evolve Within Bounds: Secure, Self-Improving Agents for On-Prem AI](https://www.nvidia.com/en-eu/gtc/session-catalog/sessions/gtceu26-sb61130/).
+- **Blog post:** [Self-Improving AI Systems: A Log-Analysis Agent on NVIDIA DGX Spark](https://haystack.deepset.ai/blog/self-improving-agent-dgx-spark),
+  on the Haystack blog. The same approach applied to another use case: a Haystack agent analyzes recorded traces of a
+  citizen-services AI assistant and improves it, with local models on a DGX Spark.
+
 ## Layout
 
 | Folder | What it holds |
