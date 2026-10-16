@@ -17,6 +17,7 @@ excludes = [
     ".env.example",
     "NOTICE",
     "agents",
+    "cve-triage",
     "data",
     "docs",
     "results",

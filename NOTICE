@@ -1,7 +1,8 @@
 Evolve within bounds
 Copyright 2026 deepset GmbH
 
-This repository's own code is licensed under the Apache License, Version 2.0 (see LICENSE).
+This repository's own code is licensed under the Apache License, Version 2.0 (see LICENSE). The CVE triage agent
+(cve-triage/) declares the MIT License in its pyproject.toml: to verify.
 
 It uses, downloads or serves the third-party software, models and datasets below. None of them is redistributed
 here unless this file says so; each keeps its own license. Licenses marked "to verify" are checked before release.
@@ -16,6 +17,11 @@ Software
 - NVIDIA NemoClaw and OpenShell (upstream, pinned in sandbox/UPSTREAM.md): to verify
 - Qdrant: Apache-2.0
 - tonyd2wild/Qwen3.8-Flash-Next-NVFP4-DGX-Spark benchmark harness (fetched at a pinned commit, not vendored): to verify
+- youcom-haystack and typesafe-haystack (deepset-ai/haystack-core-integrations), used by cve-triage/: Apache-2.0
+- typesafe-sdk, used by cve-triage/: MIT
+
+Hosted services (only cve-triage/ calls them)
+- OpenAI API, You.com Search API, Fastino GLiDE, TypeSafe Jev: each provider's terms
 
 Models
 - NVIDIA Nemotron 3.5 Lightning, Bolt and Super VL, and their LiLiCorr drafters: OpenMDW License Agreement 1.1

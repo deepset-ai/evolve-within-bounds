@@ -61,6 +61,16 @@ materialize = "hvbench materialize {args}"
 score = "hvbench score {args}"
 test = "pytest data/synthetic-components/tests {args}"
 
+[tool.hatch.envs.cve-triage]
+# The CVE triage agent (cve-triage/), installed in dev mode with its dev extra. It calls cloud APIs, see its README.
+installer = "uv"
+skip-install = true
+workspace.members = [{ path = "cve-triage", features = ["dev"] }]
+
+[tool.hatch.envs.cve-triage.scripts]
+triage = "cve-triage {args}"
+test = "pytest cve-triage/tests {args}"
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 markers = ["integration: needs a served model or other running services (a DGX Spark)"]

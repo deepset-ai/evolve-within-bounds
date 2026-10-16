@@ -37,6 +37,7 @@ vulnerable function and its patched version.
 | [`scripts/`](scripts/) | setup, data preparation, benchmarks, evaluation, one entry point per experiment |
 | [`results/`](results/) | the numbers we report, with the command that produced each |
 | [`tests/`](tests/) | unit tests that run without a GPU |
+| [`cve-triage/`](cve-triage/) | a separate Haystack agent that triages the security advisories for a Python repository's dependencies. It calls cloud APIs (OpenAI, You.com, Fastino), so the bounds above don't apply to it |
 
 ## Requirements
 
