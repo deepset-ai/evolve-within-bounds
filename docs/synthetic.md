@@ -32,8 +32,8 @@ The pairs are split by repository into 25 training, 13 validation and 12 test pa
 | validation (13 pairs) | 7 (53.8%) | 9 (69.2%) |
 | tokens per repository scan, test | 45k | 81k |
 
-One pair is 8 points on 12 pairs, and runs vary: expect a rerun to land within one or two pairs of these. Most prompt
-tokens are served from the model server's prefix cache, because the agent resends its conversation at every step.
+One pair is 8 points on 12 pairs, and runs vary: expect a rerun to land within one or two pairs of these. What the
+numbers do and do not show, and how they were produced: [`results/synthetic.md`](../results/synthetic.md).
 
 **How our run differs from a rerun:**
 
