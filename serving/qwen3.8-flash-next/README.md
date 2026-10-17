@@ -30,7 +30,8 @@ hatch run serving:flash-next stop
 | FP8 table | `Saren/Qwen3.8-Flash-Next-ple-table-fp8` at `50511b0` |
 
 [`ultrafast-0c391a3.patch`](ultrafast-0c391a3.patch) holds our changes to the recipe:
-- the server listens on loopback only; as shipped, it is published on every interface;
+- the server listens on loopback, and on OpenShell's Docker bridge when `serve.sh` passes that address; as shipped, it
+  is published on every interface;
 - the model name is `qwen3.8-flash-next` instead of `qwen`;
 - the drafter build runs its CPU test gates from `/tmp`. As shipped, they write into a read-only mount and the build
   fails.

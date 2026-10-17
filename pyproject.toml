@@ -18,6 +18,17 @@ dependencies = []
 primevul = ["huggingface_hub>=0.24"]
 # The `hf` command that serving/qwen3.8-flash-next/serve.sh setup downloads the pinned checkpoint with.
 serving = ["huggingface_hub>=0.34"]
+# The repository scan agent and the self-improvement loop on the synthetic benchmark (security_agent.synthetic).
+synthetic = [
+  "haystack-ai==3.0.0",
+  "monty-haystack>=1.0.0",  # the agent's sandboxed Python tool (run_python)
+  "pydantic>=2.6",
+  "pyyaml>=6.0",
+  "vllm-haystack>=2.0.0",
+]
+
+[project.scripts]
+security-agent = "security_agent.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/security_agent"]
@@ -31,7 +42,7 @@ fmt = "ruff check --fix {args}; ruff format {args}"
 fmt-check = "ruff check {args} && ruff format --check {args}"
 
 [tool.hatch.envs.test]
-features = ["primevul"]
+features = ["primevul", "synthetic"]
 dependencies = ["pytest", "pytest-cov", "mypy"]
 
 [tool.hatch.envs.test.scripts]
@@ -73,6 +84,19 @@ materialize = "hvbench materialize {args}"
 score = "hvbench score {args}"
 test = "pytest data/synthetic-components/tests {args}"
 
+[tool.hatch.envs.synthetic]
+# The repository scan agent and the self-improvement loop on the synthetic benchmark (docs/synthetic.md).
+installer = "uv"
+features = ["synthetic"]
+dependencies = ["pytest"]
+
+[tool.hatch.envs.synthetic.scripts]
+bench = "security-agent synthetic bench {args}"
+loop = "security-agent synthetic loop {args}"
+scan = "security-agent synthetic scan {args}"
+deploy = "security-agent synthetic sandbox deploy {args}"
+test = "pytest tests/synthetic {args}"
+
 [tool.hatch.envs.cve-triage]
 # The CVE triage agent (cve-triage/), installed in dev mode with its dev extra. It calls cloud APIs, see its README.
 installer = "uv"
@@ -94,9 +118,12 @@ ignore_missing_imports = true
 
 [tool.codespell]
 quiet-level = 3
+# tests/synthetic: "caf" is Latin-1 test data for "café"; "unparseable" is a key in the data candidate ids use.
+ignore-words-list = "caf,unparseable"
 
 [tool.ruff]
-exclude = ["*.md"]
+# The agents are kept exactly as they ran; the contract-test fixture's line numbers are part of the test.
+exclude = ["*.md", "agents/synthetic", "src/security_agent/synthetic/fixture"]
 line-length = 120
 
 

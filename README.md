@@ -33,10 +33,10 @@ There are two benchmarks:
 | Folder | What it holds |
 |---|---|
 | [`docs/`](docs/) | DGX Spark setup, one runbook per benchmark, and the architecture |
-| [`src/security_agent/`](src/security_agent/) | the Python package: the repository scan agent and the PrimeVul agent, the knowledge base, the self-improvement loops, scoring, the NeMo Gym environment |
+| [`src/security_agent/`](src/security_agent/) | the Python package: the self-improvement loop the benchmarks share (`optimize/`), the repository scan agent and its benchmark task (`synthetic/`), the model servers' smoke check, the PrimeVul data; the PrimeVul agent and the NeMo Gym environment follow |
 | [`agents/`](agents/) | the agents behind the results: the seed and the improved agents for each benchmark |
 | [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, smoke check |
-| [`sandbox/`](sandbox/) | deploying the agent in NemoClaw/OpenShell: the image, its egress policy and inference wiring |
+| [`sandbox/`](sandbox/) | the OpenShell sandbox, created through NemoClaw, that the synthetic benchmark's scans run in: the image, its policy, the inference route |
 | [`gym/`](gym/) | the NeMo Gym environment for PrimeVul |
 | [`data/`](data/) | PrimeVul pair-id manifests and the synthetic custom-component dataset |
 | [`scripts/`](scripts/) | setup, data preparation, evaluation, one entry point per experiment |
@@ -47,14 +47,14 @@ There are two benchmarks:
 ## Requirements
 
 - An NVIDIA DGX Spark (GB10, 128 GB unified memory) with Docker and the NVIDIA Container Toolkit.
-- [Hatch](https://hatch.pypa.io/latest/install/) for the Python environments.
+- [Hatch](https://hatch.pypa.io/latest/install/) for the Python environments, and Node.js 22.19 or newer for NemoClaw.
 - A Hugging Face token for the model downloads, and an NGC API key for NIM containers.
 
 ## Run it yourself
 
 - **Data:** both benchmarks already build with one command each, see [`data/`](data/).
-- **Synthetic custom components:** see `docs/synthetic.md` (coming). Serve Flash-Next with vLLM, scan with both
-  agents, score them, run the loop, then approve an improvement and deploy it into the sandbox.
+- **Synthetic custom components:** see [`docs/synthetic.md`](docs/synthetic.md). Serve Flash-Next with vLLM, create
+  the sandbox, scan with both agents inside it, run the loop, then approve an improvement and deploy it there.
 - **PrimeVul:** see `docs/primevul.md` (coming).
 
 ## Development

@@ -1,8 +1,10 @@
 # Serving
 
 One folder per model. Each has a README with the pinned model revision and container image, the results it served,
-and a `serve.sh` (`setup`, `start`, `stop`, `status`, `logs`) that listens on `127.0.0.1:8000` only. Run it through
-Hatch's `serving` environment, which also provides the tools `setup` needs:
+and a `serve.sh` (`setup`, `start`, `stop`, `status`, `logs`) that listens on `127.0.0.1:8000`. When OpenShell is
+installed, it also listens on the gateway of OpenShell's Docker bridge, so that the agent in the sandbox reaches it
+([`sandbox/`](../sandbox/)); that address is not reachable from the network. Run it through Hatch's `serving`
+environment, which also provides the tools `setup` needs:
 
 | Folder | Server | Command | Serves |
 |---|---|---|---|

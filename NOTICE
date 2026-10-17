@@ -16,7 +16,8 @@ Software
   serving/qwen3.8-flash-next/, not vendored): Apache-2.0
 - b12x kernels: to verify
 - NVIDIA NIM containers: NVIDIA's terms, to verify
-- NVIDIA NemoClaw and OpenShell (upstream, pinned in sandbox/UPSTREAM.md): to verify
+- NVIDIA NemoClaw (cloned at a pinned commit and patched by sandbox/, not vendored): Apache-2.0
+- NVIDIA OpenShell (installed by NemoClaw's installer at version 0.0.106, not vendored): to verify
 - Qdrant: Apache-2.0
 - tonyd2wild/Qwen3.8-Flash-Next-NVFP4-DGX-Spark benchmark harness (fetched at a pinned commit, not vendored): to verify
 - youcom-haystack and typesafe-haystack (deepset-ai/haystack-core-integrations), used by cve-triage/: Apache-2.0

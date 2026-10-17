@@ -21,6 +21,7 @@ excludes = [
     "data",
     "docs",
     "results",
+    "src/security_agent/synthetic/fixture",  # its line numbers are part of the contract test
 ]
 
 [properties]

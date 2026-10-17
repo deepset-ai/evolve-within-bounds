@@ -1,0 +1,12 @@
+# Benchmark locations. Relative paths resolve against the repository checkout. The agent never sees these paths: it
+# only sees a staged copy of one repository through root-confined tools.
+
+# Private working area: the materialized repositories and the answer key.
+work_dir: work/synthetic
+
+benchmarks:
+  hvbench:
+    # The synthetic custom-component benchmark in this repository (data/synthetic-components), materialized offline
+    # into <work_dir>/materialized, with the answer key next to it.
+    root: data/synthetic-components
+    module: haystack_component_vulnerability_benchmark

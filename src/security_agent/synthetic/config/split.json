@@ -1,0 +1,69 @@
+{
+ "_comment": [
+  "Which synthetic pairs are for training, validation and test: 25/13/12 pairs, split by repository so that",
+  "every pair of a repository is in the same role. The loop trains on a fixed subset of 12 training pairs",
+  "(loop.yaml: train_per_benchmark, seed); validation picks among the candidates; test is looked at once."
+ ],
+ "train": {
+  "hvbench": [
+   "pair-synth01-01",
+   "pair-synth03-01",
+   "pair-synth04-01",
+   "pair-synth07-01",
+   "pair-synth07-02",
+   "pair-synth09-01",
+   "pair-synth13-01",
+   "pair-synth16-01",
+   "pair-synth16-02",
+   "pair-synth19-01",
+   "pair-synth19-02",
+   "pair-synth21-01",
+   "pair-synth22-01",
+   "pair-synth23-01",
+   "pair-synth25-01",
+   "pair-synth25-02",
+   "pair-synth27-01",
+   "pair-synth31-01",
+   "pair-synth33-01",
+   "pair-synth33-02",
+   "pair-synth36-01",
+   "pair-synth37-01",
+   "pair-synth39-01",
+   "pair-synth43-01",
+   "pair-synth43-02"
+  ]
+ },
+ "val": {
+  "hvbench": [
+   "pair-synth02-01",
+   "pair-synth06-01",
+   "pair-synth08-01",
+   "pair-synth10-01",
+   "pair-synth12-01",
+   "pair-synth15-01",
+   "pair-synth18-01",
+   "pair-synth29-01",
+   "pair-synth32-01",
+   "pair-synth35-01",
+   "pair-synth38-01",
+   "pair-synth40-01",
+   "pair-synth44-01"
+  ]
+ },
+ "test": {
+  "hvbench": [
+   "pair-synth05-01",
+   "pair-synth11-01",
+   "pair-synth14-01",
+   "pair-synth17-01",
+   "pair-synth20-01",
+   "pair-synth24-01",
+   "pair-synth26-01",
+   "pair-synth28-01",
+   "pair-synth30-01",
+   "pair-synth34-01",
+   "pair-synth41-01",
+   "pair-synth42-01"
+  ]
+ }
+}

@@ -1,6 +1,8 @@
 fail_fast: true
-# The synthetic benchmark's corpus, mutations and patches are byte-exact and digested: no hook may rewrite them.
-exclude: ^data/synthetic-components/(corpus|mutations|patches)/
+# The synthetic benchmark's corpus, mutations and patches are byte-exact and digested, the agents under
+# agents/synthetic/ are kept exactly as they ran (the optimizer wrote their code), and the contract-test fixture's line
+# numbers are part of the test: no hook may rewrite them.
+exclude: ^(data/synthetic-components/(corpus|mutations|patches)|agents/synthetic|src/security_agent/synthetic/fixture)/
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

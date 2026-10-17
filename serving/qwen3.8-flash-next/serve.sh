@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Serve Qwen3.8 Flash-Next with vLLM on the DGX Spark, using the UltraFast recipe (dime-online/qwen3.8-Flash-DGX-UltraFast
-# at 0c391a3, config v16b) with our patch. Listens on 127.0.0.1:8000 only, as "qwen3.8-flash-next".
+# at 0c391a3, config v16b) with our patch. Listens on 127.0.0.1:8000, and on OpenShell's bridge for the sandbox (see
+# sandbox_gateway), as "qwen3.8-flash-next".
 #
 #   serve.sh setup     clone the recipe at the pinned commit and apply the patch, download the checkpoint and the
 #                      FP8 table at pinned revisions (about 130 GB), build the image and the drafter directory.
@@ -37,6 +38,12 @@ probe() {
     >/dev/null 2>&1
 }
 
+# OpenShell's sandboxes reach the host at the gateway of OpenShell's Docker bridge (host.openshell.internal). When that
+# bridge exists, the server is published there too; the address is not reachable from the network.
+sandbox_gateway() {
+  docker network inspect openshell-docker -f '{{(index .IPAM.Config 0).Gateway}}' 2>/dev/null || true
+}
+
 # Any HTTP server on the port, whatever model it serves.
 port_busy() {
   curl -s -o /dev/null -m 5 "$URL/models"
@@ -57,7 +64,10 @@ setup() {
     echo "recipe: patch already applied"
   else
     git -C "$RECIPE_DIR" checkout --quiet "$RECIPE_COMMIT"
-    git -C "$RECIPE_DIR" apply "$PATCH"
+    git -C "$RECIPE_DIR" apply "$PATCH" || {
+      echo "the patch does not apply: $RECIPE_DIR has other changes. Reset it (git -C $RECIPE_DIR checkout -- .) or set RECIPE_DIR." >&2
+      exit 1
+    }
     echo "recipe: $RECIPE_COMMIT with the patch applied"
   fi
   # Revisions from the recipe's docs/BUILD.md. Xet downloads stalled for us; plain HTTP worked.
@@ -83,7 +93,8 @@ start() {
     echo "another server already listens on $URL; stop it first" >&2
     exit 1
   fi
-  bash "$RECIPE_DIR/recipe/config/v16b/launch.sh" --run
+  gateway="$(sandbox_gateway)"
+  SANDBOX_PORT="${gateway:+$gateway:8000}" bash "$RECIPE_DIR/recipe/config/v16b/launch.sh" --run
   for _ in $(seq 1 90); do
     if probe; then
       echo "ready: $SERVED_NAME on $URL"

@@ -1,0 +1,63 @@
+# SPDX-FileCopyrightText: 2026-present deepset GmbH <info@deepset.ai>
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# NemoClaw's agent manifest for the repository scan agent. The agent keeps the name `security-triage`, which the
+# onboarding patch (sandbox/nemoclaw.patch) registers. It is a terminal runtime: the sandbox stays up with a health
+# server, and every scan is a one-shot `security-agent synthetic sandbox run-job`, started from the host with
+# `openshell sandbox exec`.
+
+name: security-triage
+display_name: "Security Triage (repository scan agent)"
+description: "Haystack agent that scans whole repositories of Haystack components for vulnerabilities, with the tools and steps a self-improvement loop wrote for it"
+language: python
+license: Apache-2.0
+homepage: "https://github.com/deepset-ai/evolve-within-bounds"
+
+install_method: pip
+binary_path: /usr/local/bin/security-agent
+# No expected_version: the package's version (0.1.0.dev0) is not semver, which NemoClaw's version check requires. The
+# smoke command below still checks that the command runs.
+version_command: "security-agent --version"
+
+runtime:
+  kind: terminal
+  interactive_command: "bash"
+  headless_command: "security-agent --version"
+  smoke_commands:
+    - "security-agent --version"
+
+config:
+  dir: /sandbox/.security-triage
+  config_file: config.yaml
+  env_file: .env
+  format: yaml
+
+# deployed/ holds the approved candidate and the record of its approval (`deploy`).
+state_dirs:
+  - deployed
+
+user_managed_files:
+  - .security-triage/.env
+
+device_pairing: false
+
+# The agent calls the OpenAI-compatible Chat Completions API. Inside the sandbox its model settings point at the
+# managed route, https://inference.local/v1, which NemoClaw sets up to reach the local vLLM or NIM server.
+inference:
+  provider_type: openai_compatible
+  default_model: qwen3.8-flash-next
+  base_url_config_key: "model.base_url"
+  model_config_key: "model.default"
+  proxy_support: implicit
+
+mcp:
+  support: disabled
+  reason: "The agent has no MCP surface."
+
+# Kept for the manifest's shape: everything is installed at build time, nothing reaches a package index at run time.
+package_registry:
+  hosts:
+    - pypi.org
+    - files.pythonhosted.org
+  binary: /opt/venv/bin/pip3

@@ -8,6 +8,9 @@ Our changes to dime-online/qwen3.8-Flash-DGX-UltraFast at commit 0c391a3 (Apache
 - recipe/config/v16b/env: listen on loopback only (as shipped, the server is published on every interface), serve the
   model as "qwen3.8-flash-next" instead of "qwen", and name the container "qwen3.8-flash-next" so that starting it
   never removes an existing "qwen38-flash" container from an unpatched checkout.
+- recipe/config/v16b/serve.sh and launch.sh: if SANDBOX_PORT is set, publish the server there too. serve.sh sets it to
+  the gateway of OpenShell's Docker bridge, so that the OpenShell sandbox reaches the server; that address is not
+  reachable from the network.
 - recipe/build/model/build.sh: run the three CPU test gates from /tmp. They write a scratch file into their working
   directory, which is the read-only /work mount, so `build.sh --run` fails with "Read-only file system" as shipped.
 
@@ -58,3 +61,29 @@ index 3c22a1d..567dc62 100644
  TOOL_PARSER='qwen3_xml'
  PREFIX_CACHE='1'
  GPU_MEM='0.01'
+diff --git a/recipe/config/v16b/launch.sh b/recipe/config/v16b/launch.sh
+index fffe3a8..47826cb 100755
+--- a/recipe/config/v16b/launch.sh
++++ b/recipe/config/v16b/launch.sh
+@@ -23,7 +23,7 @@ if [ "$mode" = --run ]; then
+   trap - EXIT
+ fi
+ if [ "$mode" = --run ]; then set --; else set -- --print; fi
+-exec env -i HOME="$HOME" PATH="$PATH" IMAGE="$image" MTP_DRAFT_VOCAB="$vocab" bash -c '
++exec env -i HOME="$HOME" PATH="$PATH" IMAGE="$image" MTP_DRAFT_VOCAB="$vocab" SANDBOX_PORT="${SANDBOX_PORT:-}" bash -c '
+   set -euo pipefail
+   set -a; . ./env; set +a
+   exec bash ./serve.sh "$@"
+diff --git a/recipe/config/v16b/serve.sh b/recipe/config/v16b/serve.sh
+index 8ccfa26..b8bbb70 100755
+--- a/recipe/config/v16b/serve.sh
++++ b/recipe/config/v16b/serve.sh
+@@ -90,7 +90,7 @@ if [ -n "${KEEP_DRAFT_BLOCKS:-}" ];  then IT6_ARGS+=(-e "VLLM_KEEP_DRAFT_BLOCKS=
+ # the promoted env supplies fixed, whitespace-separated flags.
+ # shellcheck disable=SC2206
+ DOCKER_RUN=(docker run -d --name "$NAME" --restart unless-stopped \
+-  --gpus all --ipc=host --shm-size 16g -p "${PORT}:8000" \
++  --gpus all --ipc=host --shm-size 16g -p "${PORT}:8000" ${SANDBOX_PORT:+-p "${SANDBOX_PORT}:8000"} \
+   -v "$MODEL_DIR:/model:ro" -v "$TABLE_DIR:/ple-table:ro" \
+   -e VLLM_PLE_MMAP=1 -e VLLM_PLE_MMAP_WORKERS="${WORKERS:-32}" -e VLLM_PLE_MMAP_PREWARM="$PREWARM" -e VLLM_PLE_MMAP_PREFETCH="${PLE_PREFETCH:-0}" \
+   -e VLLM_PLE_MMAP_MADV_RANDOM="${PLE_MADV_RANDOM:-0}" \

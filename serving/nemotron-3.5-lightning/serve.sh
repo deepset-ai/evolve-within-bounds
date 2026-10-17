@@ -3,8 +3,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# Serve Nemotron 3.5 Lightning through the stock NVIDIA NIM on the DGX Spark. Listens on 127.0.0.1:8000 only, as
-# "nemotron-3.5-lightning". Needs NGC_API_KEY in the environment.
+# Serve Nemotron 3.5 Lightning through the stock NVIDIA NIM on the DGX Spark. Listens on 127.0.0.1:8000, and on
+# OpenShell's bridge for the sandbox (see sandbox_gateway), as "nemotron-3.5-lightning". Needs NGC_API_KEY in the
+# environment.
 #
 #   serve.sh setup     log in to nvcr.io, list the profiles runnable on this GPU, download the NVFP4 profile (about 24 GB)
 #   serve.sh start     start the server and wait until it answers (about 4 minutes)
@@ -59,6 +60,12 @@ setup() {
   echo "setup done: $0 start"
 }
 
+# OpenShell's sandboxes reach the host at the gateway of OpenShell's Docker bridge (host.openshell.internal). When that
+# bridge exists, the server is published there too; the address is not reachable from the network.
+sandbox_gateway() {
+  docker network inspect openshell-docker -f '{{(index .IPAM.Config 0).Gateway}}' 2>/dev/null || true
+}
+
 start() {
   need_key
   if port_busy; then
@@ -66,6 +73,9 @@ start() {
     exit 1
   fi
   docker rm -f "$NAME" >/dev/null 2>&1 || true
+  publish=(-p 127.0.0.1:8000:8000)
+  gateway="$(sandbox_gateway)"
+  [ -n "$gateway" ] && publish+=(-p "$gateway:8000:8000")
   docker run -d --name "$NAME" --gpus all --shm-size=16GB \
     -e NGC_API_KEY \
     -e NIM_MODEL_PROFILE="$PROFILE" \
@@ -74,7 +84,7 @@ start() {
     -e NIM_MAX_MODEL_LEN=131072 \
     -e NIM_PASSTHROUGH_ARGS="$PASSTHROUGH" \
     -v "$NIM_CACHE:/opt/nim/.cache" -v "$NIM_WORKSPACE:/opt/nim/workspace" \
-    -p 127.0.0.1:8000:8000 "$IMAGE" >/dev/null
+    "${publish[@]}" "$IMAGE" >/dev/null
   for _ in $(seq 1 60); do
     if probe; then
       echo "ready: $SERVED_NAME on $URL"
