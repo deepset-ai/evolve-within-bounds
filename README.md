@@ -35,7 +35,7 @@ There are two benchmarks:
 | [`docs/`](docs/) | DGX Spark setup, one runbook per benchmark, and the architecture |
 | [`src/security_agent/`](src/security_agent/) | the Python package: the self-improvement loop the benchmarks share (`optimize/`), the repository scan agent and its benchmark task (`synthetic/`), the model servers' smoke check, the PrimeVul data; the PrimeVul agent and the NeMo Gym environment follow |
 | [`agents/`](agents/) | the agents behind the results: the seed and the improved agents for each benchmark |
-| [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, smoke check |
+| [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, smoke check; and Qdrant, for PrimeVul's knowledge base |
 | [`sandbox/`](sandbox/) | the OpenShell sandbox, created through NemoClaw, that the synthetic benchmark's scans run in: the image, its policy, the inference route |
 | [`gym/`](gym/) | the NeMo Gym environment for PrimeVul |
 | [`data/`](data/) | PrimeVul pair-id manifests and the synthetic custom-component dataset |

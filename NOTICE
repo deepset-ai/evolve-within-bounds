@@ -18,7 +18,12 @@ Software
 - NVIDIA NIM containers: NVIDIA's terms, to verify
 - NVIDIA NemoClaw (cloned at a pinned commit and patched by sandbox/, not vendored): Apache-2.0
 - NVIDIA OpenShell (installed by NemoClaw's installer at version 0.0.106, not vendored): to verify
-- Qdrant: Apache-2.0
+- Qdrant (container image qdrant/qdrant), qdrant-haystack, fastembed and fastembed-haystack: Apache-2.0
+- agent-pack-haystack (the Advanced RAG Agent) and sentence-transformers-haystack: Apache-2.0
+- redamon (samugit83/redamon, MIT, Copyright (c) 2026 Samuele Giampieri, Ritesh Gohil): the knowledge base's
+  prompt-injection patterns, display helper and result framing (src/security_agent/knowledge_base/sanitize.py and
+  render.py) follow its agentic/tools.py at commit 380554275fdfcf177737253132bd094178314078; license text in
+  src/security_agent/knowledge_base/LICENSE-redamon
 - tonyd2wild/Qwen3.8-Flash-Next-NVFP4-DGX-Spark benchmark harness (fetched at a pinned commit, not vendored): to verify
 - youcom-haystack and typesafe-haystack (deepset-ai/haystack-core-integrations), used by cve-triage/: Apache-2.0
 - typesafe-sdk, used by cve-triage/: MIT
@@ -37,4 +42,10 @@ Models
 Datasets
 - PrimeVul (DLVulDet/PrimeVul, mirrored as colin/PrimeVul on the Hugging Face Hub): MIT. Only manifests are shipped
   (data/primevul/); the functions are downloaded from the pinned mirror by security_agent.data.primevul.
-- CWE, NVD and ExploitDB (knowledge base, fetched by scripts/data/): each source's terms, to verify
+- CWE List (The MITRE Corporation): the names and short descriptions of 969 CWE entries are shipped in
+  src/security_agent/knowledge_base/cwe_reference.json. CWE is a trademark of The MITRE Corporation. Copyright © The
+  MITRE Corporation. The CWE Terms of Use: to verify (they ask that MITRE's copyright designation and the terms be
+  reproduced in any copy)
+- SEI CERT C Coding Standard (cmu-sei/secure-coding-standards, Carnegie Mellon University Software Engineering
+  Institute): downloaded at a pinned commit when the knowledge base is built, not redistributed; text under
+  CC BY 4.0, to verify

@@ -14,8 +14,17 @@ authors = [{ name = "deepset GmbH", email = "info@deepset.ai" }]
 dependencies = []
 
 [project.optional-dependencies]
-# Downloading the pinned PrimeVul files (security_agent.data.primevul).
-primevul = ["huggingface_hub>=0.24"]
+# PrimeVul: downloading the pinned files (security_agent.data.primevul) and the agents' knowledge base
+# (security_agent.knowledge_base). The knowledge base's models need torch.
+primevul = [
+  "agent-pack-haystack==0.0.1",          # the knowledge-base tool's retrieval sub-agent
+  "fastembed-haystack>=1.4",             # BM25 as a sparse vector
+  "haystack-ai==3.0.0",
+  "huggingface_hub>=0.24",
+  "qdrant-haystack>=10.4,<11",
+  "sentence-transformers-haystack>=0.1", # the dense embedder and the cross-encoder
+  "torch",                               # CPU-only on Linux, see tool.uv.sources: the knowledge base runs on the CPU
+]
 # The `hf` command that serving/qwen3.8-flash-next/serve.sh setup downloads the pinned checkpoint with.
 serving = ["huggingface_hub>=0.34"]
 # The repository scan agent and the self-improvement loop on the synthetic benchmark (security_agent.synthetic).
@@ -26,6 +35,15 @@ synthetic = [
   "pyyaml>=6.0",
   "vllm-haystack>=2.0.0",
 ]
+
+[tool.uv.sources]
+# PyPI's Linux torch pulls several GB of CUDA libraries; the knowledge base's models run on the CPU.
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [project.scripts]
 security-agent = "security_agent.cli:main"
@@ -51,15 +69,19 @@ integration = 'pytest --maxfail=5 -m "integration" {args:tests}'
 types = "mypy --install-types --non-interactive --cache-dir=.mypy_cache/ {args:src}"
 
 [tool.hatch.envs.primevul]
-# The PrimeVul files the experiments used, rebuilt from the pinned upstream mirror (data/primevul/).
+# The PrimeVul files the experiments used, rebuilt from the pinned upstream mirror (data/primevul/), and the agents'
+# knowledge base.
 installer = "uv"
 features = ["primevul"]
+dependencies = ["pytest"]
 
 [tool.hatch.envs.primevul.scripts]
 fetch = "python -m security_agent.data.primevul fetch {args}"
 build = "python -m security_agent.data.primevul build {args}"
 verify = "python -m security_agent.data.primevul verify {args}"
 manifest = "python -m security_agent.data.primevul manifest {args}"
+qdrant = "docker compose -f serving/qdrant/compose.yaml {args}"
+test = "pytest tests/primevul {args}"
 
 [tool.hatch.envs.serving]
 # The local model servers (serving/). Running serve.sh through these scripts puts `hf` on the PATH.
@@ -224,6 +246,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/security_agent/knowledge_base/prompts.py" = ["E501"]  # the prompt is kept byte for byte as it ran
 "tests/**" = [
   "ANN",     # flake8-annotations
   "ARG",     # flake8-unused-arguments

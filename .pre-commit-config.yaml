@@ -34,6 +34,7 @@ repos:
     hooks:
       - id: codespell
         args: ["--toml", "pyproject.toml"]
+        exclude: cwe_reference\.json$ # MITRE's text, kept as published
         additional_dependencies:
           - tomli
 

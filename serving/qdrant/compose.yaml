@@ -1,0 +1,25 @@
+# Qdrant, the document store of the PrimeVul agents' knowledge base.
+#
+#   hatch run primevul:qdrant up -d     # docker compose -f serving/qdrant/compose.yaml up -d
+#   hatch run primevul:kb build
+#
+# Pinned: a Qdrant upgrade can change scoring internals. Bound to localhost, without an API key: it holds public
+# reference text only. The collection survives `down` in the named volume.
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.0
+    container_name: security-agent-qdrant
+    ports:
+      - "127.0.0.1:6333:6333"   # REST, where the agents' search_security_kb tool connects
+      - "127.0.0.1:6334:6334"   # gRPC
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  qdrant_storage:

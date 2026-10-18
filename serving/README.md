@@ -26,3 +26,8 @@ It checks what the agents rely on: a plain answer, reasoning in its own field, a
 binds and holds, answers that follow a JSON schema, a tool call with a long argument, a short tool loop over a sample
 repository, and 8 parallel requests. It uses only the Python standard library, so
 `python3 -m security_agent.serving.smoke` with `src/` on `PYTHONPATH` works without Hatch.
+
+## Qdrant
+
+[`qdrant/compose.yaml`](qdrant/compose.yaml) runs Qdrant 1.19.0, the document store of the PrimeVul agents' knowledge
+base, on `127.0.0.1:6333`: `hatch run primevul:qdrant up -d`. It needs no GPU.
