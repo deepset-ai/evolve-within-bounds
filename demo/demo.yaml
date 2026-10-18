@@ -1,0 +1,37 @@
+# The live demo: one iteration of the self-improvement loop on the synthetic benchmark, cut down to under 10 minutes.
+# The loop is the one docs/synthetic.md runs (security_agent.optimize); only the sizes below differ.
+
+reference: agents/synthetic/seed            # the starting candidate (relative to the repository)
+# One training pair, measured before the demo (prepare.sh). Chosen for short scans, and because the seed gets it wrong,
+# so the optimizer has a failure to work on: it flags the fixed twin too ("Citation title and URL are embedded without
+# escaping", CWE-79).
+train_pair: hvbench/pair-synth22-01
+# The repository the deployed agent scans at the end: the vulnerable member of a validation pair, so neither the loop nor
+# the optimizer has seen it. Chosen for a short scan ("Lookup identifier is formatted into the statement", CWE-89).
+scan_instance: instance-dd5e249e1c8975b691d9
+sandbox: security-agent                     # the OpenShell sandbox (sandbox/sandbox.sh create)
+model_config: model.yaml                    # src/security_agent/synthetic/config/model.yaml
+prepared_dir: runs/demo/prepared            # what prepare.sh measured; every run starts from a copy
+live_dir: runs/demo/live
+
+# The experiment, as security_agent.optimize.loop.Experiment reads it.
+iterations: 1
+gpu_hours: 2
+seed: 20261022
+concurrency: 8
+min_reasoning_reads: 1                      # the optimizer must look at what the agent did before it submits
+proposer:
+  thinking_budget: 1024                     # the full loop gives the optimizer 4096 per reply and 60 steps
+  max_tokens: 8192
+  temperature: 0.6
+  max_steps: 12
+  step_reminder: true                       # at 3 and 1 steps left: submit
+  nudges: 1
+rules:                                      # as in the full loop (src/security_agent/synthetic/config/loop.yaml)
+  prefill_tps: 3000
+  decode_tps: 110
+  max_gpu_minutes_per_repo: 6
+  max_findings_per_repo: 10
+  cost_abort_slack: 1.2
+  abort_behind: 4
+  max_tool_error_rate: 0.05

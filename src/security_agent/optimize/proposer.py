@@ -39,6 +39,8 @@ REMINDER = (
 EMPTY_REPLY = "(the model returned no text)"
 
 Proposer = Callable[[Workspace, list[str], Path], tuple[Submission | None, dict[str, Any]]]
+# Called after each of the optimizer's tool calls with the tool's name, its arguments and its result (or the error).
+ToolObserver = Callable[[str, dict[str, Any], str], None]
 
 
 def step_reminder(max_steps: int) -> Any:
@@ -104,13 +106,36 @@ def _exit_tools(workspace: Workspace) -> list:
     return tools
 
 
-def agent_proposer(model: dict[str, Any], settings: dict[str, Any], system: str) -> Proposer:
+def _observed(tools: list, observer: ToolObserver | None) -> list:
+    """The tools, each reporting its calls to `observer` (refusals and errors too)."""
+    if observer is None:
+        return tools
+    observed = []
+    for tool in tools:
+
+        def call(*args: Any, _f: Callable[..., str] = tool.function, _name: str = tool.name, **kwargs: Any) -> str:
+            try:
+                result = _f(*args, **kwargs)
+            except Exception as exc:
+                observer(_name, kwargs, f"{type(exc).__name__}: {exc}")
+                raise
+            observer(_name, kwargs, result)
+            return result
+
+        observed.append(dataclasses.replace(tool, function=call))
+    return observed
+
+
+def agent_proposer(
+    model: dict[str, Any], settings: dict[str, Any], system: str, observer: ToolObserver | None = None
+) -> Proposer:
     """
     The optimizer: a Haystack Agent with the workspace's tools.
 
     :param model: the model server's settings.
     :param settings: the `proposer` section of the loop's config.
     :param system: its system prompt, from the task.
+    :param observer: called after each tool call, e.g. to show the turn as it happens.
     """
 
     def propose(workspace: Workspace, context: list[str], trajectory: Path) -> tuple[Submission | None, dict[str, Any]]:
@@ -128,7 +153,7 @@ def agent_proposer(model: dict[str, Any], settings: dict[str, Any], system: str)
             Agent(
                 hooks=hooks,
                 chat_generator=generator,
-                tools=_exit_tools(workspace),
+                tools=_observed(_exit_tools(workspace), observer),
                 system_prompt=system,
                 exit_conditions=["submit_candidate", "finish", "text"],
                 max_agent_steps=int(settings["max_steps"]),

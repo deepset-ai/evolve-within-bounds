@@ -245,6 +245,7 @@ class Experiment:
         self.gpu_seconds = 0.0
         self.stop_reason: str | None = None
         self.decision: dict[str, Any] | None = None
+        self._prepared = False
         if workspace_options is None:
             workspace_options = task.workspace_options(train, self.best, self.leakage.add)
         self.workspace_options = workspace_options
@@ -560,16 +561,27 @@ class Experiment:
         return [self._static_context(), self._outcomes_context(), self._turn_context()]
 
     # -- the experiment ----------------------------------------------------------------------------
-    def run(self) -> dict[str, Any]:
-        """Run or resume the experiment; returns the decision."""
-        self.run_dir.mkdir(parents=True, exist_ok=True)
-        if self.journal_path.is_file():
-            self._resume()
-        else:
-            self._preregister()
-        self.leakage.add(self.task.training_material(self.train))
+    def prepare(self) -> Measurement:
+        """
+        Pre-register the experiment and measure the starting candidate, or resume both; returns that measurement.
+
+        `run()` starts with this. Called alone, it leaves an experiment that a later `run()` resumes at its first turn.
+        """
+        if not self._prepared:
+            self.run_dir.mkdir(parents=True, exist_ok=True)
+            if self.journal_path.is_file():
+                self._resume()
+            else:
+                self._preregister()
+            self.leakage.add(self.task.training_material(self.train))
+            self._prepared = True
         if self.reference is None:
             self._measure_reference()
+        return self.ref
+
+    def run(self) -> dict[str, Any]:
+        """Run or resume the experiment; returns the decision."""
+        self.prepare()
         self._repair_outages()
         for outcome in self.outcomes:
             if outcome.gates is None:

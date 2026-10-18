@@ -41,6 +41,7 @@ There are two benchmarks:
 | [`data/`](data/) | PrimeVul pair-id manifests and the synthetic custom-component dataset |
 | [`scripts/`](scripts/) | setup, data preparation, evaluation, one entry point per experiment |
 | [`results/`](results/) | what came out of our runs, and how each number was produced |
+| [`demo/`](demo/) | the talk's live demo: one iteration of the self-improvement loop on the synthetic benchmark, approved by a person and deployed into the sandbox, in about 3 to 5 minutes |
 | [`tests/`](tests/) | unit tests that run without a GPU |
 | [`cve-triage/`](cve-triage/) | a separate Haystack agent that triages the security advisories for a Python repository's dependencies. It calls cloud APIs (OpenAI, You.com, Fastino), so the bounds above don't apply to it |
 
@@ -55,6 +56,7 @@ There are two benchmarks:
 - **Data:** both benchmarks already build with one command each, see [`data/`](data/).
 - **Synthetic custom components:** see [`docs/synthetic.md`](docs/synthetic.md). Serve Flash-Next with vLLM, create
   the sandbox, scan with both agents inside it, run the loop, then approve an improvement and deploy it there.
+- **The demo:** see [`demo/README.md`](demo/README.md).
 - **PrimeVul:** see [`docs/primevul.md`](docs/primevul.md). Build the benchmark file and the knowledge base, serve
   Flash-Next with vLLM, measure both agents on the test pairs, run the prompt loop, and roll the agents out with NeMo
   Gym.

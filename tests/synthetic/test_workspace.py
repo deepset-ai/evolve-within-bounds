@@ -176,3 +176,16 @@ def test_step_reminder_tells_the_optimizer_to_submit():
         agent.run(messages=[ChatMessage.from_user("Files (1):\nsrc/a.py (1 lines)")])
         texts = [json.dumps(r["messages"]) for r in server.requests]
     assert "steps in this turn are left" not in texts[0] and "[1 of your 2 steps in this turn are left." in texts[-1]
+
+
+def test_the_observer_sees_every_tool_call_and_refusal(tmp_path):
+    from security_agent.optimize.proposer import _observed
+
+    ws = _workspace(tmp_path)
+    calls = []
+    tools = {t.name: t for t in _observed(_exit_tools(ws), lambda name, args, result: calls.append((name, args)))}
+    tools["list_files"].function()
+    with pytest.raises(Exception, match="Not validated"):
+        tools["submit_candidate"].function(rationale="x", expected_revision=ws.revision)
+    assert [name for name, _ in calls] == ["list_files", "submit_candidate"]
+    assert calls[1][1]["rationale"] == "x"

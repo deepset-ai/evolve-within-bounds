@@ -332,3 +332,15 @@ def test_loop_config_and_system_prompt():
         and "`security_agent.synthetic.agent.CodeStep`" in prompt
     )
     assert "Allowed component types" in prompt  # the contract
+
+
+def test_prepare_measures_the_start_and_run_resumes_from_it(tmp_path):
+    seen = []
+    prepared = _experiment(tmp_path, [], seen, iterations=1)
+    m = prepared.prepare()
+    assert m.right == 14 and [label for label, _ in seen] == ["reference"]
+    assert not (tmp_path / "opt-1/decision.json").exists()  # prepared, not finished
+    resumed = _experiment(tmp_path, [20], seen, iterations=1)
+    decision = resumed.run()
+    assert [label for label, _ in seen].count("reference") == 1  # measured once, in prepare
+    assert decision["best"] == resumed.outcomes[0].candidate_id
