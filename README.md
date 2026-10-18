@@ -33,7 +33,7 @@ There are two benchmarks:
 | Folder | What it holds |
 |---|---|
 | [`docs/`](docs/) | DGX Spark setup, one runbook per benchmark, and the architecture |
-| [`src/security_agent/`](src/security_agent/) | the Python package: the self-improvement loop the benchmarks share (`optimize/`), the repository scan agent and its benchmark task (`synthetic/`), the model servers' smoke check, the PrimeVul data; the PrimeVul agent and the NeMo Gym environment follow |
+| [`src/security_agent/`](src/security_agent/) | the Python package: the self-improvement loop the benchmarks share (`optimize/`), the repository scan agent and its benchmark task (`synthetic/`), the PrimeVul triage agent's runner and scoring (`primevul/`) and its knowledge base (`knowledge_base/`), the model servers' smoke check, the PrimeVul data |
 | [`agents/`](agents/) | the agents behind the results: the seed and the improved agents for each benchmark |
 | [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, smoke check; and Qdrant, for PrimeVul's knowledge base |
 | [`sandbox/`](sandbox/) | the OpenShell sandbox, created through NemoClaw, that the synthetic benchmark's scans run in: the image, its policy, the inference route |
@@ -55,7 +55,8 @@ There are two benchmarks:
 - **Data:** both benchmarks already build with one command each, see [`data/`](data/).
 - **Synthetic custom components:** see [`docs/synthetic.md`](docs/synthetic.md). Serve Flash-Next with vLLM, create
   the sandbox, scan with both agents inside it, run the loop, then approve an improvement and deploy it there.
-- **PrimeVul:** see `docs/primevul.md` (coming).
+- **PrimeVul:** see [`docs/primevul.md`](docs/primevul.md). Build the benchmark file and the knowledge base, serve
+  Flash-Next with vLLM, and measure both agents on the test pairs.
 
 ## Development
 

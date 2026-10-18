@@ -89,6 +89,11 @@ setup() {
 }
 
 start() {
+  # A recipe checkout without our patch starts a server under another name and on all interfaces.
+  if ! git -C "$RECIPE_DIR" apply --reverse --check "$PATCH" 2>/dev/null; then
+    echo "$RECIPE_DIR does not carry our patch: run '$0 setup', or set RECIPE_DIR to the checkout setup prepared" >&2
+    exit 1
+  fi
   if port_busy; then
     echo "another server already listens on $URL; stop it first" >&2
     exit 1

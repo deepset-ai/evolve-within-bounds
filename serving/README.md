@@ -30,4 +30,4 @@ repository, and 8 parallel requests. It uses only the Python standard library, s
 ## Qdrant
 
 [`qdrant/compose.yaml`](qdrant/compose.yaml) runs Qdrant 1.19.0, the document store of the PrimeVul agents' knowledge
-base, on `127.0.0.1:6333`: `hatch run primevul:qdrant up -d`. It needs no GPU.
+base, on `127.0.0.1:6333`: `hatch run primevul:qdrant up -d`. It needs no GPU. See [`docs/primevul.md`](../docs/primevul.md).

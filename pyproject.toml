@@ -14,13 +14,15 @@ authors = [{ name = "deepset GmbH", email = "info@deepset.ai" }]
 dependencies = []
 
 [project.optional-dependencies]
-# PrimeVul: downloading the pinned files (security_agent.data.primevul) and the agents' knowledge base
-# (security_agent.knowledge_base). The knowledge base's models need torch.
+# PrimeVul: downloading the pinned files (security_agent.data.primevul), the triage agents and their knowledge base
+# (security_agent.primevul, security_agent.knowledge_base). The knowledge base's models need torch.
 primevul = [
   "agent-pack-haystack==0.0.1",          # the knowledge-base tool's retrieval sub-agent
   "fastembed-haystack>=1.4",             # BM25 as a sparse vector
   "haystack-ai==3.0.0",
   "huggingface_hub>=0.24",
+  "pydantic>=2.6",
+  "pyyaml>=6.0",
   "qdrant-haystack>=10.4,<11",
   "sentence-transformers-haystack>=0.1", # the dense embedder and the cross-encoder
   "torch",                               # CPU-only on Linux, see tool.uv.sources: the knowledge base runs on the CPU
@@ -69,8 +71,8 @@ integration = 'pytest --maxfail=5 -m "integration" {args:tests}'
 types = "mypy --install-types --non-interactive --cache-dir=.mypy_cache/ {args:src}"
 
 [tool.hatch.envs.primevul]
-# The PrimeVul files the experiments used, rebuilt from the pinned upstream mirror (data/primevul/), and the agents'
-# knowledge base.
+# PrimeVul (docs/primevul.md): the files the experiments used, rebuilt from the pinned upstream mirror (data/primevul/),
+# the knowledge base and the triage agents.
 installer = "uv"
 features = ["primevul"]
 dependencies = ["pytest"]
@@ -81,6 +83,8 @@ build = "python -m security_agent.data.primevul build {args}"
 verify = "python -m security_agent.data.primevul verify {args}"
 manifest = "python -m security_agent.data.primevul manifest {args}"
 qdrant = "docker compose -f serving/qdrant/compose.yaml {args}"
+kb = "security-agent primevul kb {args}"
+run = "security-agent primevul run {args}"
 test = "pytest tests/primevul {args}"
 
 [tool.hatch.envs.serving]

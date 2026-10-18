@@ -187,3 +187,16 @@ def test_build_and_retrieve_in_memory(monkeypatch):
     assert docs[0].meta["rule_id"] == "MEM30-C"
     assert len(docs) == 3
     search.clear_agent_cache()
+
+
+def test_the_tool_reports_an_unreachable_store_instead_of_raising(monkeypatch):
+    from security_agent.knowledge_base.store import KbStoreError
+
+    def unreachable(config):
+        raise KbStoreError("Cannot reach Qdrant")
+
+    search.clear_agent_cache()
+    monkeypatch.setattr(search, "make_document_store", unreachable)
+    tool = search.SecurityKbSearch()
+    assert tool.run(query="CWE-787") == {"results": "Cannot reach Qdrant"}
+    assert tool.error == "Cannot reach Qdrant"

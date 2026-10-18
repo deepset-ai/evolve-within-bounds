@@ -47,5 +47,5 @@ Datasets
   MITRE Corporation. The CWE Terms of Use: to verify (they ask that MITRE's copyright designation and the terms be
   reproduced in any copy)
 - SEI CERT C Coding Standard (cmu-sei/secure-coding-standards, Carnegie Mellon University Software Engineering
-  Institute): downloaded at a pinned commit when the knowledge base is built, not redistributed; text under
+  Institute): downloaded at a pinned commit by `security-agent primevul kb build`, not redistributed; text under
   CC BY 4.0, to verify
