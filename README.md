@@ -56,7 +56,7 @@ There are two benchmarks:
 - **Synthetic custom components:** see [`docs/synthetic.md`](docs/synthetic.md). Serve Flash-Next with vLLM, create
   the sandbox, scan with both agents inside it, run the loop, then approve an improvement and deploy it there.
 - **PrimeVul:** see [`docs/primevul.md`](docs/primevul.md). Build the benchmark file and the knowledge base, serve
-  Flash-Next with vLLM, and measure both agents on the test pairs.
+  Flash-Next with vLLM, measure both agents on the test pairs, and run the prompt loop.
 
 ## Development
 

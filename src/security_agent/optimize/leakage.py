@@ -9,9 +9,10 @@ The optimizer reads failure digests, which show training file paths, repository 
 prompt that repeats them raises the training score and nothing else. The check is applied when the optimizer submits,
 so a leaking draft is refused before it costs a scan, and again when the candidate is gated.
 
-Checked, case-insensitively, against everything the optimizer has been shown (`digest.shown_material`):
-- a planted file's path or basename (`__init__.py` excepted);
-- a repository name, as a whole word (names under 4 characters excepted);
+Checked against everything the optimizer has been shown (the task's `shown_material` and `training_material`):
+- a planted file's path or basename (`__init__.py` excepted), case-insensitively;
+- a repository name, as a whole word (names under 4 characters excepted), case-insensitively;
+- a function name that identifies one training pair, as a whole word;
 - a run of `TITLE_WORDS` words copied from a pair title;
 - a run of `CODE_TOKENS` code tokens copied from an excerpt.
 
@@ -42,6 +43,7 @@ class Leakage:
     def __init__(self) -> None:
         self.paths: set[str] = set()
         self.repositories: set[str] = set()
+        self.names: set[str] = set()
         self.title_grams: dict[tuple[str, ...], str] = {}
         self.code_grams: set[tuple[str, ...]] = set()
 
@@ -53,6 +55,7 @@ class Leakage:
             if name not in GENERIC_BASENAMES:
                 self.paths.add(name)
         self.repositories |= {r.lower() for r in shown.get("repositories", []) if len(r) >= 4}
+        self.names |= set(shown.get("names", []))
         for title in shown.get("titles", []):
             words = _words(title)
             for i in range(len(words) - TITLE_WORDS + 1):
@@ -72,6 +75,9 @@ class Leakage:
         for repo in self.repositories:
             if re.search(rf"(?<![a-z0-9_\-]){re.escape(repo)}(?![a-z0-9_\-])", lowered):
                 hits.add(f"training repository name '{repo}'")
+        for name in self.names:
+            if re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])", text):
+                hits.add(f"training function name '{name}'")
         words = _words(text)
         for i in range(len(words) - TITLE_WORDS + 1):
             gram = tuple(words[i : i + TITLE_WORDS])

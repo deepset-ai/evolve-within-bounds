@@ -147,22 +147,11 @@ def cmd_score(args: argparse.Namespace) -> int:
 # -- loop ------------------------------------------------------------------------------------------
 
 
-def _claim_run_dir(parent: Path, prefix: str) -> Path:
-    parent.mkdir(parents=True, exist_ok=True)
-    n = 1
-    while True:
-        candidate = parent / f"{prefix}{n}"
-        try:
-            candidate.mkdir()
-            return candidate
-        except FileExistsError:
-            n += 1
-
-
 def cmd_loop_run(args: argparse.Namespace) -> int:
     """Start or resume an experiment of the self-improvement loop."""
     from security_agent.optimize.loop import Experiment
     from security_agent.optimize.proposer import agent_proposer
+    from security_agent.optimize.runs import claim_run_dir
     from security_agent.optimize.splits import pairs, subsample
     from security_agent.synthetic.task import SyntheticTask, split
 
@@ -182,7 +171,7 @@ def cmd_loop_run(args: argparse.Namespace) -> int:
             train = {name: sorted(ids)[:2] for name, ids in train.items()}
             config["iterations"] = args.iterations or 1
         runs = resolve(config.get("runs_dir", "runs/synthetic/loop"))
-        run_dir = given or _claim_run_dir(runs, "opt-smoke-" if args.smoke else "opt-")
+        run_dir = given or claim_run_dir(runs, "opt-smoke-" if args.smoke else "opt-")
     rules = config.get("rules", {})
     task = SyntheticTask(
         model_config=config.get("model_config") or "model.yaml",
@@ -213,33 +202,10 @@ def cmd_loop_run(args: argparse.Namespace) -> int:
 
 def cmd_loop_status(args: argparse.Namespace) -> int:
     """Summarize an experiment's journal."""
-    for line in (Path(args.run_dir) / "journal.jsonl").read_text(encoding="utf-8").splitlines():
-        event = json.loads(line)
-        kind, when = event["type"], event["time"]
-        if kind in ("reference", "measured") and event.get("measurement"):
-            m = event["measurement"]
-            who = "start" if kind == "reference" else event["candidate_id"][:8]
-            gates = ""
-            if kind == "measured":
-                gates = "  ELIGIBLE" if not event["gates"] else "  gates: " + "; ".join(event["gates"])
-            print(
-                f"{when}  {who:<8}  {m['right']}/{m['pairs']} pairs right  findings {m['findings']}  "
-                f"{m['seconds'] / 3600:.2f} h{gates}"
-            )
-        elif kind == "measured":
-            print(f"{when}  {event['candidate_id'][:8]}  failed: {event.get('failure')}")
-        elif kind == "candidate":
-            print(
-                f"{when}  turn {event['turn']}: {event['candidate_id'][:8]} from {event['parent_id'][:8]}: "
-                f"{event['rationale'][:200]}"
-            )
-        elif kind == "turn" and not event.get("submitted"):
-            why = event.get("finish_reason") or event.get("error") or "nothing submitted"
-            print(f"{when}  turn {event['turn']}: no candidate ({why})")
-        elif kind == "stop":
-            print(f"{when}  stop: {event['reason']}")
-        elif kind == "decision":
-            print(f"{when}  best on the training pairs: {event['decision']['best_directory']}")
+    from security_agent.optimize.runs import status_lines
+
+    for line in status_lines(Path(args.run_dir)):
+        print(line)
     return 0
 
 

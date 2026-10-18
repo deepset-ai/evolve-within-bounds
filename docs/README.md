@@ -4,7 +4,7 @@
   with vLLM, create the OpenShell sandbox, scan with the seed and the looped agent, run the self-improvement loop, and
   deploy an approved agent into the sandbox.
 - [`primevul.md`](primevul.md): the runbook for PrimeVul. Build the benchmark file and the knowledge base, serve
-  Qwen3.8 Flash-Next with vLLM, and measure the seed and the looped agent on the test pairs.
+  Qwen3.8 Flash-Next with vLLM, measure the seed and the looped agent on the test pairs, and run the prompt loop.
 
 Planned pages:
 

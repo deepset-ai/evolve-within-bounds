@@ -8,11 +8,14 @@ The `security-agent primevul` commands.
   kb build [--qdrant-url URL]
   kb query TEXT [--agent DIR] [--top-k N]
   run --agent DIR [--split train|val|test] [--pairs N] [--concurrency N] [--thinking-budget N] [--run-dir DIR]
+  loop run [--config loop.yaml] [--run-dir DIR] [--iterations N] [--gpu-hours H] [--smoke]
+  loop status --run-dir DIR
 
 `run` judges every function of the chosen pairs and prints aggregates only: paired accuracy, its factors, false
 positive rates and a budget summary. Its run directory keeps every task's record (`tasks.json`, which makes the run
 resumable), the summary (`summary.json`) and one label per pair (`pairs.jsonl`). The test split is PrimeVul's paired
-test split (`holdout` in the benchmark file).
+test split (`holdout` in the benchmark file). `loop run` is the prompt loop (`security_agent.primevul.task` on the
+shared loop, `security_agent.optimize`).
 """
 
 from __future__ import annotations
@@ -27,6 +30,7 @@ from security_agent.primevul.agent import THINKING_BUDGET
 from security_agent.primevul.tasks import DATA_FILE, REPO_ROOT
 
 RUNS_DIR = REPO_ROOT / "runs" / "primevul"
+CONFIG_DIR = Path(__file__).resolve().parent / "config"
 SEED = REPO_ROOT / "agents" / "primevul" / "seed"
 FILE_SPLIT = {"train": "train", "val": "val", "test": "holdout"}
 USAGE_KEYS = ("tool_calls", "failed_tool_calls", "tasks_at_step_cap", "forced_final_answers", "errors")
@@ -106,6 +110,79 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _resolve(path: str) -> Path:
+    """A path from a config file: absolute, or relative to the repository checkout."""
+    candidate = Path(path).expanduser()
+    return candidate if candidate.is_absolute() else REPO_ROOT / candidate
+
+
+def cmd_loop_run(args: argparse.Namespace) -> int:
+    """Start or resume an experiment of the prompt loop."""
+    import yaml
+
+    from security_agent.optimize.loop import Experiment
+    from security_agent.optimize.proposer import agent_proposer
+    from security_agent.optimize.runs import claim_run_dir
+    from security_agent.primevul.task import BENCHMARK, PrimeVulTask
+    from security_agent.primevul.tasks import load_tasks, pair_up
+
+    given = Path(args.run_dir) if args.run_dir else None
+    if given is not None and (given / "preregistration.json").is_file():
+        # Resuming: the pre-registered configuration and training pairs win over the command line.
+        data = json.loads((given / "preregistration.json").read_text(encoding="utf-8"))
+        config, train, run_dir = data["config"], data["train"], given
+    else:
+        path = Path(args.config)
+        path = path if path.parent != Path() or path.is_absolute() else CONFIG_DIR / path
+        config = yaml.safe_load(path.read_text(encoding="utf-8"))
+        pairs = sorted(pair_up(load_tasks(Path(args.data), "train", int(config["train_pairs"]))))
+        train = {BENCHMARK: pairs}
+        if args.iterations is not None:
+            config["iterations"] = args.iterations
+        if args.gpu_hours is not None:
+            config["gpu_hours"] = args.gpu_hours
+        if args.smoke:  # mechanics check: two training pairs, one candidate
+            train = {BENCHMARK: pairs[:2]}
+            config["iterations"] = args.iterations or 1
+        runs = _resolve(config.get("runs_dir", "runs/primevul/loop"))
+        run_dir = given or claim_run_dir(runs, "opt-smoke-" if args.smoke else "opt-")
+    task = PrimeVulTask(
+        _resolve(config["reference"]),
+        data=Path(args.data),
+        concurrency=int(config.get("concurrency", 4)),
+        thinking_budget=config.get("thinking_budget"),
+        log=lambda m: print(m, flush=True),
+    )
+    proposer = agent_proposer(
+        config["model"], config["proposer"], task.system_prompt(task.prompt_values(config, train))
+    )
+    experiment = Experiment(
+        run_dir,
+        config=config,
+        train=train,
+        reference=_resolve(config["reference"]),
+        proposer=proposer,
+        task=task,
+        log=lambda m: print(m, flush=True),
+    )
+    decision = experiment.run()
+    print(json.dumps({k: decision[k] for k in ("stop_reason", "best", "best_directory")}, indent=1))
+    print(
+        "Next: pick among the candidates on the validation pairs (run --split val --agent <directory>), then look at "
+        "the test pairs once with the one you picked."
+    )
+    return 0
+
+
+def cmd_loop_status(args: argparse.Namespace) -> int:
+    """Summarize an experiment's journal."""
+    from security_agent.optimize.runs import status_lines
+
+    for line in status_lines(Path(args.run_dir)):
+        print(line)
+    return 0
+
+
 def add_commands(parser: argparse.ArgumentParser) -> None:
     """The `primevul` command group."""
     sub = parser.add_subparsers(dest="command", required=True)
@@ -138,6 +215,20 @@ def add_commands(parser: argparse.ArgumentParser) -> None:
     )
     run.add_argument("--run-dir", help="default: runs/primevul/<agent>-<split>-<pairs>; an existing one is resumed")
     run.set_defaults(handler=cmd_run)
+
+    loop = sub.add_parser("loop", help="the prompt loop")
+    loop_sub = loop.add_subparsers(dest="loop_command", required=True)
+    loop_run = loop_sub.add_parser("run", help="start or resume an experiment")
+    loop_run.add_argument("--config", default="loop.yaml", help="a file in the package's config/, or a path")
+    loop_run.add_argument("--data", default=str(DATA_FILE), help="the benchmark file")
+    loop_run.add_argument("--run-dir", help="experiment directory; an existing one is resumed as pre-registered")
+    loop_run.add_argument("--iterations", type=int)
+    loop_run.add_argument("--gpu-hours", type=float)
+    loop_run.add_argument("--smoke", action="store_true", help="two training pairs, one candidate")
+    loop_run.set_defaults(handler=cmd_loop_run)
+    loop_status = loop_sub.add_parser("status", help="summarize an experiment's journal")
+    loop_status.add_argument("--run-dir", required=True)
+    loop_status.set_defaults(handler=cmd_loop_status)
 
 
 def errors() -> tuple[type[Exception], ...]:

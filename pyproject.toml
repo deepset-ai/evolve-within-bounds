@@ -26,6 +26,7 @@ primevul = [
   "qdrant-haystack>=10.4,<11",
   "sentence-transformers-haystack>=0.1", # the dense embedder and the cross-encoder
   "torch",                               # CPU-only on Linux, see tool.uv.sources: the knowledge base runs on the CPU
+  "vllm-haystack>=2.0.0",                # the prompt loop's optimizer
 ]
 # The `hf` command that serving/qwen3.8-flash-next/serve.sh setup downloads the pinned checkpoint with.
 serving = ["huggingface_hub>=0.34"]
@@ -85,6 +86,7 @@ manifest = "python -m security_agent.data.primevul manifest {args}"
 qdrant = "docker compose -f serving/qdrant/compose.yaml {args}"
 kb = "security-agent primevul kb {args}"
 run = "security-agent primevul run {args}"
+loop = "security-agent primevul loop {args}"
 test = "pytest tests/primevul {args}"
 
 [tool.hatch.envs.serving]
