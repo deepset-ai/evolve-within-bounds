@@ -1,0 +1,10 @@
+# A marker, never built or installed.
+#
+# NeMo Gym installs a server's requirements.txt as it is written only when it finds a pyproject.toml two directories
+# above the server (for gym/resources_servers/primevul, this file). Otherwise it treats the server as installed from
+# PyPI and drops every requirement that contains '../..', which is how both servers here install this repository's
+# package. Keep this file.
+[project]
+name = "evolve-within-bounds-gym-servers"
+version = "0.0.0"
+description = "Marker for NeMo Gym's server setup; never built or installed."

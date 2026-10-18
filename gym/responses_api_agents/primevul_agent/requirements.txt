@@ -1,0 +1,6 @@
+nemo-gym[dev]==0.7.0
+# Gym's Haystack harness (responses_api_agents.haystack_agent ships with nemo-gym) and what it requires.
+haystack-ai==3.0.0
+mcp-haystack==1.4.1
+# This repository's package with the PrimeVul extra: the agent files' knowledge-base tool.
+-e ../../..[primevul]

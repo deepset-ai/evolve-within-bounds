@@ -1,0 +1,86 @@
+# PrimeVul as a NeMo Gym environment: the resources server, the model server and one agent server per agent.
+#
+#   hatch run gym:eval --agent primevul_seed --input work/gym/primevul/test-100.jsonl --output runs/primevul/gym/seed.jsonl
+#
+# (`hatch run gym:eval` is `gym eval run --search-dir gym --config <this file>`.) The model server is the one
+# serving/qwen3.8-flash-next starts; Qdrant must be up with the knowledge base built (docs/primevul.md).
+
+# Each server's environment goes here (relative to the repository), not next to the server.
+uv_venv_dir: work/gym/venvs
+
+primevul:
+  resources_servers:
+    primevul:
+      entrypoint: app.py
+      domain: coding
+      verified: false
+      description: Paired vulnerability classification of PrimeVul's C/C++ functions, scored by paired accuracy
+
+policy_model:
+  responses_api_models:
+    vllm_model:
+      entrypoint: app.py
+      # The local Flash-Next server (serving/qwen3.8-flash-next) unless --model-url, --model-api-key or --model say
+      # otherwise.
+      base_url: ${oc.select:policy_base_url,"http://127.0.0.1:8000/v1"}
+      api_key: ${oc.select:policy_api_key,EMPTY}
+      model: ${oc.select:policy_model_name,qwen3.8-flash-next}
+      return_token_id_information: false
+      uses_reasoning_parser: true
+      # Earlier reasoning is not sent back with the conversation, as in our runner.
+      uses_interleaved_reasoning: false
+      chat_template_kwargs: null
+      sampling_overrides: null
+      # At most 2,048 reasoning tokens per reply, as the agents' results ran.
+      extra_body:
+        thinking_token_budget: 2048
+      default_headers: {}
+
+primevul_seed:
+  responses_api_agents:
+    primevul_agent:
+      entrypoint: app.py
+      resources_server:
+        type: resources_servers
+        name: primevul
+      model_server:
+        type: responses_api_models
+        name: policy_model
+      agent: agents/primevul/seed
+      datasets:
+      - name: example
+        type: example
+        jsonl_fpath: resources_servers/primevul/data/example.jsonl
+
+primevul_looped:
+  responses_api_agents:
+    primevul_agent:
+      entrypoint: app.py
+      resources_server:
+        type: resources_servers
+        name: primevul
+      model_server:
+        type: responses_api_models
+        name: policy_model
+      agent: agents/primevul/looped
+      datasets:
+      - name: example
+        type: example
+        jsonl_fpath: resources_servers/primevul/data/example.jsonl
+
+# Rollouts reach an agent through an environment server; these relay each task to the agent unchanged.
+primevul_seed_environment_server:
+  environment_servers:
+    legacy_agent:
+      entrypoint: app.py
+      agent_server:
+        type: responses_api_agents
+        name: primevul_seed
+
+primevul_looped_environment_server:
+  environment_servers:
+    legacy_agent:
+      entrypoint: app.py
+      agent_server:
+        type: responses_api_agents
+        name: primevul_looped

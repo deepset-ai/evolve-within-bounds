@@ -87,7 +87,27 @@ qdrant = "docker compose -f serving/qdrant/compose.yaml {args}"
 kb = "security-agent primevul kb {args}"
 run = "security-agent primevul run {args}"
 loop = "security-agent primevul loop {args}"
+gym = "security-agent primevul gym {args}"
 test = "pytest tests/primevul {args}"
+
+[tool.hatch.envs.gym]
+# NeMo Gym rollouts of the PrimeVul agents (gym/, docs/primevul.md). nemo-gym needs Python 3.13.14 or newer, which
+# uv finds or downloads; Gym then gives each of its servers an environment of its own.
+installer = "uv"
+skip-install = true
+dependencies = ["uv>=0.8"]
+
+[tool.hatch.envs.gym.scripts]
+gym = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym {args}'
+collect = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym eval run --no-serve --search-dir gym --config gym/resources_servers/primevul/configs/primevul.yaml {args}'
+start = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env start --search-dir gym --config gym/resources_servers/primevul/configs/primevul.yaml {args}'
+prefetch = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env prefetch --search-dir gym --config gym/resources_servers/primevul/configs/primevul.yaml'
+# The servers' own tests, each in the environment Gym builds for it.
+test = [
+  'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env test --search-dir gym --resources-server primevul ++uv_venv_dir=work/gym/venvs',
+  "prefetch",
+  "PYTHONPATH=gym work/gym/venvs/responses_api_agents/primevul_agent/.venv/bin/python -m pytest -q -p no:cacheprovider gym/responses_api_agents/primevul_agent/tests",
+]
 
 [tool.hatch.envs.serving]
 # The local model servers (serving/). Running serve.sh through these scripts puts `hf` on the PATH.
@@ -253,6 +273,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "src/security_agent/knowledge_base/prompts.py" = ["E501"]  # the prompt is kept byte for byte as it ran
+"gym/**/tests/**" = ["D"]
 "tests/**" = [
   "ANN",     # flake8-annotations
   "ARG",     # flake8-unused-arguments

@@ -1,7 +1,8 @@
 # Runbook: PrimeVul
 
 This runbook reruns our PrimeVul results on one DGX Spark: build the benchmark file and the knowledge base, serve the
-model, measure the two agents on the test pairs, and run the prompt loop that turned the seed into the looped agent.
+model, measure the two agents on the test pairs, run the prompt loop that turned the seed into the looped agent, and
+roll the agents out as a NeMo Gym environment.
 
 ## What is being measured
 
@@ -170,11 +171,47 @@ Take a candidate only if it has more validation pairs right than the seed, and l
 candidate only. The run directory keeps every turn's conversation (`turns/`), every candidate (`candidates/`) and every
 measurement (`measure/`), and resumes when started again with the same `--run-dir`.
 
+## 6. Roll out the agents with NeMo Gym
+
+The same agents as [NeMo Gym](https://github.com/NVIDIA-NeMo/Gym) rollouts ([`gym/`](../gym/)): a resources server that
+scores each rollout with this repository's scoring, Gym's vLLM model server in front of Flash-Next, and one agent server
+per agent that runs its agent file through Gym's Haystack harness. Flash-Next and Qdrant must be up (steps 2 and 3).
+
+```bash
+hatch run primevul:gym export --split test --pairs 100   # work/gym/primevul/test-100.jsonl
+hatch run gym:start                                      # the servers; the first start builds their environments
+```
+
+The first start builds an environment for each server in `work/gym/venvs/`, a few minutes; later starts take seconds.
+
+In a second terminal, once the first reports `All 6 / 6 servers ready`:
+
+```bash
+hatch run gym:collect --agent primevul_seed   --input work/gym/primevul/test-100.jsonl --output runs/primevul/gym/seed-test-100.jsonl
+hatch run gym:collect --agent primevul_looped --input work/gym/primevul/test-100.jsonl --output runs/primevul/gym/looped-test-100.jsonl
+```
+
+`collect` prints the key metrics: paired accuracy, the false positive rate per pair, the parse-error rate, the split and
+right-way rates, and the mean reward, which is the share of functions judged right. Next to the rollouts, Gym writes the
+full metrics (`*_aggregate_metrics.json`). `--num-repeats N` judges every function N times; paired accuracy is computed
+for each repeat and averaged. Stop the servers with Ctrl-C in the first terminal. `hatch run gym:test` runs the servers'
+own tests.
+
+**What is the same as `primevul run`, and what is not.** The agent files (prompt, tool, budgets), the user message, the
+thinking budget, the knowledge-base tool and the scoring are the same. Gym's harness has no fallback for a missing
+answer: our runner asks once more when a reply has no verdict, and Gym's harness does not, so expect a few more parse
+errors. Our reported numbers come from `primevul run`.
+
 ## Troubleshooting
 
 - **Every briefing says "Cannot reach Qdrant" or "No knowledge base":** the tool reports instead of failing, so the run
   goes on without it. Start Qdrant and build the knowledge base (step 2); `kb query` checks both.
 - **The model downloads fail offline:** fill `HF_HOME` once with network access, then set `KB_OFFLINE=1`.
+- **`gym:start` stops with `address already in use` on port 11000:** another service holds the port of Gym's head
+  server. Pick a free one and pass it to both commands: `hatch run gym:start ++head_server.port=11100`, and the same
+  `++head_server.port=11100` after `gym:collect`.
+- **Gym's servers keep running after `gym:start` ended:** stop the processes that run from `work/gym/venvs/`, for
+  example `pkill -f work/gym/venvs`.
 - **`PermissionError` under `~/.cache/huggingface`:** a container created the cache as root. Point `HF_HOME` at a
   directory you own, for example `export HF_HOME=$HOME/hf`, for `build` and the knowledge base alike.
 - **Many parse errors or forced answers:** check that the server enforces the thinking budget (`hatch run

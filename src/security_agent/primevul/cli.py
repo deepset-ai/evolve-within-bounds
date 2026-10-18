@@ -10,12 +10,13 @@ The `security-agent primevul` commands.
   run --agent DIR [--split train|val|test] [--pairs N] [--concurrency N] [--thinking-budget N] [--run-dir DIR]
   loop run [--config loop.yaml] [--run-dir DIR] [--iterations N] [--gpu-hours H] [--smoke]
   loop status --run-dir DIR
+  gym export [--split train|val|test] [--pairs N] [--out FILE]
 
 `run` judges every function of the chosen pairs and prints aggregates only: paired accuracy, its factors, false
 positive rates and a budget summary. Its run directory keeps every task's record (`tasks.json`, which makes the run
 resumable), the summary (`summary.json`) and one label per pair (`pairs.jsonl`). The test split is PrimeVul's paired
 test split (`holdout` in the benchmark file). `loop run` is the prompt loop (`security_agent.primevul.task` on the
-shared loop, `security_agent.optimize`).
+shared loop, `security_agent.optimize`). `gym export` writes the chosen pairs as NeMo Gym rows (gym/).
 """
 
 from __future__ import annotations
@@ -183,6 +184,20 @@ def cmd_loop_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_gym_export(args: argparse.Namespace) -> int:
+    """Write the chosen pairs as NeMo Gym rows."""
+    from security_agent.primevul.gym import export
+
+    out = (
+        Path(args.out)
+        if args.out
+        else REPO_ROOT / "work" / "gym" / "primevul" / f"{args.split}-{args.pairs or 'all'}.jsonl"
+    )
+    count = export(Path(args.data), FILE_SPLIT[args.split], out, args.pairs)
+    print(f"{count} rows -> {out}")
+    return 0
+
+
 def add_commands(parser: argparse.ArgumentParser) -> None:
     """The `primevul` command group."""
     sub = parser.add_subparsers(dest="command", required=True)
@@ -229,6 +244,15 @@ def add_commands(parser: argparse.ArgumentParser) -> None:
     loop_status = loop_sub.add_parser("status", help="summarize an experiment's journal")
     loop_status.add_argument("--run-dir", required=True)
     loop_status.set_defaults(handler=cmd_loop_status)
+
+    gym = sub.add_parser("gym", help="the NeMo Gym environment (gym/)")
+    gym_sub = gym.add_subparsers(dest="gym_command", required=True)
+    gym_export = gym_sub.add_parser("export", help="write the chosen pairs as Gym rows, for `gym eval run --input`")
+    gym_export.add_argument("--split", choices=tuple(FILE_SPLIT), default="test")
+    gym_export.add_argument("--pairs", type=int, help="the first N pairs of the split, in file order (default: all)")
+    gym_export.add_argument("--data", default=str(DATA_FILE), help="the benchmark file")
+    gym_export.add_argument("--out", help="default: work/gym/primevul/<split>-<pairs>.jsonl")
+    gym_export.set_defaults(handler=cmd_gym_export)
 
 
 def errors() -> tuple[type[Exception], ...]:

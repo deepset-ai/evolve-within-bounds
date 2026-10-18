@@ -20,6 +20,7 @@ Software
 - NVIDIA OpenShell (installed by NemoClaw's installer at version 0.0.106, not vendored): to verify
 - Qdrant (container image qdrant/qdrant), qdrant-haystack, fastembed and fastembed-haystack: Apache-2.0
 - agent-pack-haystack (the Advanced RAG Agent) and sentence-transformers-haystack: Apache-2.0
+- NVIDIA NeMo Gym (nemo-gym 0.7.0, installed from PyPI by gym/, not vendored) and mcp-haystack: Apache-2.0
 - redamon (samugit83/redamon, MIT, Copyright (c) 2026 Samuele Giampieri, Ritesh Gohil): the knowledge base's
   prompt-injection patterns, display helper and result framing (src/security_agent/knowledge_base/sanitize.py and
   render.py) follow its agentic/tools.py at commit 380554275fdfcf177737253132bd094178314078; license text in
