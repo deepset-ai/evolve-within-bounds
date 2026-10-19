@@ -98,6 +98,13 @@ without a Spark. `replay.sh` needs only Python 3; use a terminal at least 110 co
 recorded answer; without a terminal (output redirected) it plays as recorded. A new recording replaces the old one;
 commit it to share it.
 
+## The GUI
+
+[`gui/`](../gui/) is a web page around the project: how the agent evolved, the demo (live
+or recorded) next to its steps in plain words, what the evolved agent reported on real Haystack integrations, and
+pairs of real C functions from PrimeVul to guess at before the agent's verdicts are shown. `hatch run synthetic:gui`;
+see [`gui/README.md`](../gui/README.md).
+
 ## Choosing another pair
 
 [`demo.yaml`](demo.yaml) names the training pair (`train_pair`) and the repository of the final scan (`scan_instance`).

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evolve Within Bounds</title>
+<link rel="stylesheet" href="/static/gui.css">
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+<header class="top">
+  <div class="brand">
+    <img class="wordmark" src="/static/deepset.png" alt="deepset">
+    <div class="titles">
+      <h1 class="title">Evolve Within Bounds</h1>
+      <p class="subtitle">A security agent that improves itself, on one DGX Spark</p>
+    </div>
+  </div>
+  <nav>
+    <button class="tab-button active" data-tab="demo">Watch it improve</button>
+    <button class="tab-button" data-tab="scan">Scan an integration</button>
+    <button class="tab-button" data-tab="pairs">Spot the vulnerability</button>
+    <button class="tab-button" data-tab="evolution">How the agent evolved</button>
+  </nav>
+  <div id="status" class="status" title="The DGX Spark's model server and sandbox">Checking the DGX Spark</div>
+</header>
+
+<main>
+  <!-- 1. How the agent evolved -->
+  <section id="tab-evolution" class="tab">
+    <div class="title-row">
+      <div class="intro">
+        <h2>How the agent evolved</h2>
+        <p>
+          An AI optimizer rewrote a deliberately weak security agent seven times. Each version was tested on pairs of small
+          code repositories: one with a vulnerability we planted, and its fixed twin. A pair counts when the agent
+          <strong>finds the planted vulnerability</strong> and <strong>leaves the fixed code alone</strong>.
+        </p>
+      </div>
+      <div class="result">
+        <p class="result-head">On <span id="n-test"></span> test pairs nothing in the loop had seen, from the start to version 4</p>
+        <div class="kpis">
+          <div class="kpi">
+            <span class="label">Pairs right</span>
+            <span class="figures"><span id="test-from" class="from"></span><span class="arrow">→</span><span id="test-to"></span></span>
+          </div>
+          <div class="kpi">
+            <span class="label">Fixed twins flagged by mistake</span>
+            <span class="figures"><span id="alarm-from" class="from"></span><span class="arrow">→</span><span id="alarm-to"></span><span class="unit">of <span id="n-test-twins"></span></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="legend">
+          <span><i class="dot train"></i><span id="legend-train">pairs the optimizer learns from</span></span>
+          <span><i class="dot val"></i><span id="legend-val">held-out pairs it never sees</span></span>
+          <span><i class="line"></i>best so far on the learning pairs</span>
+        </div>
+        <button id="replay-chart">Replay</button>
+      </div>
+      <div class="chart-body">
+        <svg id="chart" viewBox="0 0 1000 540" role="img" aria-label="Pairs right per version of the agent"></svg>
+        <aside id="detail" class="detail" aria-label="What the optimizer changed"></aside>
+      </div>
+      <div class="chart-foot">
+        <p>Version 4 is the one we present: it has the most held-out pairs right (<span id="n-picked"></span>). Versions are
+          never picked on the pairs the optimizer learns from. <span id="note"></span></p>
+        <p class="hint">Point at a version to see what the optimizer changed; click to keep it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Watch it improve -->
+  <section id="tab-demo" class="tab active">
+    <div class="intro">
+      <h2>Watch it improve</h2>
+      <p>One round of the loop, from a weak agent to an improvement a person approves: about 3 to 5 minutes.</p>
+    </div>
+    <div class="demo-grid">
+      <aside class="steps">
+        <ol id="step-list">
+          <li data-step="1"><b>The task</b><span>A benchmark of small code repositories, each with a planted vulnerability and a fixed twin.</span></li>
+          <li data-step="2"><b>Where it starts</b><span>The starting agent's result on one training pair, and where it went wrong.</span></li>
+          <li data-step="3"><b>The optimizer at work</b><span>An AI optimizer reads what the agent did and rewrites its instructions.</span></li>
+          <li data-step="4"><b>What changed</b><span>The change, line by line, like a code review.</span></li>
+          <li data-step="5"><b>Testing the change</b><span>The new version scans the same pair again, inside a sandbox.</span></li>
+          <li data-step="6"><b>A person decides</b><span>Only an improvement is offered, and only a person can deploy it.</span></li>
+          <li data-step="7"><b>The result</b><span>The deployed agent scans a repository it has never seen.</span></li>
+        </ol>
+        <p id="demo-note" class="note"></p>
+      </aside>
+      <div class="terminal" data-ui>
+        <div class="terminal-bar">
+          <span id="terminal-title" class="terminal-title">demo/run_demo.sh</span>
+          <span id="clock" class="clock"></span>
+          <div class="controls">
+            <button id="run-replay">Play the recording</button>
+            <button id="run-live">Run live</button>
+            <label class="speed">Speed
+              <select id="speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select>
+            </label>
+            <button id="stop" disabled>Stop</button>
+          </div>
+        </div>
+        <div id="idle" class="idle">
+          <p id="idle-head" class="idle-head">The recorded run</p>
+          <p id="idle-text">Click a step to jump to it, or play the recording.</p>
+        </div>
+        <pre id="term" class="term"></pre>
+        <div id="approval" class="approval hidden" role="dialog" aria-labelledby="approval-question">
+          <p id="approval-question">The new version passed every check. Deploy it into the sandbox?</p>
+          <div class="row">
+            <button id="decline">Decline</button>
+            <button id="approve" class="primary">Approve</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Spot the vulnerability -->
+  <section id="tab-pairs" class="tab">
+    <div class="intro">
+      <h2>Spot the vulnerability</h2>
+      <p>Pairs of real C functions from <a href="https://github.com/DLVulDet/PrimeVul" target="_blank" rel="noopener noreferrer">PrimeVul</a>:
+        a function as it was before a public security fix, and the patched version. The agent judges each function on
+        its own, and a pair only counts when it calls the vulnerable one vulnerable and the patched one safe. On 100
+        held-out pairs the evolved agent gets 21 right; the agent it started from got 16. The pairs here were picked for
+        short functions, half of them ones it got right, with its verdicts from that run.</p>
+    </div>
+    <div class="pairs-grid">
+      <ul id="pairs" class="integrations" aria-label="Pairs"></ul>
+      <div id="pair-view" class="scan-view hidden">
+        <div class="scan-head">
+          <div>
+            <h3 id="pair-name"></h3>
+            <p id="pair-about" class="muted"></p>
+          </div>
+          <a id="pair-commit" class="code-link" target="_blank" rel="noopener noreferrer">See the fix on GitHub</a>
+        </div>
+        <div id="pair-question" class="pair-question">
+          <p>One of these two functions has the vulnerability. Which one?</p>
+          <div class="row">
+            <button id="guess-a">A is vulnerable</button>
+            <button id="guess-b">B is vulnerable</button>
+            <button id="reveal" class="link-button">Just show me</button>
+          </div>
+        </div>
+        <div id="functions" class="functions"></div>
+        <div id="pair-outcome" class="pair-outcome hidden"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Scan a Haystack integration -->
+  <section id="tab-scan" class="tab">
+    <div class="intro">
+      <h2>Scan a Haystack integration</h2>
+      <p>Haystack's integrations connect it to model providers, databases and tools: real code, in use every day. Pick
+        one to see what the evolved agent reported when it scanned it, inside the sandbox.</p>
+    </div>
+    <div class="scan-grid">
+      <ul id="integrations" class="integrations" aria-label="Integrations"></ul>
+      <div id="scan-view" class="scan-view hidden">
+        <div class="scan-head">
+          <div>
+            <h3 id="scan-name"></h3>
+            <p id="scan-about" class="muted"></p>
+          </div>
+          <a id="scan-code" class="code-link" target="_blank" rel="noopener noreferrer">See the code on GitHub</a>
+        </div>
+        <div id="scan-result"></div>
+        <p class="footnote">A finding is the agent's report, not a confirmed vulnerability.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="/static/gui.js"></script>
+</body>
+</html>

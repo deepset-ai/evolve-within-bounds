@@ -1,0 +1,199 @@
+{
+ "_comment": [
+  "How the repository scan agent evolved: the self-improvement loop run behind results/synthetic.md, on all the pairs",
+  "it ran on: the public synthetic benchmark and two benchmarks we can't publish, as aggregate counts only. Per version",
+  "of the agent: pairs right of the 36 training pairs the loop measured it on, and of the 47 held-out validation pairs;",
+  "fixed twins flagged on each. A pair is right when the agent reports the planted lines in the vulnerable repository",
+  "and nothing at the same lines of its fixed twin. Each version was built on the one before it. The version presented",
+  "is the one with the most validation pairs right; its test result is on 46 test pairs nothing in the loop had seen.",
+  "Per version, what the optimizer changed: our own one-line summary, the size of the change, and a few of the lines",
+  "it added (from its prompt, its tools' descriptions, its pipeline). The optimizer's own notes are not used: they cite",
+  "repositories of the benchmarks we can't publish."
+ ],
+ "train_pairs": 36,
+ "val_pairs": 47,
+ "versions": [
+  {
+   "id": "seed",
+   "label": "Start",
+   "parent": null,
+   "train": 12,
+   "val": 19,
+   "train_flagged": 8,
+   "val_flagged": 8,
+   "summary": "The starting point, written by hand and deliberately weak: a short prompt, and tools to read files and run Python."
+  },
+  {
+   "id": "c001",
+   "label": "1",
+   "parent": "seed",
+   "train": 21,
+   "val": 23,
+   "train_flagged": 7,
+   "val_flagged": 3,
+   "summary": "Looks at the whole repository, not file by file: a first pass marks risky lines everywhere, and a last check withdraws findings whose safeguard is in place.",
+   "added": 643,
+   "removed": 12,
+   "files": [
+    "prompts/system.md",
+    "pipeline.yaml",
+    "tools/hunter.py",
+    "tools/outline.py",
+    "tools/search.py",
+    "tools/verifier.py"
+   ],
+   "highlights": [
+    "Work like a diff reviewer. Real defects in this kind of code are single statements where one",
+    "specific control is missing; the rest of the repository is normal, ordinary code."
+   ]
+  },
+  {
+   "id": "c002",
+   "label": "2",
+   "parent": "c001",
+   "train": 23,
+   "val": 21,
+   "train_flagged": 1,
+   "val_flagged": 3,
+   "summary": "Compares like with like: a new tool shows how the same kind of statement is written across the repository, so the one that differs stands out.",
+   "added": 367,
+   "removed": 73,
+   "files": [
+    "prompts/system.md",
+    "pipeline.yaml",
+    "tools/diff.py",
+    "tools/hunter.py",
+    "tools/verifier.py"
+   ],
+   "highlights": [
+    "Every repository already contains the *reference form* of the operation you are looking at",
+    "Compare how one family of statements is written across the whole repository."
+   ]
+  },
+  {
+   "id": "c003",
+   "label": "3",
+   "parent": "c002",
+   "train": 28,
+   "val": 20,
+   "train_flagged": 2,
+   "val_flagged": 8,
+   "summary": "Reports as soon as it is sure instead of running out of steps, and a new tool lists the odd one out among similar statements.",
+   "added": 334,
+   "removed": 134,
+   "files": [
+    "prompts/system.md",
+    "pipeline.yaml",
+    "tools/rare.py",
+    "tools/hunter.py",
+    "tools/verifier.py"
+   ],
+   "highlights": [
+    "Report first, analyse later. You have a hard step limit and a finding you never filed helps nobody",
+    "'Odd one out' census of the repository's sink sites."
+   ]
+  },
+  {
+   "id": "c004",
+   "label": "4",
+   "parent": "c003",
+   "train": 29,
+   "val": 25,
+   "train_flagged": 4,
+   "val_flagged": 6,
+   "summary": "Adds a step that makes no model calls: it checks where the project applies its own safeguards, and where it doesn't.",
+   "added": 451,
+   "removed": 2,
+   "files": [
+    "pipeline.yaml",
+    "tools/guards.py",
+    "tools/verifier.py"
+   ],
+   "highlights": [
+    "  guards:",
+    "      code: tools/guards.py",
+    "      max_calls: 0"
+   ]
+  },
+  {
+   "id": "c005",
+   "label": "5",
+   "parent": "c004",
+   "train": 32,
+   "val": 24,
+   "train_flagged": 2,
+   "val_flagged": 5,
+   "summary": "Learns more defect patterns, such as a path check that '..' gets around, and tells real safeguards from look-alikes.",
+   "added": 275,
+   "removed": 17,
+   "files": [
+    "prompts/system.md",
+    "tools/guards.py",
+    "tools/verifier.py"
+   ],
+   "highlights": [
+    "- a containment test written in text form - `str(root / value).startswith(str(root))` - in code",
+    "  that never resolves the path: `..` segments keep the prefix, so the test passes for a path that",
+    "  steps outside the root. The test line is the finding."
+   ]
+  },
+  {
+   "id": "c006",
+   "label": "6",
+   "parent": "c005",
+   "train": 34,
+   "val": 24,
+   "train_flagged": 2,
+   "val_flagged": 3,
+   "summary": "Adds a second step without model calls, for patterns such as a secret passed on a command line or a path that escapes its folder.",
+   "added": 476,
+   "removed": 87,
+   "files": [
+    "pipeline.yaml",
+    "tools/shapes.py",
+    "tools/verifier.py"
+   ],
+   "highlights": [
+    "  shapes:",
+    "      code: tools/shapes.py",
+    "      max_calls: 0"
+   ]
+  },
+  {
+   "id": "c007",
+   "label": "7",
+   "parent": "c006",
+   "train": 32,
+   "val": 23,
+   "train_flagged": 1,
+   "val_flagged": 2,
+   "summary": "Fewer false alarms: a step without model calls withdraws findings on lines already written the safe way.",
+   "added": 263,
+   "removed": 160,
+   "files": [
+    "prompts/system.md",
+    "pipeline.yaml",
+    "tools/prune.py",
+    "tools/hunter.py",
+    "tools/verifier.py"
+   ],
+   "highlights": [
+    "call is `ast.literal_eval`, `yaml.safe_load`, `shlex.quote`, `html.escape`/the project's own",
+    "`escape_*` helper, `secure_filename`, or a temporary-file helper is correct code - do NOT report it"
+   ]
+  }
+ ],
+ "presented": {
+  "id": "c004",
+  "test_pairs": 46,
+  "test": {
+   "seed": 16,
+   "presented": 26
+  },
+  "test_flagged": {
+   "seed": 7,
+   "presented": 1
+  }
+ },
+ "note": "The numbers cover all the pairs the loop ran on: our public synthetic benchmark and two benchmarks we can't publish."
+}
