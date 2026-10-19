@@ -12,10 +12,12 @@ The `security-agent synthetic` commands.
   loop status --run-dir DIR
   scan REPO (--candidate DIR | --sandbox NAME) [--out FILE]
   sandbox deploy --sandbox NAME --candidate DIR
+  gym export [--split train|val|test] [--pairs N] [--out FILE]
 
 `--sandbox NAME` runs every scan, and every piece of the optimizer's code, inside that OpenShell sandbox
 (`security_agent.synthetic.sandbox`). Without it, the candidate's code runs on this host. `scan --sandbox NAME`
 without `--candidate` scans with the agent deployed in the sandbox. `sandbox run-job` is what runs inside the sandbox.
+`gym export` writes the chosen pairs as NeMo Gym rows (gym/).
 """
 
 from __future__ import annotations
@@ -71,20 +73,10 @@ def _score(benchmark: Any, run_dir: Path) -> int:
     report = benchmark.score(
         run_dir / "predictions.jsonl", run_dir / "score.json", allow_missing=manifest.get("subset", False)
     )
+    from security_agent.synthetic.bench.pairs import summarize_pairs
+
     wanted = {p["pair_id"] for p in _selected_pairs(benchmark, manifest["selection"])}
-    rows = [r for r in report["pair_results"] if r["pair_id"] in wanted]
-
-    def mean(key: str) -> float | None:
-        return round(sum(1 for r in rows if r[key]) / len(rows), 4) if rows else None
-
-    summary: dict[str, Any] = {
-        "pairs": len(rows),
-        "paired_localization_accuracy": mean("pair_localized_correct"),
-        "strict_paired_accuracy": mean("pair_correct"),
-        "mutant_localization_recall": mean("mutant_localized"),
-        "baseline_mapped_localization_false_alarm_rate": mean("baseline_mapped_localization_alarm"),
-        "pairs_right": sorted(r["pair_id"] for r in rows if r["pair_localized_correct"]),
-    }
+    summary = summarize_pairs(report["pair_results"], wanted)
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
     print(json.dumps({k: summary[k] for k in ("pairs", *HEADLINE_KEYS)}, indent=1))
     print(f"(full report: {run_dir / 'score.json'}; summary: {run_dir / 'summary.json'})")
@@ -275,6 +267,21 @@ def cmd_deploy(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_gym_export(args: argparse.Namespace) -> int:
+    """Write the chosen pairs as NeMo Gym rows."""
+    from security_agent.synthetic.config import REPO_ROOT
+    from security_agent.synthetic.gym import export
+
+    out = (
+        Path(args.out)
+        if args.out
+        else REPO_ROOT / "work" / "gym" / "synthetic" / f"{args.split}-{args.pairs or 'all'}.jsonl"
+    )
+    count = export(args.split, out, args.pairs)
+    print(f"{count} rows -> {out}")
+    return 0
+
+
 def cmd_run_job(args: argparse.Namespace) -> int:
     """Inside the sandbox: run one uploaded job."""
     from security_agent.synthetic.sandbox import run_job
@@ -283,7 +290,7 @@ def cmd_run_job(args: argparse.Namespace) -> int:
     return 0
 
 
-def add_commands(parser: argparse.ArgumentParser) -> None:
+def add_commands(parser: argparse.ArgumentParser) -> None:  # noqa: PLR0915 - one statement per option
     """The `synthetic` command group."""
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -352,6 +359,14 @@ def add_commands(parser: argparse.ArgumentParser) -> None:
     job.add_argument("--job", required=True, help="the uploaded job directory; it is removed")
     job.add_argument("--out", required=True, help="where the result goes, as JSON")
     job.set_defaults(handler=cmd_run_job)
+
+    gym = sub.add_parser("gym", help="the NeMo Gym environment (gym/)")
+    gym_sub = gym.add_subparsers(dest="gym_command", required=True)
+    gym_export = gym_sub.add_parser("export", help="write the chosen pairs as Gym rows, for `gym eval run --input`")
+    gym_export.add_argument("--split", choices=("train", "val", "test"), default="test")
+    gym_export.add_argument("--pairs", type=int, help="the first N pairs of the split, in its order (default: all)")
+    gym_export.add_argument("--out", help="default: work/gym/synthetic/<split>-<pairs>.jsonl")
+    gym_export.set_defaults(handler=cmd_gym_export)
 
 
 def errors() -> tuple[type[Exception], ...]:

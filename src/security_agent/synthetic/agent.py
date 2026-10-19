@@ -933,7 +933,7 @@ def _resolved(data: dict[str, Any], directory: Path, model: dict[str, Any], scan
     out = json.loads(json.dumps(data))
     model_kwargs = {
         k: model[k]
-        for k in ("api_base_url", "model", "timeout_s", "max_retries", "temperature", "concurrency")
+        for k in ("api_base_url", "model", "timeout_s", "max_retries", "temperature", "concurrency", "gym_model_server")
         if k in model
     }
     for spec in out["components"].values():

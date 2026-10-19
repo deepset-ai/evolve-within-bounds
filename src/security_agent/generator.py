@@ -27,12 +27,13 @@ from collections.abc import Callable
 from typing import Any
 
 import openai
-from haystack.dataclasses import ChatMessage
+from haystack.dataclasses import ChatMessage, ReasoningContent
 from haystack_integrations.components.generators.vllm import VLLMChatGenerator
 
 SERVER_DOWN_STATUS = {502, 503, 504}
 MAX_SERVER_WAITS = 3
 SERVER_WAIT_S = 1800
+THINK = re.compile(r"^\s*<think>(.*?)</think>\s*", re.DOTALL)
 SERVER_ERROR_TEXT = re.compile(
     r"^(InternalServerError|APIConnectionError|APITimeoutError|ServiceUnavailableError)\b|502 Bad Gateway"
 )
@@ -118,6 +119,40 @@ def thinking_kwargs(budget: int | None) -> dict[str, Any]:
     return {"extra_body": {"thinking_token_budget": int(budget)}}
 
 
+def as_gym_metadata(extra_body: dict[str, Any]) -> dict[str, str]:
+    """
+    vLLM's request options for a NeMo Gym model server, which accepts only OpenAI's request fields.
+
+    Gym's vLLM model server reads them from `metadata` instead, as JSON strings, and merges them into the request it
+    sends to vLLM: `chat_template_kwargs` under its own key, everything else (the thinking budget) under `extra_body`.
+    """
+    extra_body = dict(extra_body)
+    metadata = {}
+    if template := extra_body.pop("chat_template_kwargs", None):
+        metadata["chat_template_kwargs"] = json.dumps(template)
+    if extra_body:
+        metadata["extra_body"] = json.dumps(extra_body)
+    return metadata
+
+
+def unwrap_reasoning(reply: ChatMessage) -> ChatMessage:
+    """
+    A NeMo Gym model server's reply as vLLM gives it.
+
+    Gym's vLLM server returns chat completions with the model's reasoning wrapped in `<think>` tags at the start of the
+    text; this puts it back in `reasoning`, so the agent and its records see the same reply in both setups.
+    """
+    match = THINK.match(reply.text or "")
+    if match is None or reply.reasoning is not None:
+        return reply
+    return ChatMessage.from_assistant(
+        text=(reply.text or "")[match.end() :] or None,
+        tool_calls=reply.tool_calls,
+        meta=reply.meta,
+        reasoning=ReasoningContent(reasoning_text=match.group(1)),
+    )
+
+
 def malformed_tool_calls(reply: ChatMessage) -> bool:
     """
     Did the model try to call a tool with arguments that are not valid JSON?
@@ -146,7 +181,12 @@ def make_generator(
     temperature: float | None = None,
     extra: dict[str, Any] | None = None,
 ) -> VLLMChatGenerator:
-    """A generator for the model config. `thinking_budget=None` turns thinking off."""
+    """
+    A generator for the model config. `thinking_budget=None` turns thinking off.
+
+    With `gym_model_server: true` in the config, the server is a NeMo Gym model server in front of vLLM, and vLLM's
+    request options travel as `metadata` (`as_gym_metadata`).
+    """
     generation_kwargs: dict[str, Any] = {
         "max_tokens": int(max_tokens),
         "temperature": model.get("temperature", 0.0) if temperature is None else temperature,
@@ -157,6 +197,8 @@ def make_generator(
         merged_body = {**generation_kwargs["extra_body"], **extra.pop("extra_body", {})}
         generation_kwargs.update(extra)
         generation_kwargs["extra_body"] = merged_body
+    if model.get("gym_model_server"):
+        generation_kwargs["metadata"] = as_gym_metadata(generation_kwargs.pop("extra_body"))
     return VLLMChatGenerator(
         model=model["model"],
         api_base_url=model["api_base_url"],
@@ -239,6 +281,8 @@ class Generator:
                     }
                 )
             raise
+        if self.model.get("gym_model_server"):
+            out["replies"] = [unwrap_reasoning(r) for r in out["replies"]]
         reply = out["replies"][0]
         usage = reply.meta.get("usage") or {}
         self.transcript = [*messages, reply]

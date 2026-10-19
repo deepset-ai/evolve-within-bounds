@@ -37,7 +37,7 @@ There are two benchmarks:
 | [`agents/`](agents/) | the agents behind the results: the seed and the improved agents for each benchmark |
 | [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, smoke check; and Qdrant, for PrimeVul's knowledge base |
 | [`sandbox/`](sandbox/) | the OpenShell sandbox, created through NemoClaw, that the synthetic benchmark's scans run in: the image, its policy, the inference route |
-| [`gym/`](gym/) | the NeMo Gym environment for PrimeVul: a resources server that scores rollouts, and an agent server that runs the agent files through Gym's Haystack harness |
+| [`gym/`](gym/) | the NeMo Gym environments for both benchmarks: resources servers that score rollouts with each benchmark's own scoring, and agent servers that run our agents (PrimeVul's agent files through Gym's Haystack harness, the synthetic benchmark's scanner as a black-box harness) |
 | [`data/`](data/) | PrimeVul pair-id manifests and the synthetic custom-component dataset |
 | [`scripts/`](scripts/) | setup, data preparation, evaluation, one entry point per experiment |
 | [`results/`](results/) | what came out of our runs, and how each number was produced |
@@ -55,7 +55,8 @@ There are two benchmarks:
 
 - **Data:** both benchmarks already build with one command each, see [`data/`](data/).
 - **Synthetic custom components:** see [`docs/synthetic.md`](docs/synthetic.md). Serve Flash-Next with vLLM, create
-  the sandbox, scan with both agents inside it, run the loop, then approve an improvement and deploy it there.
+  the sandbox, scan with both agents inside it, run the loop, then approve an improvement and deploy it there; and roll
+  the agents out with NeMo Gym.
 - **The demo:** see [`demo/README.md`](demo/README.md).
 - **PrimeVul:** see [`docs/primevul.md`](docs/primevul.md). Build the benchmark file and the knowledge base, serve
   Flash-Next with vLLM, measure both agents on the test pairs, run the prompt loop, and roll the agents out with NeMo

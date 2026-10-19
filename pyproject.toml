@@ -91,8 +91,10 @@ gym = "security-agent primevul gym {args}"
 test = "pytest tests/primevul {args}"
 
 [tool.hatch.envs.gym]
-# NeMo Gym rollouts of the PrimeVul agents (gym/, docs/primevul.md). nemo-gym needs Python 3.13.14 or newer, which
-# uv finds or downloads; Gym then gives each of its servers an environment of its own.
+# NeMo Gym rollouts of the PrimeVul agents (gym/, docs/primevul.md) and of the synthetic benchmark's scan agents
+# (docs/synthetic.md): `start` and `collect` for PrimeVul, `start-synthetic` and `collect-synthetic` for the other.
+# nemo-gym needs Python 3.13.14 or newer, which uv finds or downloads; Gym then gives each of its servers an
+# environment of its own.
 installer = "uv"
 skip-install = true
 dependencies = ["uv>=0.8"]
@@ -102,11 +104,17 @@ gym = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym {args}'
 collect = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym eval run --no-serve --search-dir gym --config gym/resources_servers/primevul/configs/primevul.yaml {args}'
 start = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env start --search-dir gym --config gym/resources_servers/primevul/configs/primevul.yaml {args}'
 prefetch = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env prefetch --search-dir gym --config gym/resources_servers/primevul/configs/primevul.yaml'
+collect-synthetic = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym eval run --no-serve --search-dir gym --config gym/resources_servers/synthetic/configs/synthetic.yaml {args}'
+start-synthetic = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env start --search-dir gym --config gym/resources_servers/synthetic/configs/synthetic.yaml {args}'
+prefetch-synthetic = 'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env prefetch --search-dir gym --config gym/resources_servers/synthetic/configs/synthetic.yaml'
 # The servers' own tests, each in the environment Gym builds for it.
 test = [
   'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env test --search-dir gym --resources-server primevul ++uv_venv_dir=work/gym/venvs',
   "prefetch",
   "PYTHONPATH=gym work/gym/venvs/responses_api_agents/primevul_agent/.venv/bin/python -m pytest -q -p no:cacheprovider gym/responses_api_agents/primevul_agent/tests",
+  'uv tool run --python ">=3.13.14,<3.14" --from nemo-gym==0.7.0 gym env test --search-dir gym --resources-server synthetic ++uv_venv_dir=work/gym/venvs',
+  "prefetch-synthetic",
+  "PYTHONPATH=gym work/gym/venvs/responses_api_agents/synthetic_agent/.venv/bin/python -m pytest -q -p no:cacheprovider gym/responses_api_agents/synthetic_agent/tests",
 ]
 
 [tool.hatch.envs.serving]
@@ -143,6 +151,7 @@ bench = "security-agent synthetic bench {args}"
 loop = "security-agent synthetic loop {args}"
 scan = "security-agent synthetic scan {args}"
 deploy = "security-agent synthetic sandbox deploy {args}"
+gym = "security-agent synthetic gym {args}"
 test = "pytest tests/synthetic {args}"
 
 [tool.hatch.envs.cve-triage]

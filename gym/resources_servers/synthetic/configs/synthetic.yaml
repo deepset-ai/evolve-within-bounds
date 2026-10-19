@@ -1,0 +1,86 @@
+# The synthetic custom-component benchmark as a NeMo Gym environment: the resources server, the model server and one
+# agent server per agent.
+#
+#   hatch run gym:collect-synthetic --agent synthetic_seed --input work/gym/synthetic/test-all.jsonl --output runs/synthetic/gym/seed.jsonl
+#
+# The model server is the one serving/qwen3.8-flash-next starts; the benchmark must be materialized
+# (hatch run synthetic:bench prepare, docs/synthetic.md).
+
+# Each server's environment goes here (relative to the repository), not next to the server.
+uv_venv_dir: work/gym/venvs
+
+synthetic:
+  resources_servers:
+    synthetic:
+      entrypoint: app.py
+      domain: coding
+      verified: false
+      description: Repository scans of the synthetic custom-component benchmark, scored by paired localization accuracy
+
+synthetic_model:
+  responses_api_models:
+    vllm_model:
+      entrypoint: app.py
+      # The local Flash-Next server (serving/qwen3.8-flash-next) unless --model-url, --model-api-key or --model say
+      # otherwise.
+      base_url: ${oc.select:policy_base_url,"http://127.0.0.1:8000/v1"}
+      api_key: ${oc.select:policy_api_key,EMPTY}
+      model: ${oc.select:policy_model_name,qwen3.8-flash-next}
+      return_token_id_information: false
+      uses_reasoning_parser: true
+      # Earlier reasoning is not sent back with the conversation, as in our scanner.
+      uses_interleaved_reasoning: false
+      chat_template_kwargs: null
+      sampling_overrides: null
+      # No server-wide thinking budget: each request brings its agent's own (as metadata.extra_body).
+      extra_body: null
+      default_headers: {}
+
+synthetic_seed:
+  responses_api_agents:
+    synthetic_agent:
+      entrypoint: app.py
+      resources_server:
+        type: resources_servers
+        name: synthetic
+      model_server:
+        type: responses_api_models
+        name: synthetic_model
+      agent: agents/synthetic/seed
+      datasets:
+      - name: example
+        type: example
+        jsonl_fpath: resources_servers/synthetic/data/example.jsonl
+
+synthetic_looped:
+  responses_api_agents:
+    synthetic_agent:
+      entrypoint: app.py
+      resources_server:
+        type: resources_servers
+        name: synthetic
+      model_server:
+        type: responses_api_models
+        name: synthetic_model
+      agent: agents/synthetic/looped
+      datasets:
+      - name: example
+        type: example
+        jsonl_fpath: resources_servers/synthetic/data/example.jsonl
+
+# Rollouts reach an agent through an environment server; these relay each task to the agent unchanged.
+synthetic_seed_environment_server:
+  environment_servers:
+    legacy_agent:
+      entrypoint: app.py
+      agent_server:
+        type: responses_api_agents
+        name: synthetic_seed
+
+synthetic_looped_environment_server:
+  environment_servers:
+    legacy_agent:
+      entrypoint: app.py
+      agent_server:
+        type: responses_api_agents
+        name: synthetic_looped

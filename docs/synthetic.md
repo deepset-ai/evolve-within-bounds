@@ -2,7 +2,7 @@
 
 This runbook reruns our synthetic results on one DGX Spark: serve the model, create the OpenShell sandbox, scan the
 benchmark with the two agents, run the self-improvement loop, and deploy an approved agent into the sandbox. Every scan
-runs inside the sandbox.
+runs inside the sandbox; only the NeMo Gym rollouts of step 7 run on the host.
 
 ## What is being measured
 
@@ -156,6 +156,38 @@ you to approve it. It then installs the candidate in the sandbox with a record o
 repository with the deployed agent and prints its findings; the full result, with the agent's conversation, goes to
 `runs/synthetic/`.
 
+## 7. Roll out the agents with NeMo Gym
+
+The same agents as [NeMo Gym](https://github.com/NVIDIA-NeMo/Gym) rollouts ([`gym/`](../gym/)). Flash-Next must be up
+(step 1) and the benchmark prepared (step 3).
+
+```bash
+hatch run synthetic:gym export --split test   # work/gym/synthetic/test-all.jsonl: the 24 repositories of the 12 test pairs
+hatch run gym:start-synthetic                   # the servers; the first start builds their environments
+```
+
+The first start builds an environment for each server in `work/gym/venvs/`, a few minutes; later starts take seconds.
+
+In a second terminal, once the first reports `All 6 / 6 servers ready`:
+
+```bash
+hatch run gym:collect-synthetic --agent synthetic_seed   --input work/gym/synthetic/test-all.jsonl --output runs/synthetic/gym/seed-test.jsonl
+hatch run gym:collect-synthetic --agent synthetic_looped --input work/gym/synthetic/test-all.jsonl --output runs/synthetic/gym/looped-test.jsonl
+```
+
+Each row is one repository, the vulnerable one or the fixed twin of a pair. The agent server scans it with our scanner,
+unchanged, and sends every model call through Gym's model server. The resources server scores the findings with the
+benchmark's own scorer and answer key: the reward is 1 when the vulnerable repository has a finding on the planted
+lines, or the fixed twin has none there. `collect` then prints the metrics `bench run` prints, over the pairs whose two
+repositories it scanned: paired localization accuracy first. The placebo repositories that `bench run` also scans are
+left out; they do not enter these metrics. `--num-repeats N` scans every repository N times; the metrics are computed
+per repeat and averaged. Stop the servers with Ctrl-C in the first terminal. `hatch run gym:test` runs the servers'
+own tests.
+
+**Not in the sandbox.** Gym's agent server runs the scanner in its own process, as `bench run` does without
+`--sandbox`, so the looped agent's own code runs on the host (see below). A rollout's model calls have to go through
+Gym's model server; from inside the sandbox they would go straight to the model server it was created with.
+
 ## Without the sandbox
 
 Without `--sandbox`, scans and the optimizer's code run on the host, in the command's own process. The optimizer's code
@@ -170,3 +202,8 @@ security boundary; the sandbox is.
 - **The sandbox is gone** (after a restart of the OpenShell gateway): `sandbox/sandbox.sh create`.
 - **"the sandbox runs security_agent …, the host …":** the code changed since the sandbox was created; `sandbox/sandbox.sh
   create` again.
+- **`gym:start-synthetic` stops with `address already in use` on port 11000:** another service holds the port of Gym's
+  head server. Pick a free one and pass it to both commands: `hatch run gym:start-synthetic ++head_server.port=11100`,
+  and the same `++head_server.port=11100` after `gym:collect-synthetic`.
+- **Gym's servers keep running after `gym:start-synthetic` ended:** stop the processes that run from `work/gym/venvs/`,
+  for example `pkill -f work/gym/venvs`.
