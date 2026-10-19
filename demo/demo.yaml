@@ -1,11 +1,13 @@
 # The live demo: one iteration of the self-improvement loop on the synthetic benchmark, cut down to under 10 minutes.
-# The loop is the one docs/synthetic.md runs (security_agent.optimize); only the sizes below differ.
+# The loop is the one docs/synthetic.md runs (security_agent.optimize); only the sizes below and the optimizer's
+# temperature differ.
 
 reference: agents/synthetic/seed            # the starting candidate (relative to the repository)
-# One training pair, measured before the demo (prepare.sh). Chosen for short scans, and because the seed gets it wrong,
-# so the optimizer has a failure to work on: it flags the fixed twin too ("Citation title and URL are embedded without
-# escaping", CWE-79).
-train_pair: hvbench/pair-synth22-01
+# One training pair, measured before the demo (prepare.sh). Chosen because the seed gets it wrong and the fix is
+# complete: it flags the fixed twin too, which records the credential's environment variable instead of its value
+# ("Run config records the resolved extraction credential", CWE-522), so the optimizer has a real false alarm to
+# remove. In five rehearsals, four candidates got the pair right.
+train_pair: hvbench/pair-synth31-01
 # The repository the deployed agent scans at the end: the vulnerable member of a validation pair, so neither the loop nor
 # the optimizer has seen it. Chosen for a short scan ("Lookup identifier is formatted into the statement", CWE-89).
 scan_instance: instance-dd5e249e1c8975b691d9
@@ -23,7 +25,7 @@ min_reasoning_reads: 1                      # the optimizer must look at what th
 proposer:
   thinking_budget: 1024                     # the full loop gives the optimizer 4096 per reply and 60 steps
   max_tokens: 8192
-  temperature: 0.6
+  temperature: 0.0                          # the full loop samples at 0.6
   max_steps: 12
   step_reminder: true                       # at 3 and 1 steps left: submit
   nudges: 1

@@ -46,13 +46,20 @@ def candidate_id(directory: Path) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()[:16]
 
 
+def _lines(path: Path) -> list[str]:
+    """A file's lines, each ending in a newline: a last line without one would run into the next line of the diff."""
+    if not path.is_file():
+        return []
+    return [line if line.endswith("\n") else line + "\n" for line in path.read_text(encoding="utf-8").splitlines(True)]
+
+
 def diff(parent: Path, child: Path, context: int = 2) -> str:
-    """A unified diff from one candidate directory to another."""
+    """A unified diff from one candidate directory to another; a missing newline at the end of a file is no change."""
     out: list[str] = []
     for rel in sorted(set(files(parent)) | set(files(child))):
-        a = (parent / rel).read_text(encoding="utf-8").splitlines(True) if (parent / rel).is_file() else []
-        b = (child / rel).read_text(encoding="utf-8").splitlines(True) if (child / rel).is_file() else []
-        out += difflib.unified_diff(a, b, f"parent/{rel}", f"candidate/{rel}", n=context)
+        out += difflib.unified_diff(
+            _lines(parent / rel), _lines(child / rel), f"parent/{rel}", f"candidate/{rel}", n=context
+        )
     return "".join(out)
 
 

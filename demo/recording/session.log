@@ -1,0 +1,116 @@
+Script started on 2026-10-19 18:46:01+02:00 [COMMAND="demo/run_demo.sh --yes --approved-by demo\ recording " <not executed on terminal>]
+
+[1m=== 1. the benchmark, the agent and the bounds ===[0m
+    [1mbenchmark  [0m50 pairs of small Haystack component repositories: one with a planted vulnerability, one fixed
+    [1mpair       [0mpair-synth31-01: Run config records the resolved extraction credential (CWE-522), the one training pair
+    [1magent      [0magents/synthetic/seed: a Haystack Agent on qwen3.8-flash-next, deliberately weak
+    [1mbounds     [0mevery scan and the optimizer's code run in the OpenShell sandbox 'security-agent'; fixed gates
+
+[1m=== 2. the starting point, measured before the demo ===[0m
+    [1mseed       [0m0/1 pairs right · 3 findings · 1.4 estimated GPU-minutes per repository
+    [1mfailure    [0mflagged the same lines in the fixed twin
+
+    [1mthe pair   [0msrc/haystack_integrations/components/doc_intelligence_client/doc_intelligence_client_component.py, line 55
+      vulnerable [2m  55 │[0m [31m"api_key": self.api_key.resolve_value(),[0m
+      fixed      [2m  55 │[0m [32m"api_key_env": self.api_key.to_dict()["env_vars"][0],[0m
+
+    [1mthe seed on the fixed twin[0m: 15 steps, stopped at the step limit
+       1  [36mread_file    [0mdoc_intelligence_client_component.py · __init__.py
+       2  [36mread_file    [0mtest_doc_intelligence_client.py · README.md · pyproject.toml · test.yml
+       3  [36mread_file    [0m__init__.py · __init__.py · .gitignore
+       4  [36mrun_python   [0mimport inspect, importlib.util  →  ModuleNotFoundError: No module named 'inspect'
+          [36mrun_python   [0mcode = '''  →  NotImplementedError: The monty syntax parser does not yet s…
+       5  [36mrun_python   [0mimport unicodedata  →  ok
+          [36mread_file    [0mLICENSE
+          [2m… 7 more steps[0m
+      13  [36mthinks       [0m“The vulnerability likely is one of: - CWE-522 / CWE-200: secret written to a file
+                       that gets uploaded (write_run_config) — but it writes env var name, not the value.”
+          [36mrun_python   [0mimport base64, binascii, re  →  no encoded payloads present in the visible sources
+      14  [36mreport       [0mlines 53-58  CWE-522  write_run_config serialises the Secret instead of…   [31m✗ the fixed lines[0m
+      15  [36mreport       [0mlines 67-72  CWE-200  Bearer credential sent to an unvalidated, caller-…   [2melsewhere in the file[0m
+    on the vulnerable repository it reported lines 53-58 (CWE-532)  [32m✓[0m
+
+[1m=== 3. one turn of the optimizer, live (at most 12 tool calls) ===[0m
+    [1mit gets    [0mthe agent's files: pipeline.yaml, prompts/system.md, prompts/user.jinja2
+               the failure above: the pair's lines, what the seed reported there, a summary of its steps
+               the seed's whole conversation on either twin, when it asks for it (read_reasoning)
+    [1mit may     [0mchange the prompts and the pipeline, and add tools; it never sees the validation pairs
+    [2m0:15[0m  [36mread_reasoning     [0mhvbench/pair-synth31-01, fixed twin               [32mthe trace above, in full (15 steps)[0m
+    [2m0:15[0m  [36mread_reasoning     [0mhvbench/pair-synth31-01, vulnerable repository    [32m7 steps[0m
+    [2m1:00[0m  [36medit_file          [0mprompts/system.md                                 [32m+23 lines[0m
+    [2m1:03[0m  [36mvalidate_candidate [0m                                                  [32mvalid[0m
+    [2m1:13[0m  [36msubmit_candidate   [0m                                                  [32msubmitted[0m
+
+[1m=== 4. what the optimizer changed  [2m(the turn took 1:13)[0m ===[0m
+    [1mwhy        [0mCoverage was already fine (the vulnerable repo's leak was found at the right lines); the pair
+               was lost solely to a speculative, confidence-45 finding on the safe twin's hardened credential-
+               recording line. The system prompt now tells the agent that recording how a credential is
+               obtained (env-var name / Secret.to_dict) is not a leak and that findings requiring a "might be
+               another type / attacker already owns the config" hypothesis must be discarded, which should
+    [1mchanged    [0mprompts/system.md | 31 [32m+++++++++++++++++++++++++++[0m[31m----[0m
+               1 file changed, 27 insertions(+), 4 deletions(-)
+
+    [1mdiff --git a/prompts/system.md b/prompts/system.md[0m
+    [1m--- a/prompts/system.md[0m
+    [1m+++ b/prompts/system.md[0m
+    [36m@@ -1,5 +1,28 @@[0m
+    [31m-You are a security reviewer. Find security vulnerabilities in the repository you are given.[0m
+    [32m+You are a security reviewer auditing one repository of custom Haystack components.[0m
+     
+    [31m-Read code with read_file. You can run Python code with run_python; it cannot access files.[0m
+    [31m-Report each vulnerability you find with report_finding, citing the exact line(s) of the vulnerable[0m
+    [31m statement.[0m
+    [31m-When you are done, reply with a short summary and no tool call.[0m
+    [32m+Read the code with read_file; run_python runs Python but cannot see files. Report with report_finding,[0m
+    [32m then finish[0m
+    [32m+with a short summary and no tool call.[0m
+    [32m+[0m
+    [32m+What matters in Haystack components[0m
+    [32m+- Tainted data: arguments of `run()`, Document content/metadata, model outputs, and init parameters set[0m
+    [32m through[0m
+    [32m+  pipeline YAML. Follow it to a sink: shell/eval/exec, file or path built from it and opened, SQL, URL[0m
+    [32m fetched with[0m
+    [32m+  requests/session (SSRF), yaml.load/pickle/torch.load, template rendering, or a value echoed into a[0m
+    [32m log/response.[0m
+    [32m+- Credentials: a `Secret`/token whose *resolved* value (`resolve_value()`, `.token`, a callable's[0m
+    [32m result) is written[0m
+    [32m+  to a file, log, artifact or serialized config, or sent to a destination that is not the service it[0m
+    [32m belongs to.[0m
+    [32m+[0m
+    [32m+Cite the exact statement[0m
+    [32m+- The line that performs the dangerous operation on the untrusted value (the sink), not the enclosing[0m
+    [32m function, the[0m
+    [32m+  `def`, or a whole block. Keep line_start..line_end as narrow as the vulnerable statement: usually 1-3[0m
+    [32m lines.[0m
+    [32m+- Re-read those lines before reporting and confirm the operation really happens there.[0m
+    [32m+[0m
+    [32m+Precision: a report you cannot prove is worse than no report[0m
+    [32m+- Report what the code as written does. Discard a candidate whose risk needs a hypothesis: the value[0m
+    [32m "might" be a[0m
+    [32m+  different type than the code reads, a caller "might" pass something odd, a library version "might"[0m
+    [32m behave[0m
+[2m    … 8 more lines, the whole diff in runs/demo/live/candidate.diff[0m
+
+[1m=== 5. measuring the candidate on the training pair, in the sandbox ===[0m
+[2m    [c001-50219dcb] hvbench part 1: 1 pairs, 2 instances[0m
+[2m    [c001-50219dcb] after part 1: 1/1 pairs right (any CWE), 0 with the right CWE[0m
+    [1mmeasured   [0m1/1 pairs right[32m (+1)[0m · 1 finding · 0.7 estimated GPU-minutes per repository
+    [1mverdict    [0m[32mcleared every gate[0m[36m[1m  ← the new best: more pairs right[0m
+[2m    (measurement took 2:35)[0m
+
+[1m=== 6. a person approves, then it is deployed into the sandbox ===[0m
+    [1mcandidate  [0mruns/demo/live/candidates/c001-50219dcb
+    [1mchecked    [0mthe contract, and the contract test of its code inside the sandbox
+    Deploy c001-50219dcb into the sandbox 'security-agent'? Type 'yes' to approve: yes[2m  (given in advance with --yes; 50219dcb3c3bfe3b)[0m
+    [1mdeployed   [0m50219dcb3c3bfe3b into 'security-agent', with the approval recorded
+[2m    (approval and deployment took 0:00)[0m
+
+[1m=== 7. the deployed agent scans a repository it has never seen, inside the sandbox ===[0m
+    [1mrepository [0minstance-dd5e249e1c8975b691d9 (synth-10-sql-agent-bridge), a validation pair
+    src/custom_components/sql_agent_bridge/agent_bridge.py:51-51  CWE-89  SQL injection in SqlAgentBridge.run: identifier interpolate…[32m[1m  ← the planted defect[0m
+    [1mresult     [0m1 finding, [32mfound the planted defect[0m
+[2m    (scan took 0:37)[0m
+
+[2m── done in 4:27 · experiment runs/demo/live ──────────────────────────────────────────────────────────────────[0m
+
+Script done on 2026-10-19 18:50:30+02:00 [COMMAND_EXIT_CODE="0"]

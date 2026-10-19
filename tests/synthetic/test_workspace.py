@@ -79,6 +79,18 @@ def test_workspace_writes_and_deletes_only_code_files(tmp_path):
     assert json.loads(ws.delete_file("tools/search.py", ws.revision))["ok"] and ws.revision == ws.parent_id
 
 
+def test_a_file_without_a_final_newline_keeps_its_diff_lines_apart(tmp_path):
+    parent, child = tmp_path / "parent", tmp_path / "child"
+    parent.mkdir()
+    (child / "tools").mkdir(parents=True)
+    (parent / "a.md").write_text("x = 1\ny = 2")
+    (child / "a.md").write_text("x = 1\ny = 3")
+    (child / "tools/b.py").write_text("z = 1")
+    diff = cand.diff(parent, child)
+    assert "\n-y = 2\n+y = 3\n" in diff and diff.endswith("+z = 1\n")
+    assert cand.added_text(diff) == "y = 3\nz = 1"  # the leakage check sees every added line
+
+
 def test_exit_tools_raise_on_refusal_so_the_agent_continues(tmp_path):
     ws = _workspace(tmp_path)
     submit = next(t for t in _exit_tools(ws) if t.name == "submit_candidate")

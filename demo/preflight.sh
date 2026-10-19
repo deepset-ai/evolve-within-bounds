@@ -14,7 +14,11 @@ for arg in "$@"; do
 done
 export PATH="$HOME/.local/bin:$PATH"
 URL=http://127.0.0.1:8000/v1
-MODEL=qwen3.8-flash-next
+# The model the demo runs on: the one its model config names (demo.yaml, model_config).
+MODEL=$(hatch run synthetic:python -c 'import sys; sys.path.insert(0, "demo"); import demo
+from security_agent.synthetic.config import load_yaml
+print(load_yaml(demo.load_config()["model_config"])["model"])' 2>/dev/null | tail -1)
+MODEL="${MODEL:-qwen3.8-flash-next}"
 SANDBOX="${SANDBOX:-security-agent}"
 failed=0
 
@@ -26,10 +30,18 @@ reply=$(curl -sf -m 240 "$URL/chat/completions" -H 'Content-Type: application/js
   \"chat_template_kwargs\":{\"enable_thinking\":false}}" 2>/dev/null)
 [[ "$reply" == *'"choices"'* ]] \
   && ok "$MODEL answers on $URL" \
-  || fail "$MODEL does not answer on $URL: hatch run serving:flash-next start (about 5 minutes)"
+  || fail "$MODEL does not answer on $URL: start its server (serving/README.md; Flash-Next takes about 5 minutes)"
 
 if openshell sandbox list 2>/dev/null | grep -qw "$SANDBOX"; then
   ok "the OpenShell sandbox '$SANDBOX' exists"
+  # The sandbox runs the package as it was when the sandbox was created, and refuses jobs from other code.
+  version='from security_agent.synthetic.sandbox import code_version; print(code_version())'
+  host_code=$(hatch run synthetic:python -c "$version" 2>/dev/null | tail -1)
+  sandbox_code=$(openshell sandbox exec --name "$SANDBOX" --timeout 60 --no-tty -- /opt/venv/bin/python3 -c "$version" \
+    2>/dev/null | tail -1)
+  [[ -n "$host_code" && "$host_code" == "$sandbox_code" ]] \
+    && ok "the sandbox runs this checkout's code ($host_code)" \
+    || fail "the sandbox runs other code than this checkout: sandbox/sandbox.sh create (about 2 minutes)"
 else
   fail "no OpenShell sandbox '$SANDBOX': sandbox/sandbox.sh create"
 fi
@@ -48,7 +60,7 @@ fi
 if ((!UNPREPARED)); then
   grep -q '"type": "reference"' runs/demo/prepared/journal.jsonl 2>/dev/null \
     && ok "the seed is measured on the demo's pair (runs/demo/prepared)" \
-    || fail "the demo is not prepared: demo/prepare.sh (about 3 minutes)"
+    || fail "the demo is not prepared: demo/prepare.sh (about 6 minutes)"
 fi
 
 if ((failed)); then

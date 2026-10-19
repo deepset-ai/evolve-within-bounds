@@ -1,0 +1,2 @@
+# The demo's recording is replayed byte by byte: no line-ending conversion.
+demo/recording/* -text
