@@ -1,0 +1,89 @@
+SPDX-FileCopyrightText: 2026-present deepset GmbH <info@deepset.ai>
+
+SPDX-License-Identifier: Apache-2.0
+
+Our changes to dime-online/qwen3.8-Flash-DGX-UltraFast at commit 0c391a3 (Apache-2.0). serve.sh applies them with
+`git apply`; git ignores this text before the first diff.
+
+- recipe/config/v16b/env: listen on loopback only (as shipped, the server is published on every interface), serve the
+  model as "qwen3.8-flash-next" instead of "qwen", and name the container "qwen3.8-flash-next" so that starting it
+  never removes an existing "qwen38-flash" container from an unpatched checkout.
+- recipe/config/v16b/serve.sh and launch.sh: if SANDBOX_PORT is set, publish the server there too. serve.sh sets it to
+  the gateway of OpenShell's Docker bridge, so that the OpenShell sandbox reaches the server; that address is not
+  reachable from the network.
+- recipe/build/model/build.sh: run the three CPU test gates from /tmp. They write a scratch file into their working
+  directory, which is the read-only /work mount, so `build.sh --run` fails with "Read-only file system" as shipped.
+
+diff --git a/recipe/build/model/build.sh b/recipe/build/model/build.sh
+index cc26df3..ea6e238 100755
+--- a/recipe/build/model/build.sh
++++ b/recipe/build/model/build.sh
+@@ -24,6 +24,12 @@ docker_common=(docker run --rm --network none --memory 8g --ipc=host
+   --user "$(id -u):$(id -g)" -e PYTHONDONTWRITEBYTECODE=1
+   -v "$here:/work:ro" -v "$models_root:/models" -w /work
+   --entrypoint python3 "$image")
++# The CPU test gates write a scratch file into their working directory, and /work is mounted read-only, so they run
++# from /tmp. The build and verify steps are unchanged.
++docker_tests=(docker run --rm --network none --memory 8g --ipc=host
++  --user "$(id -u):$(id -g)" -e PYTHONDONTWRITEBYTECODE=1
++  -v "$here:/work:ro" -v "$models_root:/models" -w /tmp
++  --entrypoint python3 "$image")
+ build_args=(/work/build_int4side_model_dir.py --tier drafter-dense --group-size 32
+   --model-dir "/models/$base" --out-dir "/models/$output")
+ verify_args=(/work/build_int4side_model_dir.py --tier drafter-dense --group-size 32
+@@ -49,9 +55,9 @@ printf '%s  %s\n' \
+   echo 'base checkpoint does not match the pinned public inputs' >&2; exit 65;
+ }
+ 
+-"${docker_common[@]}" /work/test_rtn_int4_gptq.py
+-"${docker_common[@]}" /work/test_build_int4side.py
+-"${docker_common[@]}" /work/test_build_mtpdense.py
++"${docker_tests[@]}" /work/test_rtn_int4_gptq.py
++"${docker_tests[@]}" /work/test_build_int4side.py
++"${docker_tests[@]}" /work/test_build_mtpdense.py
+ "${docker_common[@]}" "${build_args[@]}"
+ "${docker_common[@]}" "${verify_args[@]}"
+ 
+diff --git a/recipe/config/v16b/env b/recipe/config/v16b/env
+index 3c22a1d..567dc62 100644
+--- a/recipe/config/v16b/env
++++ b/recipe/config/v16b/env
+@@ -1,9 +1,9 @@
+ # SPDX-License-Identifier: Apache-2.0
+-NAME='qwen38-flash'
++NAME='qwen3.8-flash-next'
+ MODEL_DIR="$HOME/models/Qwen3.8-Flash-Next-W4A16-AutoRound-hybrid-mtpdense-g32"
+ TABLE_DIR="$HOME/models/ple-table-fp8"
+-PORT='8000'
+-SERVED_NAME='qwen'
++PORT='127.0.0.1:8000'
++SERVED_NAME='qwen3.8-flash-next'
+ TOOL_PARSER='qwen3_xml'
+ PREFIX_CACHE='1'
+ GPU_MEM='0.01'
+diff --git a/recipe/config/v16b/launch.sh b/recipe/config/v16b/launch.sh
+index fffe3a8..47826cb 100755
+--- a/recipe/config/v16b/launch.sh
++++ b/recipe/config/v16b/launch.sh
+@@ -23,7 +23,7 @@ if [ "$mode" = --run ]; then
+   trap - EXIT
+ fi
+ if [ "$mode" = --run ]; then set --; else set -- --print; fi
+-exec env -i HOME="$HOME" PATH="$PATH" IMAGE="$image" MTP_DRAFT_VOCAB="$vocab" bash -c '
++exec env -i HOME="$HOME" PATH="$PATH" IMAGE="$image" MTP_DRAFT_VOCAB="$vocab" SANDBOX_PORT="${SANDBOX_PORT:-}" bash -c '
+   set -euo pipefail
+   set -a; . ./env; set +a
+   exec bash ./serve.sh "$@"
+diff --git a/recipe/config/v16b/serve.sh b/recipe/config/v16b/serve.sh
+index 8ccfa26..b8bbb70 100755
+--- a/recipe/config/v16b/serve.sh
++++ b/recipe/config/v16b/serve.sh
+@@ -90,7 +90,7 @@ if [ -n "${KEEP_DRAFT_BLOCKS:-}" ];  then IT6_ARGS+=(-e "VLLM_KEEP_DRAFT_BLOCKS=
+ # the promoted env supplies fixed, whitespace-separated flags.
+ # shellcheck disable=SC2206
+ DOCKER_RUN=(docker run -d --name "$NAME" --restart unless-stopped \
+-  --gpus all --ipc=host --shm-size 16g -p "${PORT}:8000" \
++  --gpus all --ipc=host --shm-size 16g -p "${PORT}:8000" ${SANDBOX_PORT:+-p "${SANDBOX_PORT}:8000"} \
+   -v "$MODEL_DIR:/model:ro" -v "$TABLE_DIR:/ple-table:ro" \
+   -e VLLM_PLE_MMAP=1 -e VLLM_PLE_MMAP_WORKERS="${WORKERS:-32}" -e VLLM_PLE_MMAP_PREWARM="$PREWARM" -e VLLM_PLE_MMAP_PREFETCH="${PLE_PREFETCH:-0}" \
+   -e VLLM_PLE_MMAP_MADV_RANDOM="${PLE_MADV_RANDOM:-0}" \

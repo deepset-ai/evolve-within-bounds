@@ -1,12 +1,16 @@
 # Documentation
 
+- [`synthetic.md`](synthetic.md): the runbook for the synthetic custom-component benchmark. Serve Qwen3.8 Flash-Next
+  with vLLM, create the OpenShell sandbox, scan with the seed and the looped agent, run the self-improvement loop,
+  deploy an approved agent into the sandbox, and roll the agents out with NeMo Gym.
+- [`primevul.md`](primevul.md): the runbook for PrimeVul. Build the benchmark file and the knowledge base, serve
+  Qwen3.8 Flash-Next with vLLM, measure the seed and the looped agent on the test pairs, run the prompt loop, and roll
+  the agents out with NeMo Gym.
+
 Planned pages:
 
-- `architecture.md`: how the pieces connect: the Haystack agent inside the OpenShell sandbox, the model server
-  (vLLM or NIM), the knowledge base, the Monty sandbox for model-written tools, and NeMo Gym.
-- `setup-dgx-spark.md`: from a fresh DGX Spark to a served model and a running agent.
-- `self-improvement.md`: the loop. The seed agent, the optimizer, the gates, the validation check, and its modes:
-  prompt only, tool only, and tool plus prompt.
-- `reproducing-results.md`: for each reported number, the command, its runtime on one DGX Spark, the expected value
-  and its run-to-run noise.
-- `experiments/`: the pre-registrations and results, one file per round.
+- `setup-dgx-spark.md`: from a fresh DGX Spark to a served model.
+- `architecture.md`: how the pieces connect, and which of them produced which result.
+
+For each step, the runbooks give the command, its runtime on one DGX Spark and what to expect, including the
+run-to-run noise.

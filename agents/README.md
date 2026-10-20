@@ -1,15 +1,13 @@
 # Agents
 
-Agent configurations as Haystack YAML. Load them with `Agent.from_dict`. Treat them as code, see
-[SECURITY.md](../SECURITY.md).
+The agents behind the results, as Haystack YAML. Treat them as code, see [SECURITY.md](../SECURITY.md).
 
-Planned:
-
-- `seed/`: the simple seed agent the loop starts from.
-- `controls/`: the fixed agents used for comparison. Deductive prompt (C), the same with repository context (R), and
-  the same with retrieved training examples (K).
-- `self-improved/`: the agents the loop produced. Each folder has the YAML, the diff against the seed, the
-  optimizer's rationale, and the source of any tool the optimizer wrote, extracted for reading.
-
-A tool the optimizer writes is stored as a `MontySourceTool` entry in the YAML; its Python source is in the `source`
-field.
+- [`synthetic/seed/`](synthetic/seed/) and [`synthetic/looped/`](synthetic/looped/): the repository scan agent
+  before and after the self-improvement loop. Each is a Haystack pipeline around an `Agent` (`pipeline.yaml`, whose
+  header says what it is), with its prompts. The looped agent's `tools/` folder holds the Python tools and pipeline
+  steps the optimizer wrote. Run them with `security_agent.synthetic`, inside the OpenShell
+  sandbox: [`docs/synthetic.md`](../docs/synthetic.md).
+- [`primevul/seed/`](primevul/seed/) and [`primevul/looped/`](primevul/looped/): the PrimeVul triage agent before
+  and after the prompt loop, a serialized Haystack `Agent` (`agent.yaml`) with one tool, `search_security_kb`. The loop
+  changed its system prompt and the tool's description. Load them with `Agent.from_dict`, or run them with
+  `security_agent.primevul`: [`docs/primevul.md`](../docs/primevul.md).

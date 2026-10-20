@@ -1,0 +1,40 @@
+# The prompt loop on PrimeVul (security-agent primevul loop run). Copied into preregistration.json before anything is
+# measured.
+# - The starting candidate is the seed agent: Flash-Next with the knowledge-base tool and a short prompt. The optimizer
+#   edits its system prompt, the tool's description and its budgets; the contract holds everything else fixed.
+# - One model server serves the agent, its knowledge-base sub-agent and the optimizer.
+# - Training on the first 100 training pairs of the benchmark file, one measurement per candidate. Validation picks
+#   among the candidates afterwards (security-agent primevul run --split val); the loop never sees it.
+
+reference: agents/primevul/seed        # the starting candidate (relative to the repository)
+train_pairs: 100                       # the first N training pairs of the benchmark file
+seed: 20260919                         # the halves for the early abort
+runs_dir: runs/primevul/loop
+iterations: 3                          # candidates
+gpu_hours: 40                          # wall hours of measurements and turns
+concurrency: 4                         # functions judged in parallel, as in the agents' measurements
+thinking_budget: 2048                  # the agent's reasoning tokens per reply, as in the agents' measurements
+min_reasoning_reads: 0
+
+model:                                 # the server for the optimizer (the agent's endpoint is in its agent.yaml)
+  api_base_url: http://127.0.0.1:8000/v1
+  model: qwen3.8-flash-next
+  timeout_s: 900
+  max_retries: 3
+
+proposer:
+  thinking_budget: 12288
+  max_tokens: 16384
+  temperature: 0.2
+  max_steps: 30
+  step_reminder: true                  # at 7 and 2 steps left: submit
+  nudges: 2
+
+rules:                                 # see security_agent.optimize.loop.Rules; per function
+  prefill_tps: 3000                    # prompt tokens per second, measured at 8 parallel requests on one DGX Spark
+  decode_tps: 110                      # output tokens per second, likewise
+  max_gpu_minutes_per_repo: 1.5        # our check: the seed needs about 0.4, the looped agent about 0.8
+  max_findings_per_repo: 1             # a finding is a function called vulnerable: at most one each
+  cost_abort_slack: 1.2
+  abort_behind: 4
+  max_tool_error_rate: 0.05

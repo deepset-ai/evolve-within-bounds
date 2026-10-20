@@ -1,0 +1,23 @@
+# Nemotron 3.5 Lightning (30B total, 3B active per token) through the stock NVIDIA NIM, as set up by
+# serving/nemotron-3.5-lightning (loopback only). Start it from the repository root with
+# `hatch run serving:lightning start` (about 4 minutes until ready), and pass `--model-config model.lightning.yaml`.
+# The reported synthetic numbers use model.yaml.
+
+api_base_url: http://127.0.0.1:8000/v1
+model: nemotron-3.5-lightning
+timeout_s: 600
+max_retries: 3
+
+# = the server's --max-num-seqs; one global limit shared by all steps and repositories.
+concurrency: 8
+
+temperature: 0.0
+
+# Thinking is switched with the chat template's `enable_thinking` and capped per request with vLLM's
+# `thinking_token_budget`, as for Qwen.
+
+fingerprint:
+  server: nim-2.0.9 (vllm 0.25.1)
+  image: nvcr.io/nim/nvidia/nemotron-3.5-lightning-30b-a3b:2.0.9-variant@sha256:c2b2138e056dcfbd5da634477c3aa2ffcc01a672fc5946422f7a9afc8e315d3f
+  profile: vllm-nvfp4-tp1-pp1 (920207996e4ec77b)
+  served_name: nemotron-3.5-lightning

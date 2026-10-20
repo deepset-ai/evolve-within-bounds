@@ -1,0 +1,3 @@
+nemo-gym[dev]==0.7.0
+# This repository's package with the synthetic extra: the scanner, its tools and the benchmark.
+-e ../../..[synthetic]

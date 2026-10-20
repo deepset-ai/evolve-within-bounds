@@ -1,0 +1,33 @@
+# The starting candidate: a Haystack Agent with Monty's Python tool (run_python), the repository's file list in its
+# first message and a size-capped read_file. It reports with report_finding, which is always on.
+# The model is set by the run (security_agent/synthetic/config/model.yaml).
+components:
+  agent:
+    type: security_agent.synthetic.agent.ScanAgent
+    init_parameters:
+      system_prompt: prompts/system.md
+      user_prompt: prompts/user.jinja2
+      tools:
+      - read_file
+      - run_python
+      max_agent_steps: 15
+      max_tokens: 4096
+      thinking_budget: 1024
+      temperature: 0.0
+      read_file_lines: 150
+      file_list_chars: 8000
+      tool_output_chars: 8000
+      tool_timeout_s: 60
+      tool_model_calls: 0
+      tool_completion_tokens: 0
+      scan_prompt_tokens: 1500000
+      scan_completion_tokens: 60000
+      timeout_s: 1200
+  normalizer:
+    type: security_agent.synthetic.normalize.Normalizer
+    init_parameters:
+      max_per_location: 1
+      tau: 0
+connections:
+- sender: agent.findings
+  receiver: normalizer.candidates

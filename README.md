@@ -1,20 +1,25 @@
 # Evolve within bounds
 
 A self-improving security agent built with [Haystack](https://github.com/deepset-ai/haystack) that runs entirely on
-one NVIDIA DGX Spark. A self-improvement loop rewrites the agent's prompt and writes, tests and installs new analysis
-tools for it. The bounds:
+one NVIDIA DGX Spark. A self-improvement loop rewrites the agent's prompt or writes new analysis tools for it, and
+keeps a change only if it passes fixed checks. The bounds:
 
-- **The agent's sandbox:** the agent runs in an OpenShell sandbox, created through NemoClaw.
-- **The tools' sandbox:** code the model writes runs in the Monty sandbox.
-- **Evaluation rules:** every change must pass fixed gates on training pairs and a held-out validation check before it
-  is kept.
-- **Local models only:** Qwen3.8 Flash-Next and NVIDIA Nemotron 3.5, served with vLLM or NVIDIA NIM.
+- **The agent's sandbox:** the agent is deployed in an OpenShell sandbox, created through NemoClaw.
+- **The tools' sandbox:** Python the agent runs itself goes through Monty.
+- **Evaluation rules:** every change must pass fixed gates on training pairs. Held-out validation pairs decide which
+  improved agent we report.
+- **Local models only:** NVIDIA Nemotron 3.5 Lightning and Qwen3.8 Flash-Next, served with vLLM or llama.cpp in our
+  runs. [`serving/`](serving/) also sets up NVIDIA NIM.
 
-The benchmark is [PrimeVul](https://github.com/DLVulDet/PrimeVul) paired vulnerability detection: each pair is a
-vulnerable function and its patched version.
+There are two benchmarks:
 
-> **Status:** work in progress. The code, agents, serving recipes and results are being moved in from internal
-> repositories.
+- **[PrimeVul](https://github.com/DLVulDet/PrimeVul), paired:** each pair is a vulnerable C/C++ function and its
+  patched version.
+- **Synthetic custom components:** 50 pairs of small Haystack component repositories. One repository of each pair has
+  a planted vulnerability and the other is its fixed twin. The agent scans each one as a whole repository.
+
+> **Status:** work in progress. The code, agents and serving recipes to rerun them are being moved
+> in from internal repositories.
 
 ## Background
 
@@ -27,28 +32,35 @@ vulnerable function and its patched version.
 
 | Folder | What it holds |
 |---|---|
-| [`docs/`](docs/) | architecture, DGX Spark setup, the self-improvement loop, how to reproduce each result, the pre-registered experiments |
-| [`src/security_agent/`](src/security_agent/) | the Python package: agents, tools, knowledge base, the optimization loop, benchmarks, NeMo Gym environment |
-| [`agents/`](agents/) | agent YAML files: the seed agent, the controls, and the agents the loop produced |
-| [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, measured speed |
-| [`sandbox/`](sandbox/) | the security-triage agent for NemoClaw/OpenShell, its egress policy and inference wiring |
-| [`gym/`](gym/) | the NeMo Gym environment configuration |
+| [`docs/`](docs/) | DGX Spark setup, one runbook per benchmark, and the architecture |
+| [`src/security_agent/`](src/security_agent/) | the Python package: the self-improvement loop the benchmarks share (`optimize/`), the repository scan agent and its benchmark task (`synthetic/`), the PrimeVul triage agent's runner and scoring (`primevul/`) and its knowledge base (`knowledge_base/`), the model servers' smoke check, the PrimeVul data |
+| [`agents/`](agents/) | the agents behind the results: the seed and the improved agents for each benchmark |
+| [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, smoke check; and Qdrant, for PrimeVul's knowledge base |
+| [`sandbox/`](sandbox/) | the OpenShell sandbox, created through NemoClaw, that the synthetic benchmark's scans run in: the image, its policy, the inference route |
+| [`gym/`](gym/) | the NeMo Gym environments for both benchmarks: resources servers that score rollouts with each benchmark's own scoring, and agent servers that run our agents (PrimeVul's agent files through Gym's Haystack harness, the synthetic benchmark's scanner as a black-box harness) |
 | [`data/`](data/) | PrimeVul pair-id manifests and the synthetic custom-component dataset |
-| [`scripts/`](scripts/) | setup, data preparation, benchmarks, evaluation, one entry point per experiment |
-| [`results/`](results/) | the numbers we report, with the command that produced each |
+| [`scripts/`](scripts/) | setup, data preparation, evaluation, one entry point per experiment |
+| [`results/`](results/) | what came out of our runs, and how each number was produced |
+| [`demo/`](demo/) | the talk's live demo: one iteration of the self-improvement loop on the synthetic benchmark, approved by a person and deployed into the sandbox, in about 3 to 5 minutes |
 | [`tests/`](tests/) | unit tests that run without a GPU |
 | [`cve-triage/`](cve-triage/) | a separate Haystack agent that triages the security advisories for a Python repository's dependencies. It calls cloud APIs (OpenAI, You.com, Fastino), so the bounds above don't apply to it |
 
 ## Requirements
 
 - An NVIDIA DGX Spark (GB10, 128 GB unified memory) with Docker and the NVIDIA Container Toolkit.
-- [Hatch](https://hatch.pypa.io/latest/install/) for the Python environments.
+- [Hatch](https://hatch.pypa.io/latest/install/) for the Python environments, and Node.js 22.19 or newer for NemoClaw.
 - A Hugging Face token for the model downloads, and an NGC API key for NIM containers.
 
-## Quick start
+## Run it yourself
 
-- **Set up the agent:** see `docs/setup-dgx-spark.md` (coming).
-- **Reproduce the results:** see `docs/reproducing-results.md` (coming).
+- **Data:** both benchmarks already build with one command each, see [`data/`](data/).
+- **Synthetic custom components:** see [`docs/synthetic.md`](docs/synthetic.md). Serve Flash-Next with vLLM, create
+  the sandbox, scan with both agents inside it, run the loop, then approve an improvement and deploy it there; and roll
+  the agents out with NeMo Gym.
+- **The demo:** see [`demo/README.md`](demo/README.md).
+- **PrimeVul:** see [`docs/primevul.md`](docs/primevul.md). Build the benchmark file and the knowledge base, serve
+  Flash-Next with vLLM, measure both agents on the test pairs, run the prompt loop, and roll the agents out with NeMo
+  Gym.
 
 ## Development
 

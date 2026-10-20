@@ -1,0 +1,35 @@
+# The self-improvement loop on the synthetic benchmark (security-agent synthetic loop run). Copied into
+# preregistration.json before anything is measured.
+# - The starting candidate is weak: an Agent with a file list, read_file and a Python sandbox, a short
+#   generic prompt and low limits. The optimizer writes the agent's tools and pipeline steps in Python, edits the
+#   prompts and may raise the limits.
+# - One model server (model.yaml) serves the scanner, the optimizer and the code's model calls.
+# - Training on a fixed subset of 12 training pairs, one measurement per candidate. Validation picks among the
+#   candidates afterwards (security-agent synthetic bench run --split val); the loop never sees it.
+
+reference: agents/synthetic/seed       # the starting candidate (relative to the repository)
+train_per_benchmark: 12                # the fixed training subset (security_agent.optimize.splits.subsample)
+seed: 20261013                         # the training subset, and the halves for the early abort
+model_config: model.yaml
+runs_dir: runs/synthetic/loop
+iterations: 15                         # candidates
+gpu_hours: 40                          # wall hours of measurements and turns
+concurrency: 8                         # repositories scanned in parallel: the server's 8 slots
+min_reasoning_reads: 2                 # read_reasoning calls before submit_candidate is accepted
+
+proposer:
+  thinking_budget: 4096
+  max_tokens: 16384
+  temperature: 0.6
+  max_steps: 60                        # writing several tools, debugging them and trial scans take steps
+  step_reminder: true                  # at 15 and 5 steps left: submit
+  nudges: 2
+
+rules:                                 # see security_agent.optimize.loop.Rules
+  prefill_tps: 3000                    # prompt tokens per second, measured at 8 parallel requests on one DGX Spark
+  decode_tps: 110                      # output tokens per second, likewise
+  max_gpu_minutes_per_repo: 6
+  max_findings_per_repo: 10
+  cost_abort_slack: 1.2
+  abort_behind: 4
+  max_tool_error_rate: 0.05

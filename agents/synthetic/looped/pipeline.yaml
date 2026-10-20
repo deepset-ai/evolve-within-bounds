@@ -1,0 +1,64 @@
+# The looped candidate, written by the optimizer from the starting candidate (../seed) and picked afterwards as the
+# candidate with the most validation pairs right. It adds three pipeline steps around the agent (guards, hunter,
+# verifier) and three tools for it (search, outline, rare), and raises the agent's limits. The optimizer wrote
+# everything below and in prompts/ and tools/; only this comment is ours.
+components:
+  guards:
+    type: security_agent.synthetic.agent.CodeStep
+    init_parameters:
+      code: tools/guards.py
+      max_calls: 0
+      max_completion_tokens: 0
+      timeout_s: 300
+  hunter:
+    type: security_agent.synthetic.agent.CodeStep
+    init_parameters:
+      code: tools/hunter.py
+      max_calls: 60
+      max_completion_tokens: 40000
+      timeout_s: 900
+  agent:
+    type: security_agent.synthetic.agent.ScanAgent
+    init_parameters:
+      system_prompt: prompts/system.md
+      user_prompt: prompts/user.jinja2
+      tools:
+      - read_file
+      - run_python
+      - tools/search.py
+      - tools/outline.py
+      - tools/rare.py
+      max_agent_steps: 22
+      max_tokens: 4096
+      thinking_budget: 768
+      temperature: 0.0
+      read_file_lines: 200
+      file_list_chars: 12000
+      tool_output_chars: 5000
+      tool_timeout_s: 60
+      tool_model_calls: 0
+      tool_completion_tokens: 0
+      scan_prompt_tokens: 2000000
+      scan_completion_tokens: 120000
+      timeout_s: 1500
+  verifier:
+    type: security_agent.synthetic.agent.CodeStep
+    init_parameters:
+      code: tools/verifier.py
+      max_calls: 40
+      max_completion_tokens: 20000
+      timeout_s: 600
+  normalizer:
+    type: security_agent.synthetic.normalize.Normalizer
+    init_parameters:
+      max_per_location: 1
+      tau: 0
+connections:
+- sender: guards.findings
+  receiver: hunter.findings
+- sender: hunter.findings
+  receiver: agent.findings
+- sender: agent.findings
+  receiver: verifier.findings
+- sender: verifier.findings
+  receiver: normalizer.candidates

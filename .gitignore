@@ -27,3 +27,6 @@ data/primevul/build/
 models/
 *.safetensors
 *.gguf
+
+# The materialized benchmarks and answer keys (security-agent synthetic bench prepare)
+work/

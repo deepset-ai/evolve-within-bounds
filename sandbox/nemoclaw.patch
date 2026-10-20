@@ -1,0 +1,632 @@
+SPDX-FileCopyrightText: 2026-present deepset GmbH <info@deepset.ai>
+
+SPDX-License-Identifier: Apache-2.0
+
+Our changes to NVIDIA/NemoClaw at commit 2cf1ecd69 (Apache-2.0). sandbox.sh applies them with `git apply`; git ignores
+this text before the first diff.
+
+`nemoclaw onboard --agent <name>` only accepts agents that its managed-startup code knows. These changes register one
+more, `security-triage`, as a one-shot terminal agent with a single inference role and no dashboard or messaging: its
+profile and environment mapping, its config generator, its state directory, its use of the host-local inference route,
+and the matching fixtures in NemoClaw's tests. The agent itself is the directory security-triage/, which sandbox.sh
+copies to agents/security-triage/.
+
+diff --git a/scripts/checks/generate-managed-startup-profile-fixture.mts b/scripts/checks/generate-managed-startup-profile-fixture.mts
+index e27c873bd..cebcfa81a 100755
+--- a/scripts/checks/generate-managed-startup-profile-fixture.mts
++++ b/scripts/checks/generate-managed-startup-profile-fixture.mts
+@@ -199,6 +199,32 @@ export function managedStartupE2eProfile(
+           reasoningEffort: null,
+         },
+       };
++    case "security-triage":
++      return {
++        ...common,
++        agent,
++        agentConfig: { agent },
++        inference: {
++          ...common.inference,
++          routeProvider: "custom",
++          upstreamProvider: "anthropic-prod",
++          model: "claude-sonnet-5",
++          api: "anthropic-messages",
++          primaryModelRef: null,
++          compatibility: null,
++          inputModalities: null,
++        },
++        dashboard: {
++          agent,
++          mode: "disabled",
++        },
++        tuning: {
++          contextWindow: null,
++          maxTokens: null,
++          reasoning: null,
++          reasoningEffort: null,
++        },
++      };
+   }
+ }
+ 
+diff --git a/src/lib/onboard/managed-bootstrap/podman-image-transaction.ts b/src/lib/onboard/managed-bootstrap/podman-image-transaction.ts
+index 82a37c1ec..6389d9baf 100644
+--- a/src/lib/onboard/managed-bootstrap/podman-image-transaction.ts
++++ b/src/lib/onboard/managed-bootstrap/podman-image-transaction.ts
+@@ -50,6 +50,7 @@ const PODMAN_BOOTSTRAP_AGENTS = Object.freeze({
+   hermes: true,
+   "langchain-deepagents-code": true,
+   pi: false,
++  "security-triage": false,
+ } satisfies Record<ManagedStartupAgent, boolean>);
+ 
+ export interface PodmanBootstrapImageTransactionInput {
+diff --git a/src/lib/onboard/managed-startup-agent-environment.test.ts b/src/lib/onboard/managed-startup-agent-environment.test.ts
+index 23272f875..2eb8770b5 100644
+--- a/src/lib/onboard/managed-startup-agent-environment.test.ts
++++ b/src/lib/onboard/managed-startup-agent-environment.test.ts
+@@ -267,6 +267,48 @@ function piProfile(): ManagedStartupProfile {
+   };
+ }
+ 
++function securityTriageProfile(): ManagedStartupProfile {
++  return {
++    schemaVersion: MANAGED_STARTUP_PROFILE_SCHEMA_VERSION,
++    agent: "security-triage",
++    agentConfig: { agent: "security-triage" },
++    inference: {
++      routeProvider: "custom",
++      upstreamProvider: "anthropic-prod",
++      model: "claude-sonnet-5",
++      routedBaseUrl: "https://inference.local/v1",
++      upstreamEndpointUrl: null,
++      api: "anthropic-messages",
++      primaryModelRef: null,
++      compatibility: null,
++      inputModalities: null,
++    },
++    proxy: {
++      managedHost: "10.200.0.1",
++      managedPort: 3128,
++      hostHttpUrl: null,
++      hostHttpsUrl: null,
++      hostNoProxy: [],
++    },
++    dashboard: {
++      agent: "security-triage",
++      mode: "disabled",
++    },
++    tools: {
++      disclosure: "progressive",
++      enabledGateways: [],
++    },
++    messaging: { plan: null },
++    tuning: {
++      contextWindow: null,
++      maxTokens: null,
++      reasoning: null,
++      reasoningEffort: null,
++    },
++    corporateCa: { bundleSha256: CA_SHA256 },
++  };
++}
++
+ function decodeBase64Json(encoded: string): unknown {
+   return JSON.parse(Buffer.from(encoded, "base64").toString("utf8")) as unknown;
+ }
+@@ -286,6 +328,7 @@ const PROFILES: Readonly<Record<ManagedStartupAgent, () => ManagedStartupProfile
+   hermes: hermesProfile,
+   "langchain-deepagents-code": dcodeProfile,
+   pi: piProfile,
++  "security-triage": securityTriageProfile,
+ };
+ 
+ describe("managed startup agent environment", () => {
+diff --git a/src/lib/onboard/managed-startup-application.test.ts b/src/lib/onboard/managed-startup-application.test.ts
+index 1e3daa3bb..313292b12 100644
+--- a/src/lib/onboard/managed-startup-application.test.ts
++++ b/src/lib/onboard/managed-startup-application.test.ts
+@@ -52,6 +52,8 @@ function agentConfigFor(agent: ManagedStartupAgent): ManagedStartupAgentConfig {
+       return { agent, autoApprovalMode: "thread-opt-in", observabilityEnabled: true };
+     case "pi":
+       return { agent };
++    case "security-triage":
++      return { agent };
+   }
+ }
+ 
+@@ -105,7 +107,9 @@ function profileFor(
+           }
+         : agent === "pi"
+           ? { agent, mode: "disabled" as const }
+-          : { agent, mode: "disabled" as const };
++          : agent === "security-triage"
++            ? { agent, mode: "disabled" as const }
++            : { agent, mode: "disabled" as const };
+   return {
+     schemaVersion: MANAGED_STARTUP_PROFILE_SCHEMA_VERSION,
+     agent,
+diff --git a/src/lib/onboard/managed-startup-coordinator.test.ts b/src/lib/onboard/managed-startup-coordinator.test.ts
+index 90a5b9211..38a9bb98f 100644
+--- a/src/lib/onboard/managed-startup-coordinator.test.ts
++++ b/src/lib/onboard/managed-startup-coordinator.test.ts
+@@ -81,6 +81,9 @@ function adaptersFor(order: string[] = []): {
+     pi: vi.fn(async () => {
+       order.push("apply:pi");
+     }),
++    "security-triage": vi.fn(async () => {
++      order.push("apply:security-triage");
++    }),
+   };
+   return {
+     adapters: [
+@@ -91,6 +94,7 @@ function adaptersFor(order: string[] = []): {
+         apply: applyByAgent["langchain-deepagents-code"],
+       },
+       { agent: "pi", apply: applyByAgent.pi },
++      { agent: "security-triage", apply: applyByAgent["security-triage"] },
+     ],
+     applyByAgent,
+   };
+diff --git a/src/lib/onboard/managed-startup-image-runtime.test.ts b/src/lib/onboard/managed-startup-image-runtime.test.ts
+index 1a938a3d1..42d2d68a1 100644
+--- a/src/lib/onboard/managed-startup-image-runtime.test.ts
++++ b/src/lib/onboard/managed-startup-image-runtime.test.ts
+@@ -81,6 +81,8 @@ function dashboard(agent: ManagedStartupAgent): ManagedStartupDashboard {
+       return { agent, mode: "disabled" };
+     case "pi":
+       return { agent, mode: "disabled" };
++    case "security-triage":
++      return { agent, mode: "disabled" };
+   }
+ }
+ 
+@@ -89,7 +91,7 @@ function actionInput(
+   mode: "apply" | "clear" = "apply",
+ ): ManagedStartupImageActionPlanInput {
+   const messagingActions =
+-    agent === "langchain-deepagents-code" || agent === "pi"
++    agent === "langchain-deepagents-code" || agent === "pi" || agent === "security-triage"
+       ? []
+       : [
+           {
+diff --git a/src/lib/onboard/managed-startup-profile.test.ts b/src/lib/onboard/managed-startup-profile.test.ts
+index de26d47ed..3e25f2e65 100644
+--- a/src/lib/onboard/managed-startup-profile.test.ts
++++ b/src/lib/onboard/managed-startup-profile.test.ts
+@@ -293,6 +293,7 @@ const STOCK_DOCKER_ARGS = {
+     path.join(process.cwd(), "agents/langchain-deepagents-code/Dockerfile"),
+   ),
+   pi: dockerArgs(path.join(process.cwd(), "agents/pi/Dockerfile")),
++  "security-triage": dockerArgs(path.join(process.cwd(), "agents/security-triage/Dockerfile")),
+ } satisfies Record<ManagedStartupAgent, Set<string>>;
+ 
+ const RUNTIME_INPUT_SOURCE_FILES = [
+diff --git a/src/lib/onboard/managed-startup-shared-state-transaction.test.ts b/src/lib/onboard/managed-startup-shared-state-transaction.test.ts
+index 7cc42889b..cf36e5369 100644
+--- a/src/lib/onboard/managed-startup-shared-state-transaction.test.ts
++++ b/src/lib/onboard/managed-startup-shared-state-transaction.test.ts
+@@ -198,6 +198,10 @@ describe("managed startup shared-state transaction", () => {
+           fs.mkdirSync(path.join(root, "agent"));
+           fs.writeFileSync(path.join(root, "agent", "models.json"), "{}\n");
+         },
++        "security-triage": () => {
++          fs.mkdirSync(path.join(root, "state"));
++          fs.mkdirSync(path.join(root, "logs"));
++        },
+       };
+       createManagedDrift[agent]();
+ 
+@@ -215,6 +219,7 @@ describe("managed startup shared-state transaction", () => {
+         hermes: [".config-hash"],
+         "langchain-deepagents-code": [".state", "skills"],
+         pi: ["agent", path.join("agent", "models.json")],
++        "security-triage": ["state", "logs"],
+       };
+       expect(
+         absentManagedPaths[agent].every((relativePath) =>
+diff --git a/src/lib/onboard/managed-startup/agent-environment.ts b/src/lib/onboard/managed-startup/agent-environment.ts
+index 2b5dc2c1f..23c1f13f0 100644
+--- a/src/lib/onboard/managed-startup/agent-environment.ts
++++ b/src/lib/onboard/managed-startup/agent-environment.ts
+@@ -44,7 +44,9 @@ export interface ManagedStartupRootOwnedFileMaterial {
+     | "/usr/local/share/nemoclaw/dcode-reasoning-effort"
+     | "/usr/local/share/nemoclaw/dcode-upstream-provider"
+     | "/usr/local/share/nemoclaw/pi-proxy-host"
+-    | "/usr/local/share/nemoclaw/pi-proxy-port";
++    | "/usr/local/share/nemoclaw/pi-proxy-port"
++    | "/usr/local/share/nemoclaw/security-triage-proxy-host"
++    | "/usr/local/share/nemoclaw/security-triage-proxy-port";
+   readonly contents: string;
+   readonly owner: "root";
+   readonly group: "root";
+@@ -615,6 +617,65 @@ function mapPiProfile(
+   });
+ }
+ 
++/**
++ * Security Triage has a single inference role and no exposed
++ * tuning knobs (unlike Pi's context-window/max-tokens/reasoning trio), so
++ * this is Pi's mapper with the tuning fields dropped.
++ */
++function mapSecurityTriageProfile(
++  profile: ManagedStartupProfile,
++  environment: ApplicationEnvironment,
++): ManagedStartupAgentEnvironment {
++  if (
++    profile.agent !== "security-triage" ||
++    profile.agentConfig.agent !== "security-triage" ||
++    profile.dashboard.agent !== "security-triage" ||
++    profile.messaging.plan !== null
++  ) {
++    throw new ManagedStartupAgentEnvironmentError("Security Triage profile state is inconsistent");
++  }
++
++  const configurationEnvironment: MutableEnvironment = {
++    ...commonConfigurationEnvironment(profile),
++  };
++  appendHostProxyEnvironment(configurationEnvironment, profile);
++  const runtimeEnvironment: MutableEnvironment = { ...configurationEnvironment };
++  delete runtimeEnvironment.NEMOCLAW_INFERENCE_BASE_URL;
++  for (const name of [
++    "HTTP_PROXY",
++    "HTTPS_PROXY",
++    "NO_PROXY",
++    "http_proxy",
++    "https_proxy",
++    "no_proxy",
++  ]) {
++    delete runtimeEnvironment[name];
++  }
++  const materials: readonly ManagedStartupAgentMaterial[] = Object.freeze([
++    corporateCaMaterial(profile),
++    rootOwnedFile(
++      "NEMOCLAW_PROXY_HOST",
++      "/usr/local/share/nemoclaw/security-triage-proxy-host",
++      profile.proxy.managedHost,
++    ),
++    rootOwnedFile(
++      "NEMOCLAW_PROXY_PORT",
++      "/usr/local/share/nemoclaw/security-triage-proxy-port",
++      String(profile.proxy.managedPort),
++    ),
++  ]);
++
++  return Object.freeze({
++    schemaVersion: profile.schemaVersion,
++    agent: profile.agent,
++    configurationEnvironment: sortedEnvironment(configurationEnvironment),
++    runtimeEnvironment: sortedEnvironment(runtimeEnvironment),
++    applicationRuntime: applicationRuntimePlan(profile, environment),
++    materials,
++    actions: applicationActions(profile, null),
++  });
++}
++
+ /**
+  * Convert a secret-free validated profile into existing agent-generator and
+  * entrypoint inputs without depending on Docker, Podman, or another compute
+@@ -635,5 +696,7 @@ export function mapManagedStartupProfileToAgentEnvironment(
+       return mapDcodeProfile(validated, environment);
+     case "pi":
+       return mapPiProfile(validated, environment);
++    case "security-triage":
++      return mapSecurityTriageProfile(validated, environment);
+   }
+ }
+diff --git a/src/lib/onboard/managed-startup/clone-rebinder.ts b/src/lib/onboard/managed-startup/clone-rebinder.ts
+index 01e3ff155..130dcc906 100644
+--- a/src/lib/onboard/managed-startup/clone-rebinder.ts
++++ b/src/lib/onboard/managed-startup/clone-rebinder.ts
+@@ -212,6 +212,9 @@ function currentAgentConfig(
+   if (profile.agentConfig.agent === "pi") {
+     return profile.agentConfig;
+   }
++  if (profile.agentConfig.agent === "security-triage") {
++    return profile.agentConfig;
++  }
+   if (profile.agentConfig.agent !== "langchain-deepagents-code") {
+     return {
+       ...profile.agentConfig,
+@@ -399,7 +402,11 @@ function destinationMessagingPlan(
+   destinationSandboxName: string,
+ ): ManagedStartupJsonObject | null {
+   if (profile.messaging.plan === null) return null;
+-  if (profile.agent === "langchain-deepagents-code" || profile.agent === "pi") {
++  if (
++    profile.agent === "langchain-deepagents-code" ||
++    profile.agent === "pi" ||
++    profile.agent === "security-triage"
++  ) {
+     fail(`${profile.agent} cannot carry a messaging plan`);
+   }
+   const rebound = rebindSandboxMessagingPlanForClone({
+diff --git a/src/lib/onboard/managed-startup/image-runtime.ts b/src/lib/onboard/managed-startup/image-runtime.ts
+index cc499bdfa..e7a4d23e5 100644
+--- a/src/lib/onboard/managed-startup/image-runtime.ts
++++ b/src/lib/onboard/managed-startup/image-runtime.ts
+@@ -543,6 +543,11 @@ function generatorCommand(agent: ManagedStartupAgent): readonly string[] {
+         "--experimental-strip-types",
+         "/opt/nemoclaw-pi/generate-config.ts",
+       ];
++    case "security-triage":
++      return [
++        "/opt/venv/bin/python3",
++        "/opt/nemoclaw-security-triage-config/generate_config.py",
++      ];
+   }
+ }
+ 
+diff --git a/src/lib/onboard/managed-startup/onboard-profile.ts b/src/lib/onboard/managed-startup/onboard-profile.ts
+index 9a22950b8..e1cdca4d1 100644
+--- a/src/lib/onboard/managed-startup/onboard-profile.ts
++++ b/src/lib/onboard/managed-startup/onboard-profile.ts
+@@ -52,6 +52,7 @@ const PROFILE_ENVIRONMENT_INPUTS = {
+     "NEMOCLAW_PROXY_PORT",
+     "NEMOCLAW_REASONING",
+   ],
++  "security-triage": ["NEMOCLAW_PROXY_HOST", "NEMOCLAW_PROXY_PORT"],
+ } as const satisfies Record<ManagedStartupAgent, readonly string[]>;
+ 
+ const HOST_NO_PROXY_INPUTS = ["NO_PROXY", "no_proxy"] as const;
+@@ -134,6 +135,13 @@ function dashboardForInput(
+     return { agent, mode: "disabled" };
+   }
+ 
++  if (agent === "security-triage") {
++    if (input.manageDashboard) {
++      throw new ManagedStartupOnboardProfileError("Security Triage must not enable a dashboard");
++    }
++    return { agent, mode: "disabled" };
++  }
++
+   if (!input.manageDashboard) {
+     throw new ManagedStartupOnboardProfileError(`${agent} requires managed dashboard state`);
+   }
+diff --git a/src/lib/onboard/managed-startup/profile-builder.ts b/src/lib/onboard/managed-startup/profile-builder.ts
+index b862ec41e..353baeebe 100644
+--- a/src/lib/onboard/managed-startup/profile-builder.ts
++++ b/src/lib/onboard/managed-startup/profile-builder.ts
+@@ -68,6 +68,7 @@ const EXPECTED_AFFORDANCE_INVENTORY_SHA256 = {
+   hermes: "26c2dc3750274e5c2a79bf382a4b18b3cf26c0ef64938e91b694427aa23756e8",
+   "langchain-deepagents-code": "08c75cf22495ec93a090bc5b70544eac65970e658b10fba057dea5ffef502e4a",
+   pi: "6302d387182c596fd67ad18577ecf82107bad6271aeeb5e69714115f91557abb",
++  "security-triage": "195e7f361cf83f2fee7b896579c3ceb680498645368920b42e3b951244e5e08a",
+ } as const satisfies Record<ManagedStartupAgent, string>;
+ 
+ const INVENTORY_INPUTS = new Set(
+diff --git a/src/lib/onboard/managed-startup/profile.ts b/src/lib/onboard/managed-startup/profile.ts
+index 928839c57..755904fb7 100644
+--- a/src/lib/onboard/managed-startup/profile.ts
++++ b/src/lib/onboard/managed-startup/profile.ts
+@@ -128,6 +128,7 @@ export const MANAGED_STARTUP_AGENTS = [
+   "hermes",
+   "langchain-deepagents-code",
+   "pi",
++  "security-triage",
+ ] as const;
+ 
+ export type ManagedStartupAgent = (typeof MANAGED_STARTUP_AGENTS)[number];
+@@ -218,11 +219,17 @@ export interface ManagedStartupPiDashboard {
+   readonly mode: "disabled";
+ }
+ 
++export interface ManagedStartupSecurityTriageDashboard {
++  readonly agent: "security-triage";
++  readonly mode: "disabled";
++}
++
+ export type ManagedStartupDashboard =
+   | ManagedStartupOpenClawDashboard
+   | ManagedStartupHermesDashboard
+   | ManagedStartupDcodeDashboard
+-  | ManagedStartupPiDashboard;
++  | ManagedStartupPiDashboard
++  | ManagedStartupSecurityTriageDashboard;
+ 
+ export interface ManagedStartupWebSearch {
+   readonly enabled: boolean;
+@@ -314,11 +321,16 @@ export interface ManagedStartupPiConfig {
+   readonly agent: "pi";
+ }
+ 
++export interface ManagedStartupSecurityTriageConfig {
++  readonly agent: "security-triage";
++}
++
+ export type ManagedStartupAgentConfig =
+   | ManagedStartupOpenClawConfig
+   | ManagedStartupHermesConfig
+   | ManagedStartupDcodeConfig
+-  | ManagedStartupPiConfig;
++  | ManagedStartupPiConfig
++  | ManagedStartupSecurityTriageConfig;
+ 
+ export interface ManagedStartupProfile {
+   readonly schemaVersion: typeof MANAGED_STARTUP_PROFILE_SCHEMA_VERSION;
+@@ -456,6 +468,27 @@ const PROFILE_CAPABILITIES = {
+     observability: "none",
+     supportsMinimalBootstrap: false,
+   },
++  "security-triage": {
++    // One-shot triage run, single inference role -- no per-role
++    // model split like deep-research's five sub-agent LLMs.
++    inferenceApis: ["anthropic-messages"],
++    dashboardModes: ["disabled"],
++    inputModalities: [],
++    webSearchProviders: [],
++    toolGateways: [],
++    tuningFields: [],
++    supportsMessaging: false,
++    supportsInferenceCompatibility: false,
++    supportsUpstreamEndpoint: false,
++    supportsHostProxyIntent: true,
++    supportsPrimaryModelRef: false,
++    supportsAgentTimeout: false,
++    supportsHeartbeat: false,
++    supportsExtraAgents: false,
++    supportsDeviceAuth: false,
++    observability: "none",
++    supportsMinimalBootstrap: false,
++  },
+ } satisfies Record<ManagedStartupAgent, ManagedStartupAgentCapabilities>;
+ 
+ for (const agent of MANAGED_STARTUP_AGENTS) {
+@@ -618,6 +651,23 @@ export const MANAGED_STARTUP_PROFILE_AFFORDANCE_INVENTORY = {
+     ),
+     ...HOST_PROXY_AFFORDANCES,
+   ],
++  "security-triage": [
++    affordance("NEMOCLAW_MODEL", "inference.model"),
++    affordance("NEMOCLAW_INFERENCE_PROVIDER_ID", "inference.routeProvider"),
++    affordance("NEMOCLAW_UPSTREAM_PROVIDER", "inference.upstreamProvider"),
++    affordance("NEMOCLAW_INFERENCE_BASE_URL", "inference.routedBaseUrl"),
++    affordance("NEMOCLAW_INFERENCE_API", "inference.api"),
++    affordance("NEMOCLAW_TOOL_DISCLOSURE", "tools.disclosure"),
++    affordance("NEMOCLAW_PROXY_HOST", "proxy.managedHost"),
++    affordance("NEMOCLAW_PROXY_PORT", "proxy.managedPort"),
++    affordance(
++      "NEMOCLAW_CORPORATE_CA_B64",
++      "corporateCa.bundleSha256",
++      "host-material",
++      "digest-handoff",
++    ),
++    ...HOST_PROXY_AFFORDANCES,
++  ],
+ } as const satisfies Record<ManagedStartupAgent, readonly ManagedStartupAffordance[]>;
+ 
+ export type ManagedStartupDeferredRuntimeOwner =
+@@ -742,6 +792,13 @@ export const MANAGED_STARTUP_PROFILE_DEFERRED_RUNTIME_INPUTS = Object.freeze({
+       "credential provider construction owns key metadata outside the secret-free profile",
+     ),
+   ]),
++  "security-triage": Object.freeze([
++    deferredRuntimeInput(
++      "NEMOCLAW_EXTRA_PLACEHOLDER_KEYS",
++      "credential-plumbing",
++      "credential provider construction owns key metadata outside the secret-free profile",
++    ),
++  ]),
+ }) satisfies Readonly<Record<ManagedStartupAgent, readonly ManagedStartupDeferredRuntimeInput[]>>;
+ 
+ export interface ManagedStartupRuntimeCleanupObligation {
+@@ -878,6 +935,14 @@ export const MANAGED_STARTUP_PROFILE_EXCLUDED_DOCKER_INPUTS = {
+     { input: "TARGETARCH", reason: "platform-build" },
+     { input: "NEMOCLAW_MANAGED_IMAGE_RUNTIME_USER", reason: "fixed-image-contract" },
+   ],
++  "security-triage": [
++    { input: "BASE_IMAGE", reason: "release-composition" },
++    { input: "NEMOCLAW_MANAGED_IMAGE_CAPABILITY_UNION", reason: "release-composition" },
++    { input: "NEMOCLAW_BUILD_ID", reason: "build-provenance" },
++    { input: "NEMOCLAW_DARWIN_VM_COMPAT", reason: "platform-build" },
++    { input: "TARGETARCH", reason: "platform-build" },
++    { input: "NEMOCLAW_MANAGED_IMAGE_RUNTIME_USER", reason: "fixed-image-contract" },
++  ],
+ } as const satisfies Record<ManagedStartupAgent, readonly ManagedStartupExcludedDockerInput[]>;
+ 
+ export class ManagedStartupProfileError extends Error {
+diff --git a/src/lib/onboard/managed-startup/shared-state-transaction.ts b/src/lib/onboard/managed-startup/shared-state-transaction.ts
+index 32474bdab..69b3db236 100644
+--- a/src/lib/onboard/managed-startup/shared-state-transaction.ts
++++ b/src/lib/onboard/managed-startup/shared-state-transaction.ts
+@@ -390,6 +390,8 @@ function agentRoot(agent: ManagedStartupAgent, sandboxRoot: string): string {
+       return path.join(sandboxRoot, ".deepagents");
+     case "pi":
+       return path.join(sandboxRoot, ".pi");
++    case "security-triage":
++      return path.join(sandboxRoot, ".security-triage");
+   }
+ }
+ 
+diff --git a/src/lib/onboard/runtime-provider/host-local-inference-routing.ts b/src/lib/onboard/runtime-provider/host-local-inference-routing.ts
+index 231586916..5597b9f74 100644
+--- a/src/lib/onboard/runtime-provider/host-local-inference-routing.ts
++++ b/src/lib/onboard/runtime-provider/host-local-inference-routing.ts
+@@ -26,6 +26,7 @@ export const HOST_LOCAL_INFERENCE_APPLICATIONS = [
+   "openclaw",
+   "hermes",
+   "langchain-deepagents-code",
++  "security-triage",
+ ] as const;
+ 
+ export type HostLocalInferenceApplication = (typeof HOST_LOCAL_INFERENCE_APPLICATIONS)[number];
+diff --git a/src/lib/onboard/runtime-provider/runtime-provider-contract.test.ts b/src/lib/onboard/runtime-provider/runtime-provider-contract.test.ts
+index d279d5faa..ffa13c773 100644
+--- a/src/lib/onboard/runtime-provider/runtime-provider-contract.test.ts
++++ b/src/lib/onboard/runtime-provider/runtime-provider-contract.test.ts
+@@ -25,9 +25,10 @@ import { loadAgent } from "../../agent/defs";
+ import type { SandboxEntry, SandboxWorkloadReceipt } from "../../state/registry/types";
+ import { cloneSandboxWorkloadReceipt } from "../../state/registry/workload";
+ import { createDockerManagedBootstrapSurface } from "../managed-bootstrap/docker-runtime";
+-import { MANAGED_IMAGE_REPOSITORIES } from "../managed-image/contract";
++import { isManagedImageAgent, MANAGED_IMAGE_REPOSITORIES } from "../managed-image/contract";
+ import {
+   encodeManagedStartupProfile,
++  type ManagedStartupAgent,
+   type ManagedStartupProfile,
+ } from "../managed-startup/profile";
+ import { registerCreatedSandbox } from "../sandbox-registration";
+@@ -86,14 +87,21 @@ const MANAGED_RECEIPT = {
+ 
+ type ManagedWorkloadReceipt = Extract<SandboxWorkloadReceipt, { readonly kind: "managed-image" }>;
+ 
++function throwNotManagedImageAgent(agent: ManagedStartupAgent): never {
++  throw new Error(`${agent} is not a managed-image agent`);
++}
++
+ function receiptForProfile(
+   profile: ManagedStartupProfile,
+   corporateCaB64?: string,
+ ): ManagedWorkloadReceipt {
++  const managedImageAgent = isManagedImageAgent(profile.agent)
++    ? profile.agent
++    : throwNotManagedImageAgent(profile.agent);
+   const encodedProfile = encodeManagedStartupProfile(profile);
+   return {
+     ...MANAGED_RECEIPT,
+-    reference: `${MANAGED_IMAGE_REPOSITORIES[profile.agent]}@sha256:${"a".repeat(64)}`,
++    reference: `${MANAGED_IMAGE_REPOSITORIES[managedImageAgent]}@sha256:${"a".repeat(64)}`,
+     encodedProfile,
+     startupProfileSha256: createHash("sha256").update(encodedProfile, "utf8").digest("hex"),
+     ...(corporateCaB64 === undefined ? {} : { corporateCaB64 }),
+diff --git a/src/lib/onboard/workload/clone.ts b/src/lib/onboard/workload/clone.ts
+index 5ba03f331..f37d17353 100644
+--- a/src/lib/onboard/workload/clone.ts
++++ b/src/lib/onboard/workload/clone.ts
+@@ -250,7 +250,11 @@ function reboundMessaging(
+   destinationSandboxName: string,
+ ): SandboxMessagingState | undefined {
+   if (profile.messaging.plan === null) return undefined;
+-  if (profile.agent === "langchain-deepagents-code" || profile.agent === "pi") {
++  if (
++    profile.agent === "langchain-deepagents-code" ||
++    profile.agent === "pi" ||
++    profile.agent === "security-triage"
++  ) {
+     fail(`${profile.agent} clone unexpectedly produced a messaging plan`);
+   }
+   const agent = profile.agent;
+diff --git a/src/lib/state/registry/workload.ts b/src/lib/state/registry/workload.ts
+index ef2d95115..1ff008210 100644
+--- a/src/lib/state/registry/workload.ts
++++ b/src/lib/state/registry/workload.ts
+@@ -4,7 +4,7 @@
+ import { Buffer } from "node:buffer";
+ import { createHash } from "node:crypto";
+ 
+-import { MANAGED_IMAGE_REPOSITORIES } from "../../onboard/managed-image/contract";
++import { isManagedImageAgent, MANAGED_IMAGE_REPOSITORIES } from "../../onboard/managed-image/contract";
+ import {
+   decodeManagedStartupProfile,
+   MANAGED_STARTUP_PROFILE_MAX_BYTES,
+@@ -118,7 +118,10 @@ export function cloneSandboxWorkloadReceipt(
+   } catch {
+     return undefined;
+   }
+-  if (!value.reference.startsWith(`${MANAGED_IMAGE_REPOSITORIES[profile.agent]}@sha256:`)) {
++  if (
++    !isManagedImageAgent(profile.agent) ||
++    !value.reference.startsWith(`${MANAGED_IMAGE_REPOSITORIES[profile.agent]}@sha256:`)
++  ) {
+     return undefined;
+   }
+   const corporateCaBytes =

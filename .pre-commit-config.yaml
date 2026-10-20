@@ -1,6 +1,8 @@
 fail_fast: true
-# The synthetic benchmark's corpus, mutations and patches are byte-exact and digested: no hook may rewrite them.
-exclude: ^data/synthetic-components/(corpus|mutations|patches)/
+# The synthetic benchmark's corpus, mutations and patches are byte-exact and digested, the agents under
+# agents/synthetic/ are kept exactly as they ran (the optimizer wrote their code), the contract-test fixture's line
+# numbers are part of the test, and the demo's recording is replayed byte by byte: no hook may rewrite them.
+exclude: ^(data/synthetic-components/(corpus|mutations|patches)|agents/synthetic|src/security_agent/synthetic/fixture|demo/recording)/
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -17,6 +19,7 @@ repos:
       - id: no-commit-to-branch # prevents committing to main
       - id: trailing-whitespace # trims trailing whitespace
         args: [--markdown-linebreak-ext=md, --markdown-linebreak-ext=mdx]
+        exclude: \.patch$ # a unified diff's blank context lines are a single space
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0
@@ -31,6 +34,7 @@ repos:
     hooks:
       - id: codespell
         args: ["--toml", "pyproject.toml"]
+        exclude: cwe_reference\.json$ # MITRE's text, kept as published
         additional_dependencies:
           - tomli
 
