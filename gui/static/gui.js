@@ -70,6 +70,7 @@ async function refreshStatus() {
     status.textContent = spark.live ? `DGX Spark ready${data.busy ? ` · ${data.busy} running` : ""}` : "Recordings only";
     const missing = [data.model ? null : "the model server is offline", data.sandbox ? null : "the sandbox is missing"].filter(Boolean);
     status.title = spark.live ? "The DGX Spark's model server and sandbox are ready" : `On the DGX Spark, ${missing.join(" and ")}`;
+    if (spark.busy === "demo" && demo.mode === null) attachLive(); // a run is going, started before this page was opened
   } catch {
     spark.live = false;
     status.className = "status off";
@@ -448,6 +449,11 @@ async function runLive() {
     $("#demo-note").textContent = `Can't start: ${started.error}.`;
     return;
   }
+  attachLive();
+}
+
+// Follow the live run on the DGX Spark: the one just started, or one already running when the page was opened.
+function attachLive() {
   startDemo("live");
   let opened = false;
   const stream = new EventSource("/api/demo/stream");
