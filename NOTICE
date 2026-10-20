@@ -3,7 +3,8 @@ Copyright 2026 deepset GmbH
 
 This repository's own code is licensed under the Apache License, Version 2.0 (see LICENSE). The CVE triage agent
 (cve-triage/) is a Haystack port of You.com's cve-triage-agent (https://github.com/youdotcom-oss/cve-triage-agent,
-Copyright (c) 2026 You.com) and keeps that repository's MIT License, as its pyproject.toml declares.
+Copyright (c) 2026 You.com) and keeps that repository's MIT License, as its pyproject.toml declares; license text in
+cve-triage/LICENSE.
 
 It uses, downloads or serves the third-party software, models and datasets below. None of them is redistributed
 here unless this file says so; each keeps its own license.
