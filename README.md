@@ -42,6 +42,7 @@ There are two benchmarks:
 | [`scripts/`](scripts/) | setup, data preparation, evaluation, one entry point per experiment |
 | [`results/`](results/) | what came out of our runs, and how each number was produced |
 | [`demo/`](demo/) | the talk's live demo: one iteration of the self-improvement loop on the synthetic benchmark, approved by a person and deployed into the sandbox, in about 3 to 5 minutes |
+| [`gui/`](gui/) | a web page: how the agent evolved, the demo live or recorded, the evolved agent's verdict on real Haystack integrations, and PrimeVul pairs to guess at before the agent's verdicts are shown |
 | [`tests/`](tests/) | unit tests that run without a GPU |
 | [`cve-triage/`](cve-triage/) | a separate Haystack agent that triages the security advisories for a Python repository's dependencies. It calls cloud APIs (OpenAI, You.com, Fastino), so the bounds above don't apply to it |
 

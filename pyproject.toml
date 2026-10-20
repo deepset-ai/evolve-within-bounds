@@ -152,6 +152,7 @@ loop = "security-agent synthetic loop {args}"
 scan = "security-agent synthetic scan {args}"
 deploy = "security-agent synthetic sandbox deploy {args}"
 gym = "security-agent synthetic gym {args}"
+gui = "python gui/server.py {args}"
 test = "pytest tests/synthetic {args}"
 
 [tool.hatch.envs.cve-triage]

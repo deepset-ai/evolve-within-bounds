@@ -1,0 +1,95 @@
+# The Haystack integrations the page offers, from deepset-ai/haystack-core-integrations at a pinned commit. Each one is
+# scanned once, before they are shown, by the evolved agent (hatch run synthetic:gui --prepare); a person reviews the
+# findings (--review), and only the integrations they approve (--approve) appear on the page.
+repository: https://github.com/deepset-ai/haystack-core-integrations.git
+commit: 44ffad573352baf9293d36b5c2cc385e1ce9b2fb
+
+integrations:
+  - name: anthropic
+    title: Anthropic
+    group: Models
+    about: Lets a Haystack app talk to Claude models.
+  - name: mistral
+    title: Mistral
+    group: Models
+    about: Lets a Haystack app use Mistral's models, to chat and to turn text into vectors.
+  - name: ollama
+    title: Ollama
+    group: Models
+    about: Runs open models on your own machine, through the Ollama server.
+  - name: llama_cpp
+    title: llama.cpp
+    group: Models
+    about: Runs open models on your own machine, through llama.cpp.
+  - name: qdrant
+    title: Qdrant
+    group: Databases
+    about: Stores documents in the Qdrant vector database and finds the ones that match a question.
+  - name: chroma
+    title: Chroma
+    group: Databases
+    about: Stores documents in the Chroma vector database and finds the ones that match a question.
+  - name: pgvector
+    title: pgvector
+    group: Databases
+    about: Stores documents in PostgreSQL, with vector search, and finds the ones that match a question.
+  - name: weaviate
+    title: Weaviate
+    group: Databases
+    about: Stores documents in the Weaviate vector database and finds the ones that match a question.
+  - name: mariadb
+    title: MariaDB
+    group: Databases
+    about: Stores documents in MariaDB, with vector search, and finds the ones that match a question.
+  - name: arangodb
+    title: ArangoDB
+    group: Databases
+    about: Stores documents in the ArangoDB database and finds the ones that match a question.
+  - name: falkordb
+    title: FalkorDB
+    group: Databases
+    about: Stores documents in the FalkorDB graph database and queries them with Cypher.
+  - name: mongodb_atlas
+    title: MongoDB Atlas
+    group: Databases
+    about: Stores documents in MongoDB Atlas and finds the ones that match a question.
+  - name: sqlalchemy
+    title: SQLAlchemy
+    group: Databases
+    about: Runs SQL queries on a database through SQLAlchemy and returns the rows.
+  - name: snowflake
+    title: Snowflake
+    group: Databases
+    about: Runs SQL queries on a Snowflake data warehouse and returns the rows.
+  - name: github
+    title: GitHub
+    group: Tools and services
+    about: Lets an agent read and change GitHub repositories, issues and pull requests.
+  - name: mcp
+    title: MCP
+    group: Tools and services
+    about: Connects an agent to tools on Model Context Protocol servers.
+  - name: langfuse
+    title: Langfuse
+    group: Tools and services
+    about: Records what a Haystack app does, step by step, for Langfuse's tracing.
+  - name: firecrawl
+    title: Firecrawl
+    group: Tools and services
+    about: Fetches and crawls web pages, and searches the web, through the Firecrawl service.
+  - name: e2b
+    title: E2B
+    group: Tools and services
+    about: Gives an agent a cloud sandbox from E2B, to run shell commands and read and write files.
+  - name: libreoffice
+    title: LibreOffice
+    group: Tools and services
+    about: Converts office documents to other formats with LibreOffice.
+  - name: openapi
+    title: OpenAPI
+    group: Tools and services
+    about: Lets an agent call any web service described by an OpenAPI specification.
+  - name: oauth
+    title: OAuth
+    group: Tools and services
+    about: Gets and refreshes OAuth tokens, so a Haystack app can sign in to other services.

@@ -1,0 +1,24 @@
+# Pairs of real C/C++ functions from PrimeVul for the "Spot the vulnerability" tab: a function as it was before a
+# public security fix, and the patched version. The evolved PrimeVul agent judges each function alone
+# (hatch run synthetic:gui --prepare-pairs); the page shows both functions, the agent's verdict on each, and whether
+# the pair came out right. The functions and the verdicts stay on the machine that runs the page, in work/gui/ and
+# runs/gui/pairs/; the benchmark file is built by hatch run primevul:build (docs/primevul.md).
+data: data/primevul/build/primevul-loop.jsonl
+meta: data/primevul/build/primevul-test.meta.json
+agent: agents/primevul/looped
+
+# Short functions with small fixes, across different kinds of weakness: six pairs the agent got right in the run behind
+# results/primevul.md (its verdicts are taken from that run with --import-pairs) and six it got wrong.
+pairs:
+  - primevul-holdout-95    # tensorflow, CWE-125: right
+  - primevul-holdout-52    # tensorflow, CWE-476: right
+  - primevul-holdout-83    # vim, CWE-787: right
+  - primevul-holdout-81    # barebox, CWE-200: right
+  - primevul-holdout-73    # deark, CWE-369: right
+  - primevul-holdout-51    # v4l2loopback, CWE-134: right
+  - primevul-holdout-5     # gpac, CWE-476: called both vulnerable
+  - primevul-holdout-61    # qemu, CWE-787: called both vulnerable
+  - primevul-holdout-54    # tensorflow, CWE-190: called both safe
+  - primevul-holdout-86    # mruby, CWE-787: called both safe
+  - primevul-holdout-88    # tensorflow, CWE-703: called both safe
+  - primevul-holdout-16    # tensorflow, CWE-369: the wrong way round
