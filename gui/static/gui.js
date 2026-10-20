@@ -562,7 +562,7 @@ async function loadPairs() {
       "button",
       { class: "integration", "data-name": p.id },
       el("span", { class: "name", text: p.project || p.id }),
-      el("span", { class: "about", text: p.cwe_name }),
+      el("span", { class: "about", text: p.cwe_name.split(":")[0] }), // the weakness's name alone; the panel explains it
     );
     row.addEventListener("click", () => selectPair(p.id));
     list.append(el("li", {}, row));
@@ -692,9 +692,9 @@ function verdictBox(fn) {
   return el(
     "div",
     { class: "verdict-box" },
-    el("p", { class: "said" }, el("b", { text: `The agent ${said}` }), " · ", el("span", { class: fn.right ? "ok" : "ko", text: fn.right ? "right" : "wrong" })),
-    fn.rationale ? el("p", { class: "why", text: plain(fn.rationale) }) : null,
+    el("p", { class: "said" }, el("span", { text: `The agent ${said}` }), el("span", { class: `badge ${fn.right ? "success" : "error"}`, text: fn.right ? "right" : "wrong" })),
     el("p", { class: "meta" }, ...duration(fn.seconds), fn.lookups ? ` · ${fn.lookups} knowledge-base lookup${fn.lookups === 1 ? "" : "s"}` : " · no knowledge-base lookup", pointed),
+    fn.rationale ? el("details", { class: "reason" }, el("summary", { text: "Its reasoning" }), el("p", { class: "why", text: plain(fn.rationale) })) : null,
   );
 }
 
@@ -754,7 +754,6 @@ async function loadIntegrations() {
       { class: "integration", "data-name": integration.name },
       el("span", { class: "name", text: integration.title }),
       el("span", { class: `badge ${count ? "warning" : "success"}`, text: count ? `${count} finding${count === 1 ? "" : "s"}` : "Nothing found" }),
-      el("span", { class: "about", text: integration.about }),
     );
     row.addEventListener("click", () => select(integration.name));
     list.append(el("li", {}, row));

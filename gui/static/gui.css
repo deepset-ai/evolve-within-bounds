@@ -235,27 +235,29 @@ main { padding: 28px var(--margin) 48px; max-width: 1440px; margin: 0 auto; }
 .code .c-fn { color: #8fc5ff; }
 .code .c-cm { color: var(--muted); font-style: italic; }
 .code div.flagged .n { color: var(--pale); font-weight: 600; }
-.verdict-box { margin-top: 14px; }
-.verdict-box .said b { font-weight: 600; }
-.verdict-box .ok { color: var(--success); font-weight: 500; }
-.verdict-box .ko { color: var(--error); font-weight: 500; }
-.verdict-box .why { color: var(--muted); margin-top: 4px; max-width: 60ch; }
-.verdict-box .meta { margin: 6px 0 0; }
+.verdict-box { margin-top: 16px; }
+.verdict-box .said { display: flex; align-items: center; gap: 10px; font-weight: 600; min-height: 32px; }
+.verdict-box .meta { margin: 2px 0 0; }
+.verdict-box .reason { margin-top: 10px; }
+.verdict-box .reason summary { cursor: pointer; list-style: none; color: var(--pale); }
+.verdict-box .reason summary::-webkit-details-marker { display: none; }
+.verdict-box .reason summary::before { content: "▸ "; color: var(--muted); }
+.verdict-box .reason[open] summary::before { content: "▾ "; }
+.verdict-box .why { color: var(--muted); margin-top: 8px; max-width: 60ch; }
 .pair-outcome { margin-top: var(--gap); }
 .outcome-head { font-size: var(--fs-card); font-weight: 600; margin-bottom: 4px; }
 .legend-note { font-size: var(--fs-meta); color: var(--muted); margin-top: 12px; }
-.integrations li.note { padding: 14px var(--pad); font-size: var(--fs-meta); color: var(--muted); }
+.integrations li.note { padding: 18px var(--pad) 8px; font-size: var(--fs-meta); color: var(--muted); }
 
 /* 4. integrations: the list beside the selected one's result */
 .scan-grid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: var(--gap); align-items: start; }
-.integrations { list-style: none; margin: 0; padding: 0 0 8px; background: var(--surface); position: sticky; top: 88px; max-height: calc(100vh - 104px); overflow: auto; }
-.integrations li + li { border-top: 1px solid var(--line); }
-.integrations .group { padding: 16px var(--pad) 4px; font-size: var(--fs-meta); font-weight: 500; color: var(--muted); }
-.integrations li.group + li { border-top: 0; }
+.integrations { list-style: none; margin: 0; padding: 8px 0; background: var(--surface); position: sticky; top: 88px; max-height: calc(100vh - 104px); overflow: auto; }
+.integrations .group { padding: 22px var(--pad) 6px; font-size: var(--fs-meta); font-weight: 500; color: var(--muted); }
+.integrations li.group:first-child { padding-top: 10px; }
 .integrations.is-empty { grid-column: 1 / -1; }
 .integrations .empty { padding: var(--pad); color: var(--muted); }
 .integrations .empty-head { color: var(--text); font-weight: 600; margin-bottom: 4px; }
-.integration { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; width: 100%; height: auto; text-align: left; font-size: var(--fs-body); font-weight: 400; border: 0; padding: 10px var(--pad); }
+.integration { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; width: 100%; height: auto; text-align: left; font-size: var(--fs-body); font-weight: 400; border: 0; padding: 9px var(--pad); }
 .integration:hover:not(:disabled) { background: var(--hover); }
 .integration.active { background: var(--active); }
 .integration .name { font-weight: 600; }
