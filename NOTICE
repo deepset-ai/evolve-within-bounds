@@ -10,14 +10,16 @@ here unless this file says so; each keeps its own license. Licenses marked "to v
 Software
 - Haystack (deepset-ai/haystack): Apache-2.0
 - monty-haystack (deepset-ai/haystack-core-integrations): Apache-2.0
-- pydantic-monty: to verify
+- pydantic-monty (pydantic/monty), installed by monty-haystack: MIT
 - vLLM (vllm-project/vllm), container images vllm/vllm-openai: Apache-2.0
 - dime-online/qwen3.8-Flash-DGX-UltraFast serving recipe (cloned at a pinned commit and patched by
   serving/qwen3.8-flash-next/, not vendored): Apache-2.0
-- b12x kernels: to verify
-- NVIDIA NIM containers: NVIDIA's terms, to verify
+- NVIDIA NIM container nvcr.io/nim/nvidia/nemotron-3.5-lightning-30b-a3b (pulled from NGC, not redistributed): the
+  NVIDIA Software License Agreement and the Product-Specific Terms for AI Products. Production use needs an NVIDIA AI
+  Enterprise subscription; without one, NIMs are licensed for development and testing (NVIDIA Developer Program) or
+  for single-user use on an RTX or Grace-Blackwell workstation
 - NVIDIA NemoClaw (cloned at a pinned commit and patched by sandbox/, not vendored): Apache-2.0
-- NVIDIA OpenShell (installed by NemoClaw's installer at version 0.0.106, not vendored): to verify
+- NVIDIA OpenShell (installed by NemoClaw's installer at version 0.0.106, not vendored): Apache-2.0
 - Qdrant (container image qdrant/qdrant), qdrant-haystack, fastembed and fastembed-haystack: Apache-2.0
 - agent-pack-haystack (the Advanced RAG Agent) and sentence-transformers-haystack: Apache-2.0
 - NVIDIA NeMo Gym (nemo-gym 0.7.0, installed from PyPI by gym/, not vendored) and mcp-haystack: Apache-2.0
@@ -25,7 +27,6 @@ Software
   prompt-injection patterns, display helper and result framing (src/security_agent/knowledge_base/sanitize.py and
   render.py) follow its agentic/tools.py at commit 380554275fdfcf177737253132bd094178314078; license text in
   src/security_agent/knowledge_base/LICENSE-redamon
-- tonyd2wild/Qwen3.8-Flash-Next-NVFP4-DGX-Spark benchmark harness (fetched at a pinned commit, not vendored): to verify
 - youcom-haystack and typesafe-haystack (deepset-ai/haystack-core-integrations), used by cve-triage/: Apache-2.0
 - typesafe-sdk, used by cve-triage/: MIT
 
@@ -33,20 +34,29 @@ Hosted services (only cve-triage/ calls them)
 - OpenAI API, You.com Search API, Fastino GLiDE, TypeSafe Jev: each provider's terms
 
 Models
-- NVIDIA Nemotron 3.5 Lightning, Bolt and Super VL, and their LiLiCorr drafters: OpenMDW License Agreement 1.1
-- Qwen3.8 Flash-Next: to verify
-- Saren/Qwen3.8-Flash-Next-W4A16-AutoRound-hybrid and Saren/Qwen3.8-Flash-Next-ple-table-fp8 (the quantized
-  checkpoint and FP8 table the UltraFast recipe serves): to verify
-- Embedding and reranking models used by the knowledge base (BAAI/bge-small-en-v1.5, BAAI/bge-m3,
-  cross-encoder/ms-marco-MiniLM-L-6-v2, Qdrant/bm25): to verify
+- NVIDIA Nemotron 3.5 Lightning (served by the NIM container above): OpenMDW License Agreement 1.1
+- Qwen3.8 Flash-Next (Qwen/Qwen3.8-Flash-Next), served as Saren/Qwen3.8-Flash-Next-W4A16-AutoRound-hybrid (from
+  Intel/Qwen3.8-Flash-Next-W4A16-AutoRound) with the FP8 table Saren/Qwen3.8-Flash-Next-ple-table-fp8 (from
+  Qwen/Qwen3.8-Flash-Next-FP8): Qwen Community License 1.0. It is not an open-source license: a licensee running a
+  Model-as-a-Service or AI Work Assistant business needs a separate license from Qwen for commercial use
+- BAAI/bge-small-en-v1.5, the knowledge base's dense embedder: MIT
+- cross-encoder/ms-marco-MiniLM-L6-v2 (formerly ms-marco-MiniLM-L-6-v2), the knowledge base's reranker: Apache-2.0
+- Qdrant/bm25, the knowledge base's sparse embedder: Apache-2.0
 
 Datasets
 - PrimeVul (DLVulDet/PrimeVul, mirrored as colin/PrimeVul on the Hugging Face Hub): MIT. Only manifests are shipped
   (data/primevul/); the functions are downloaded from the pinned mirror by security_agent.data.primevul.
 - CWE List (The MITRE Corporation): the names and short descriptions of 969 CWE entries are shipped in
-  src/security_agent/knowledge_base/cwe_reference.json. CWE is a trademark of The MITRE Corporation. Copyright © The
-  MITRE Corporation. The CWE Terms of Use: to verify (they ask that MITRE's copyright designation and the terms be
-  reproduced in any copy)
+  src/security_agent/knowledge_base/cwe_reference.json under the CWE Terms of Use, reproduced at the end of this file
 - SEI CERT C Coding Standard (cmu-sei/secure-coding-standards, Carnegie Mellon University Software Engineering
-  Institute): downloaded at a pinned commit by `security-agent primevul kb build`, not redistributed; text under
-  CC BY 4.0, to verify
+  Institute): downloaded at a pinned commit by `security-agent primevul kb build`, not redistributed. Its text is under
+  CC BY 4.0 and its code examples under MIT. Copyright 2026 Carnegie Mellon University. CERT and Carnegie Mellon are
+  registered trademarks of Carnegie Mellon University.
+
+CWE Terms of Use (https://cwe.mitre.org/about/termsofuse.html)
+Copyright © 2006–2026, The MITRE Corporation. CWE is a trademark of The MITRE Corporation.
+CWE™ is free to use by any organization or individual for any research, development, and/or commercial purposes, per
+these CWE Terms of Use. Accordingly, The MITRE Corporation hereby grants you a non-exclusive, royalty-free license to
+use CWE for research, development, and commercial purposes. Any copy you make for such purposes is authorized on the
+condition that you reproduce MITRE’s copyright designation and this license in any such copy. CWE is a trademark of The
+MITRE Corporation. Please contact cwe@mitre.org if you require further clarification on this issue.
