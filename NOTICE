@@ -2,10 +2,11 @@ Evolve within bounds
 Copyright 2026 deepset GmbH
 
 This repository's own code is licensed under the Apache License, Version 2.0 (see LICENSE). The CVE triage agent
-(cve-triage/) declares the MIT License in its pyproject.toml: to verify.
+(cve-triage/) is a Haystack port of You.com's cve-triage-agent (https://github.com/youdotcom-oss/cve-triage-agent,
+Copyright (c) 2026 You.com) and keeps that repository's MIT License, as its pyproject.toml declares.
 
 It uses, downloads or serves the third-party software, models and datasets below. None of them is redistributed
-here unless this file says so; each keeps its own license. Licenses marked "to verify" are checked before release.
+here unless this file says so; each keeps its own license.
 
 Software
 - Haystack (deepset-ai/haystack): Apache-2.0
@@ -34,7 +35,7 @@ Hosted services (only cve-triage/ calls them)
 - OpenAI API, You.com Search API, Fastino GLiDE, TypeSafe Jev: each provider's terms
 
 Models
-- NVIDIA Nemotron 3.5 Lightning (served by the NIM container above): OpenMDW License Agreement 1.1
+- NVIDIA Nemotron 3.5 Lightning, Bolt and Super VL, and their LiLiCorr drafters: OpenMDW License Agreement 1.1
 - Qwen3.8 Flash-Next (Qwen/Qwen3.8-Flash-Next), served as Saren/Qwen3.8-Flash-Next-W4A16-AutoRound-hybrid (from
   Intel/Qwen3.8-Flash-Next-W4A16-AutoRound) with the FP8 table Saren/Qwen3.8-Flash-Next-ple-table-fp8 (from
   Qwen/Qwen3.8-Flash-Next-FP8): Qwen Community License 1.0. It is not an open-source license: a licensee running a
