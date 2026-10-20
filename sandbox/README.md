@@ -39,17 +39,21 @@ Needs Docker, Node.js 22.19 or newer, and a model server from [`serving/`](../se
 also Qdrant with the knowledge base ([`docs/primevul.md`](../docs/primevul.md), step 2):
 
 ```bash
-hatch run serving:flash-next start
+hatch run serving:flash-next start   # PrimeVul; for the synthetic benchmark: hatch run serving:super-vl start
 sandbox/sandbox.sh setup     # NemoClaw at the pin with the patch, OpenShell 0.0.106, the nemoclaw command
 sandbox/sandbox.sh create    # builds the image and creates the sandbox "security-agent" (about 6 minutes)
 ```
+
+`create` routes the sandbox's model calls to the model it is given in `MODEL`, Flash-Next by default. For the
+synthetic benchmark, whose numbers come from Super VL, create it with `MODEL=nemotron-3.5-super-vl sandbox/sandbox.sh
+create`.
 
 The model server listens on loopback, and also on the gateway of OpenShell's Docker bridge when that bridge exists;
 that is where the sandbox's inference route sends model calls. Qdrant does the same when started with `hatch run
 primevul:qdrant up -d` ([`serving/qdrant/`](../serving/qdrant/)). Neither address is reachable from the network. The
 bridge is created with the first sandbox, so a server started before needs one restart:
 
-- the model server: `create` says so; `hatch run serving:flash-next stop`, then `start`;
+- the model server: `create` says so; `hatch run serving:<model> stop`, then `start`;
 - Qdrant: `hatch run primevul:qdrant up -d` again. It recreates the container with the bridge address and keeps the
   knowledge base.
 
@@ -63,8 +67,8 @@ Then pass `--sandbox security-agent` to the commands. The runbooks, [`docs/synth
 [`docs/primevul.md`](../docs/primevul.md), do this everywhere.
 
 Settings, as environment variables: `SANDBOX` (the sandbox's name, default `security-agent`), `MODEL` (the served
-model name, default `qwen3.8-flash-next`; `nemotron-3.5-lightning` for NIM) and `NEMOCLAW_DIR` (default
-`~/NemoClaw-security-agent`).
+model name, default `qwen3.8-flash-next`; `nemotron-3.5-super-vl` for Super VL, `nemotron-3.5-lightning` for NIM) and
+`NEMOCLAW_DIR` (default `~/NemoClaw-security-agent`).
 
 ## How a job runs
 

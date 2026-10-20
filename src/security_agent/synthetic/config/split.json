@@ -1,7 +1,7 @@
 {
  "_comment": [
   "Which synthetic pairs are for training, validation and test: 25/13/12 pairs, split by repository so that",
-  "every pair of a repository is in the same role. The loop trains on a fixed subset of 12 training pairs",
+  "every pair of a repository is in the same role. The loop trains on a fixed subset of 24 training pairs",
   "(loop.yaml: train_per_benchmark, seed); validation picks among the candidates; test is looked at once."
  ],
  "train": {

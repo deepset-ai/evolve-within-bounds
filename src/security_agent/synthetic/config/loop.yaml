@@ -4,11 +4,11 @@
 #   generic prompt and low limits. The optimizer writes the agent's tools and pipeline steps in Python, edits the
 #   prompts and may raise the limits.
 # - One model server (model.yaml) serves the scanner, the optimizer and the code's model calls.
-# - Training on a fixed subset of 12 training pairs, one measurement per candidate. Validation picks among the
+# - Training on a fixed subset of 24 of the 25 training pairs, one measurement per candidate. Validation picks among the
 #   candidates afterwards (security-agent synthetic bench run --split val); the loop never sees it.
 
 reference: agents/synthetic/seed       # the starting candidate (relative to the repository)
-train_per_benchmark: 12                # the fixed training subset (security_agent.optimize.splits.subsample)
+train_per_benchmark: 24                # the fixed training subset (security_agent.optimize.splits.subsample)
 seed: 20261013                         # the training subset, and the halves for the early abort
 model_config: model.yaml
 runs_dir: runs/synthetic/loop
@@ -27,7 +27,7 @@ proposer:
 
 rules:                                 # see security_agent.optimize.loop.Rules
   prefill_tps: 3000                    # prompt tokens per second, measured at 8 parallel requests on one DGX Spark
-  decode_tps: 110                      # output tokens per second, likewise
+  decode_tps: 120                      # output tokens per second, likewise
   max_gpu_minutes_per_repo: 6
   max_findings_per_repo: 10
   cost_abort_slack: 1.2

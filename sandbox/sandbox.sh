@@ -13,8 +13,8 @@
 #   sandbox.sh status     the sandbox, the inference route, and whether the model server and Qdrant answer on the bridge
 #   sandbox.sh destroy    remove the sandbox
 #
-# Settings: SANDBOX (default security-agent), MODEL (the served model name, default qwen3.8-flash-next), NEMOCLAW_DIR (default
-# ~/NemoClaw-security-agent).
+# Settings: SANDBOX (default security-agent), MODEL (the served model name, default qwen3.8-flash-next;
+# nemotron-3.5-super-vl for the synthetic benchmark), NEMOCLAW_DIR (default ~/NemoClaw-security-agent).
 set -euo pipefail
 
 NEMOCLAW_REPO=https://github.com/NVIDIA/NemoClaw
@@ -123,7 +123,7 @@ create() {
     echo "ready: sandbox $SANDBOX; the model server answers on OpenShell's bridge"
   else
     echo "sandbox $SANDBOX created, but the model server does not listen on OpenShell's bridge ($(host_address)) yet." >&2
-    echo "Restart it once, now that the bridge exists: hatch run serving:flash-next stop, then start." >&2
+    echo "Restart it once, now that the bridge exists: hatch run serving:<model> stop, then start." >&2
     exit 1
   fi
 }

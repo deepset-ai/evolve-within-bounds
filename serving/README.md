@@ -8,10 +8,11 @@ environment, which also provides the tools `setup` needs:
 
 | Folder | Server | Command | Serves |
 |---|---|---|---|
-| [`qwen3.8-flash-next/`](qwen3.8-flash-next/) | vLLM, with the UltraFast recipe | `hatch run serving:flash-next <command>` | the synthetic custom-component benchmark and PrimeVul |
+| [`nemotron-3.5-super-vl/`](nemotron-3.5-super-vl/) | vLLM nightly, the model card's DGX Spark recipe | `hatch run serving:super-vl <command>` | the synthetic custom-component benchmark |
+| [`qwen3.8-flash-next/`](qwen3.8-flash-next/) | vLLM, with the UltraFast recipe | `hatch run serving:flash-next <command>` | PrimeVul, and the live demo |
 | [`nemotron-3.5-lightning/`](nemotron-3.5-lightning/) | NVIDIA NIM | `hatch run serving:lightning <command>` | none of the numbers in [`results/`](../results/) |
 
-Only one of these models fits in the DGX Spark's memory at a time, and both use port 8000.
+Only one of these models fits in the DGX Spark's memory at a time, and all use port 8000.
 
 ## Smoke check
 

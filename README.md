@@ -8,8 +8,8 @@ keeps a change only if it passes fixed checks. The bounds:
 - **The tools' sandbox:** Python the agent runs itself goes through Monty.
 - **Evaluation rules:** every change must pass fixed gates on training pairs. Held-out validation pairs decide which
   improved agent we report.
-- **Local models only:** NVIDIA Nemotron 3.5 Lightning and Qwen3.8 Flash-Next, served with vLLM or llama.cpp in our
-  runs. [`serving/`](serving/) also sets up NVIDIA NIM.
+- **Local models only:** NVIDIA Nemotron 3.5 Super VL and Qwen3.8 Flash-Next, served with vLLM or llama.cpp in our
+  runs. [`serving/`](serving/) also sets up NVIDIA NIM, for Nemotron 3.5 Lightning.
 
 There are two benchmarks:
 
@@ -55,7 +55,7 @@ There are two benchmarks:
 ## Run it yourself
 
 - **Data:** both benchmarks already build with one command each, see [`data/`](data/).
-- **Synthetic custom components:** see [`docs/synthetic.md`](docs/synthetic.md). Serve Flash-Next with vLLM, create
+- **Synthetic custom components:** see [`docs/synthetic.md`](docs/synthetic.md). Serve Super VL with vLLM, create
   the sandbox, scan with both agents inside it, run the loop, then approve an improvement and deploy it there; and roll
   the agents out with NeMo Gym.
 - **The demo:** see [`demo/README.md`](demo/README.md).

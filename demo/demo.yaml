@@ -12,7 +12,7 @@ train_pair: hvbench/pair-synth31-01
 # the optimizer has seen it. Chosen for a short scan ("Lookup identifier is formatted into the statement", CWE-89).
 scan_instance: instance-dd5e249e1c8975b691d9
 sandbox: security-agent                     # the OpenShell sandbox (sandbox/sandbox.sh create)
-model_config: model.yaml                    # src/security_agent/synthetic/config/model.yaml
+model_config: model.flash-next.yaml         # src/security_agent/synthetic/config/model.flash-next.yaml
 prepared_dir: runs/demo/prepared            # what prepare.sh measured; every run starts from a copy
 live_dir: runs/demo/live
 

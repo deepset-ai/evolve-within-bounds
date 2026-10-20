@@ -1,0 +1,22 @@
+# Qwen3.8 Flash-Next on vLLM with the UltraFast recipe, as set up by serving/qwen3.8-flash-next (loopback only), for
+# scans and for the optimizer. Start it from the repository root with `hatch run serving:flash-next start` (about 4 to
+# 7 minutes until ready), and pass `--model-config model.flash-next.yaml`. The live demo (demo/) runs on it.
+
+api_base_url: http://127.0.0.1:8000/v1
+model: qwen3.8-flash-next
+timeout_s: 600
+max_retries: 3
+
+# = the server's --max-num-seqs; one global limit shared by all steps and repositories.
+concurrency: 8
+
+temperature: 0.0
+
+# Thinking budgets and output limits are per step (the candidate's pipeline.yaml). Always set one: without a budget
+# Flash-Next can think for thousands of tokens and never answer.
+
+fingerprint:
+  server: vllm
+  image: qwen38-flash-dgx:iter6d-20260910
+  recipe: dime-online/qwen3.8-Flash-DGX-UltraFast@0c391a3 v16b
+  served_name: qwen3.8-flash-next

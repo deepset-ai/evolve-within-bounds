@@ -18,6 +18,7 @@ Model calls to the local vLLM (or NIM) server, configured from `config/model*.ya
 
 from __future__ import annotations
 
+import functools
 import json
 import re
 import threading
@@ -163,6 +164,35 @@ def malformed_tool_calls(reply: ChatMessage) -> bool:
     return (reply.meta or {}).get("finish_reason") == "tool_calls" and not reply.tool_calls
 
 
+EMPTY_ANSWER = "(the model returned no answer)"
+
+
+def empty_answer(error: BaseException) -> bool:
+    """Is this the error Haystack raises when the model's reply holds only reasoning: no text and no tool call?"""
+    return isinstance(error, ValueError) and "must contain at least one" in str(error)
+
+
+def tolerate_empty_answers(run: Callable[..., dict], retries: int = 1) -> Callable[..., dict]:
+    """
+    `run`, asked again on an empty answer (`retries` times), then answering `EMPTY_ANSWER` instead of raising.
+
+    Nemotron 3.5 Super VL sometimes replies with reasoning only. Without this, the error would end an agent's scan; with
+    it, the agent's loop ends normally.
+    """
+
+    @functools.wraps(run)  # the Agent checks run's signature for `tools`
+    def wrapped(*args: Any, **kwargs: Any) -> dict:
+        for _ in range(retries + 1):
+            try:
+                return run(*args, **kwargs)
+            except ValueError as exc:
+                if not empty_answer(exc):
+                    raise
+        return {"replies": [ChatMessage.from_assistant(EMPTY_ANSWER, meta={"finish_reason": "empty"})]}
+
+    return wrapped
+
+
 def cached_tokens(usage: dict[str, Any]) -> int:
     """
     Prompt tokens the server took from its prefix cache, so did not compute again.
@@ -197,6 +227,10 @@ def make_generator(
         merged_body = {**generation_kwargs["extra_body"], **extra.pop("extra_body", {})}
         generation_kwargs.update(extra)
         generation_kwargs["extra_body"] = merged_body
+    if model.get("greedy_with_thinking_budget") and thinking_budget is not None:
+        # A server bug (serving/nemotron-3.5-super-vl): with a thinking budget and a temperature above 0, everything
+        # after the budget is lost, and the call generates nothing visible until max_tokens.
+        generation_kwargs["temperature"] = 0.0
     if model.get("gym_model_server"):
         generation_kwargs["metadata"] = as_gym_metadata(generation_kwargs.pop("extra_body"))
     return VLLMChatGenerator(

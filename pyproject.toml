@@ -28,7 +28,8 @@ primevul = [
   "torch",                               # CPU-only on Linux, see tool.uv.sources: the knowledge base runs on the CPU
   "vllm-haystack>=2.0.0",                # the prompt loop's optimizer
 ]
-# The `hf` command that serving/qwen3.8-flash-next/serve.sh setup downloads the pinned checkpoint with.
+# The `hf` command that serving/qwen3.8-flash-next/serve.sh and serving/nemotron-3.5-super-vl/serve.sh setup download
+# the pinned checkpoints with.
 serving = ["huggingface_hub>=0.34"]
 # The repository scan agent and the self-improvement loop on the synthetic benchmark (security_agent.synthetic).
 synthetic = [
@@ -125,6 +126,7 @@ features = ["serving"]
 [tool.hatch.envs.serving.scripts]
 flash-next = "bash serving/qwen3.8-flash-next/serve.sh {args}"
 lightning = "bash serving/nemotron-3.5-lightning/serve.sh {args}"
+super-vl = "bash serving/nemotron-3.5-super-vl/serve.sh {args}"
 smoke = "python -m security_agent.serving.smoke {args}"
 
 [tool.hatch.envs.components]
