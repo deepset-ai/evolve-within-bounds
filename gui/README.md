@@ -16,8 +16,8 @@ A web page for showing the project. Four tabs:
    [haystack-core-integrations](https://github.com/deepset-ai/haystack-core-integrations), Haystack's connectors to
    model providers, databases and tools, at the commit pinned in [`integrations.yaml`](integrations.yaml). The visitor
    picks one and sees what the evolved agent ([`agents/synthetic/looped`](../agents/synthetic/looped/)) reported
-   when it scanned it inside the sandbox: each finding with its code, what kind of weakness it is, why the agent thinks
-   so and how to fix it, or that it found nothing; and the files it read, with the scan's model calls and time.
+   when it scanned it inside the sandbox: the findings one at a time, each with its code, what the agent noticed, why
+   it matters and the call to check, or that it reported nothing; and the files it read, with the scan's steps and time.
 4. **Spot the vulnerability:** pairs of real C functions from [PrimeVul](https://github.com/DLVulDet/PrimeVul), chosen
    in [`pairs.yaml`](pairs.yaml): a function as it was before a public security fix, and the patched version, side by
    side with the lines that differ marked. The visitor guesses which one is vulnerable; the page then shows which it

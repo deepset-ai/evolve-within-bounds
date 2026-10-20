@@ -114,12 +114,10 @@ async function drawChart() {
     chart.append(svg("line", { x1: L, y1: y(p), x2: W - R, y2: y(p), class: "grid" }));
     chart.append(svg("text", { x: L - 12, y: y(p) + 4, "text-anchor": "end" }, `${p}%`));
   }
-  versions.forEach((v, i) =>
-    chart.append(svg("text", { x: x(i), y: H - B + 26, "text-anchor": "middle" }, v.label)),
-  );
+  versions.forEach((v, i) => chart.append(svg("text", { x: x(i), y: H - B + 26, "text-anchor": "middle" }, v.label)));
   chart.append(svg("text", { x: L + (W - L - R) / 2, y: H - 14, "text-anchor": "middle", class: "axis-title" }, "Version written by the optimizer"));
   const ax = 18;
-  chart.append(svg("text", { x: ax, y: T + (H - T - B) / 2, transform: `rotate(-90 ${ax} ${T + (H - T - B) / 2})`, "text-anchor": "middle", class: "axis-title" }, "Pairs right"));
+  chart.append(svg("text", { x: ax, y: T + (H - T - B) / 2, transform: `rotate(-90 ${ax} ${T + (H - T - B) / 2})`, "text-anchor": "middle", class: "axis-title" }, "Correct"));
 
   // What appears with each version, in order: its lineage, the best-so-far step, its two dots.
   const layers = versions.map(() => []);
@@ -147,13 +145,12 @@ async function drawChart() {
     if (v.id === data.presented.id) {
       const top = Math.min(y(trainPct[i]), y(valPct[i]));
       const bottom = Math.max(y(trainPct[i]), y(valPct[i]));
-      const [hw, pad] = [26, 16];
-      add(i, svg("rect", { x: x(i) - hw, y: top - pad, width: 2 * hw, height: bottom - top + 2 * pad, rx: hw, class: "halo" }));
+      add(i, svg("rect", { x: x(i) - 26, y: top - 16, width: 52, height: bottom - top + 32, rx: 26, class: "halo" }));
       add(i, svg("text", { x: x(i), y: bottom + 40, "text-anchor": "middle", class: "tag" }, "the agent we present"));
     }
     const name = seed ? "Start" : `Version ${v.label}`;
     const hit = svg("rect", { x: x(i) - band / 2, y: T, width: band, height: H - T - B, fill: "transparent", class: "point", tabindex: "0", role: "button" });
-    hit.setAttribute("aria-label", `${name}: ${v.train} of ${data.train_pairs} learning pairs right, ${v.val} of ${data.val_pairs} held-out`);
+    hit.setAttribute("aria-label", `${name}: ${v.train} of ${data.train_pairs} learning pairs right, ${v.val} of ${data.val_pairs} it never saw`);
     hit.addEventListener("mouseenter", () => show(i));
     hit.addEventListener("mouseleave", () => show(pinned()));
     hit.addEventListener("focus", () => show(i));
@@ -201,7 +198,7 @@ function detailPanel(v, data) {
       "div",
       { class: "name" },
       name,
-      el("span", { text: ` (${percent(v.val, data.val_pairs)} held-out)` }),
+      el("span", { text: ` (${percent(v.val, data.val_pairs)} on pairs it never saw)` }),
       v.id === data.presented.id ? el("span", { class: "presented badge success", text: "the agent we present" }) : null,
     ),
     el(
@@ -212,7 +209,7 @@ function detailPanel(v, data) {
     el("div", { class: "summary", text: v.summary || "" }),
     el("div", {
       class: "scores",
-      text: `Learning pairs ${v.train} of ${data.train_pairs} right · held-out ${v.val} of ${data.val_pairs} · fixed twins flagged ${v.val_flagged} of the held-out`,
+      text: `Correct on ${v.train} of ${data.train_pairs} pairs it learned from · ${v.val} of ${data.val_pairs} it never saw · ${v.val_flagged} false alarm${v.val_flagged === 1 ? "" : "s"}`,
     }),
     v.added != null ? el("div", { class: "size" }, el("b", { text: `+${v.added}` }), " ", el("i", { text: `−${v.removed}` }), ` lines in ${v.files.length} files`) : null,
     v.files ? el("div", { class: "files", text: v.files.join(" · ") }) : null,
@@ -227,10 +224,9 @@ async function fillCards() {
   $("#test-to").textContent = percent(p.test.presented, p.test_pairs);
   $("#alarm-from").textContent = p.test_flagged.seed;
   $("#alarm-to").textContent = p.test_flagged.presented;
-  $("#note").textContent = evolution.note;
   const picked = evolution.versions.find((v) => v.id === p.id);
   $("#legend-train").textContent = `pairs the optimizer learns from (${evolution.train_pairs})`;
-  $("#legend-val").textContent = `held-out pairs it never sees (${evolution.val_pairs})`;
+  $("#legend-val").textContent = `pairs it never sees (${evolution.val_pairs})`;
   $("#n-test").textContent = $("#n-test-twins").textContent = p.test_pairs;
   $("#n-picked").textContent = `${picked.val} of ${evolution.val_pairs}`;
 }
@@ -656,57 +652,81 @@ function codeLine(line, pieces) {
   return pieces.length ? pieces.map(([cls, text]) => (cls ? el("span", { class: cls, text }) : text)) : [line.text];
 }
 
-// The two functions, as "A" and "B" in the pair's fixed order; after the reveal, which is which and the verdicts.
-function renderPair() {
+// The question above the code, or, after the reveal, the result: yours, then the agent's.
+function renderQuestion(guess) {
+  const box = $("#pair-question");
+  const vulnerableSide = pair.first === "vulnerable" ? "A" : "B";
+  if (!revealed) {
+    const show = el("button", { class: "link-button", text: "Just show me" });
+    show.addEventListener("click", () => reveal(null));
+    box.className = "pair-question";
+    box.replaceChildren(el("p", { text: "Which one is vulnerable?" }), show);
+    return;
+  }
+  const outcome = guess === null ? "plain" : guess === vulnerableSide ? "ok" : "ko";
+  const head = guess === null ? `${vulnerableSide} is vulnerable` : `${outcome === "ok" ? "Correct" : "Incorrect"} — ${vulnerableSide} is vulnerable`;
+  const agent = pair.right ? "The agent got it right." : `The agent got it wrong. ${whyWrong()}`;
+  box.className = `pair-question banner ${outcome}`;
+  box.replaceChildren(el("p", { class: "banner-head", text: head }), el("p", { class: "banner-sub", text: agent }));
+}
+
+// The two functions, as "A" and "B" in the pair's fixed order; before the reveal each is a choice, after it the code
+// shows which is which, with the agent's verdict beneath.
+function renderPair(guess = null) {
   const order = pair.first === "vulnerable" ? ["vulnerable", "patched"] : ["patched", "vulnerable"];
-  $("#functions").replaceChildren(
+  const functions = $("#functions");
+  functions.classList.toggle("choosing", !revealed);
+  functions.replaceChildren(
     ...order.map((which, i) => {
       const fn = pair[which];
+      const side = "AB"[i];
       const pieces = tokenize(fn.lines.map((line) => line.text).join("\n"), /^c/.test(pair.lang) ? "c" : langOf(pair.file));
-      return el(
+      const head = el(
         "div",
-        { class: `function${revealed ? ` ${which}` : ""}` },
-        el(
-          "div",
-          { class: "function-head" },
-          el("span", { class: "letter", text: "AB"[i] }),
-          revealed ? el("span", { class: `badge ${which === "vulnerable" ? "error" : "success"}`, text: which === "vulnerable" ? "The vulnerable one" : "The patched one" }) : null,
-        ),
-        el(
-          "div",
-          { class: "code" },
-          ...fn.lines.map((line, i) =>
-            el(
-              "div",
-              { class: `${revealed && line.changed ? "hit" : ""}${revealed && fn.flagged.includes(line.n) ? " flagged" : ""}` },
-              el("span", { class: "n", text: String(line.n) }),
-              ...codeLine(line, pieces.length === fn.lines.length ? pieces[i] : []),
-            ),
+        { class: "function-head" },
+        el("span", { class: "letter", text: side }),
+        revealed ? el("span", { class: `badge ${which === "vulnerable" ? "error" : "success"}`, text: which === "vulnerable" ? "Vulnerable" : "Fixed" }) : el("button", { class: "guess", text: `Choose ${side}` }),
+      );
+      const code = el(
+        "div",
+        { class: `code${revealed ? " dimmed" : ""}` },
+        ...fn.lines.map((line, j) =>
+          el(
+            "div",
+            { class: `${revealed && line.changed ? "hit" : ""}${revealed && fn.flagged.includes(line.n) ? " flagged" : ""}` },
+            el("span", { class: "n", text: String(line.n) }),
+            ...codeLine(line, pieces.length === fn.lines.length ? pieces[j] : []),
           ),
         ),
-        revealed ? verdictBox(fn) : null,
       );
+      if (!revealed) for (const target of [head, code]) target.addEventListener("click", () => reveal(side));
+      return el("div", { class: `function${revealed ? ` ${which}` : ""}` }, head, code, revealed ? verdictBox(fn) : null);
     }),
   );
-  $("#pair-question").classList.toggle("hidden", revealed);
-  $("#pair-outcome").classList.toggle("hidden", !revealed);
+  renderQuestion(guess);
+  $("#pair-legend").classList.toggle("hidden", !revealed);
 }
 
 function verdictBox(fn) {
-  const said = fn.verdict === null ? "gave no verdict" : fn.verdict === "vulnerable" ? "called it vulnerable" : "called it safe";
+  const said = fn.verdict === null ? "none" : fn.verdict === "vulnerable" ? "Vulnerable" : "Safe";
   const pointed = fn.flagged.length ? ` · pointed at line${fn.flagged.length === 1 ? "" : "s"} ${fn.flagged.join(", ")}` : "";
   return el(
     "div",
     { class: "verdict-box" },
-    el("p", { class: "said" }, el("span", { text: `The agent ${said}` }), el("span", { class: `badge ${fn.right ? "success" : "error"}`, text: fn.right ? "right" : "wrong" })),
-    el("p", { class: "meta" }, ...duration(fn.seconds), fn.lookups ? ` · ${fn.lookups} knowledge-base lookup${fn.lookups === 1 ? "" : "s"}` : " · no knowledge-base lookup", pointed),
-    fn.rationale ? el("details", { class: "reason" }, el("summary", { text: "Its reasoning" }), el("p", { class: "why", text: plain(fn.rationale) })) : null,
+    el("p", { class: "said" }, el("span", { text: `Agent verdict: ${said}` }), el("span", { class: `badge ${fn.right ? "success" : "error"}`, text: fn.right ? "right" : "wrong" })),
+    el(
+      "details",
+      { class: "reason" },
+      el("summary", { text: "How the agent reasoned" }),
+      el("p", { class: "meta" }, ...duration(fn.seconds), fn.lookups ? ` · ${fn.lookups} knowledge-base lookup${fn.lookups === 1 ? "" : "s"}` : " · no knowledge-base lookup", pointed),
+      fn.rationale ? el("p", { class: "why", text: plain(fn.rationale) }) : null,
+    ),
   );
 }
 
 function whyWrong() {
   const [v, p] = [pair.vulnerable.verdict, pair.patched.verdict];
-  if (v === "vulnerable" && p === "vulnerable") return "It called both vulnerable: it saw the risk, but not that the fix had closed it. A pair counts only when both verdicts are right.";
+  if (v === "vulnerable" && p === "vulnerable") return "It called both vulnerable: it saw the risk, but not that the fix had closed it.";
   if (v === "benign" && p === "benign") return "It called both safe: it missed the vulnerability.";
   if (v === "benign" && p === "vulnerable") return "It got the two the wrong way round.";
   return "One of its answers could not be read as a verdict.";
@@ -714,19 +734,8 @@ function whyWrong() {
 
 function reveal(guess) {
   revealed = true;
-  renderPair();
-  const vulnerableSide = pair.first === "vulnerable" ? "A" : "B";
-  const you = guess === null ? "" : guess === vulnerableSide ? "You picked the vulnerable one. " : `You picked the patched one; ${vulnerableSide} is the vulnerable one. `;
-  $("#pair-outcome").replaceChildren(
-    el("p", { class: "outcome-head", text: `${you}The agent got this pair ${pair.right ? "right" : "wrong"}.` }),
-    el("p", { class: "muted", text: pair.right ? "It called the vulnerable function vulnerable and the patched one safe, each judged on its own." : whyWrong() }),
-    el("p", { class: "legend-note", text: "Amber marks the lines that differ between the two functions; blue the lines the agent pointed at." }),
-  );
+  renderPair(guess);
 }
-
-$("#guess-a").addEventListener("click", () => reveal("A"));
-$("#guess-b").addEventListener("click", () => reveal("B"));
-$("#reveal").addEventListener("click", () => reveal(null));
 
 // -- 4. the agent's verdict on Haystack integrations ---------------------------------------------------------------
 
@@ -759,7 +768,7 @@ async function loadIntegrations() {
       "button",
       { class: "integration", "data-name": integration.name },
       el("span", { class: "name", text: integration.title }),
-      el("span", { class: `badge ${count ? "warning" : "success"}`, text: count ? `${count} finding${count === 1 ? "" : "s"}` : "Nothing found" }),
+      el("span", { class: `badge ${count ? "warning" : "success"}`, text: count ? `${count} finding${count === 1 ? "" : "s"}` : "No findings" }),
     );
     row.addEventListener("click", () => select(integration.name));
     list.append(el("li", {}, row));
@@ -793,27 +802,75 @@ const shorten = (text, max) => (text.length > max ? `${text.slice(0, max)}…` :
 
 const SEVERITY = { high: "error", medium: "warning" };
 
-function renderFinding(finding) {
-  const why = plain(finding.why);
-  const fix = plain(finding.fix);
+let findingIndex = 0; // which of the selected integration's findings is open
+
+// One finding in three parts, in the agent's own words: what it noticed (with the code), why it matters, and the
+// call a reviewer should check. A part the agent did not fill is left out, never written for it.
+function renderFinding(integration) {
+  const count = integration.findings.length;
+  const finding = integration.findings[findingIndex];
   const lines = finding.lines[0] === finding.lines[1] ? `line ${finding.lines[0]}` : `lines ${finding.lines[0]}–${finding.lines[1]}`;
-  const where = `${finding.cwe_name} (${finding.cwe}) · ${shortPath(finding.file)}, ${lines}`;
-  const explanation = el("p", { class: "why" });
-  if (why) explanation.append(shorten(why, 360));
-  if (fix) explanation.append(why ? " " : "", el("b", { text: "Fix: " }), shorten(fix, 240));
+  const why = plain(finding.why);
+  const check = plain(finding.fix) ? [plain(finding.fix)] : finding.sink ? ["The call ", el("code", { class: "sink", text: plain(finding.sink) })] : null;
+  const step = (by) => {
+    findingIndex = (findingIndex + by + count) % count;
+    renderFindings(integration);
+  };
+  const previous = el("button", { text: "Previous" });
+  const next = el("button", { text: "Next" });
+  previous.addEventListener("click", () => step(-1));
+  next.addEventListener("click", () => step(1));
+  const part = (label, ...body) => [el("span", { class: "label", text: label }), el("div", { class: "text" }, ...body)];
   return el(
     "div",
     { class: "finding" },
     el(
-      "p",
-      { class: "ftitle" },
-      plain(finding.title),
-      finding.severity ? el("span", { class: `badge ${SEVERITY[finding.severity] || ""}`, text: `${finding.severity} severity` }) : null,
+      "div",
+      { class: "finding-bar" },
+      el(
+        "p",
+        { class: "where" },
+        finding.severity ? el("span", { class: `badge ${SEVERITY[finding.severity] || ""}`, text: `${finding.severity} severity` }) : null,
+        el("span", { text: `${finding.cwe_name} (${finding.cwe})` }),
+      ),
+      count > 1 ? el("div", { class: "finding-nav" }, el("span", { class: "count", text: `${findingIndex + 1} of ${count}` }), previous, next) : null,
     ),
-    el("p", { class: "where", text: where }),
-    finding.excerpt.length ? codeBlock(finding.excerpt, finding.file) : null,
-    why || fix ? explanation : null,
+    el(
+      "div",
+      { class: "parts" },
+      ...part(
+        "What it noticed",
+        el("p", { class: "noticed", text: plain(finding.title) }),
+        el("p", { class: "place", text: `${shortPath(finding.file)}, ${lines}` }),
+        finding.excerpt.length ? codeBlock(finding.excerpt, finding.file) : null,
+      ),
+      ...(why ? part("Why it matters", el("p", { text: shorten(why, 360) })) : []),
+      ...(check ? part("What to check", el("p", {}, ...check)) : []),
+    ),
   );
+}
+
+// The findings index, then the open finding.
+function renderFindings(integration) {
+  const index = el(
+    "ol",
+    { class: "findings-index" },
+    ...integration.findings.map((finding, i) => {
+      const row = el(
+        "button",
+        { class: `index-row${i === findingIndex ? " active" : ""}` },
+        el("span", { class: "num", text: String(i + 1) }),
+        el("span", { class: "title", text: plain(finding.title) }),
+        finding.severity ? el("span", { class: `badge ${SEVERITY[finding.severity] || ""}`, text: finding.severity }) : null,
+      );
+      row.addEventListener("click", () => {
+        findingIndex = i;
+        renderFindings(integration);
+      });
+      return el("li", {}, row);
+    }),
+  );
+  $("#findings").replaceChildren(index, renderFinding(integration));
 }
 
 const number = (n) => n.toLocaleString("en-US");
@@ -826,17 +883,30 @@ function renderResult(integration) {
   const facts = [
     ["Files read", [integration.files != null ? `${read.length} of ${integration.files}` : number(read.length)], "The files the agent opened, of all the files in the integration"],
     ["Lines read", [number(lines)], "The lines in the files it opened"],
-    ["Model calls", [number(integration.calls)], "How many times the agent asked the language model: once per step of reasoning or tool use"],
+    ["Reasoning steps", [number(integration.calls)], "Each step is one call to the language model: the agent thinks, then reads a file or reports"],
     ["Scan time", duration(integration.seconds), "How long the scan took, inside the sandbox"],
   ];
+  findingIndex = 0;
   $("#scan-result").replaceChildren(
-    el("p", { class: "verdict", text: count ? `The agent reported ${count} finding${count === 1 ? "" : "s"}` : "The agent found nothing to report" }),
+    el("p", { class: "verdict", text: count ? `${count} potential issue${count === 1 ? "" : "s"} for review` : "No findings reported" }),
     el("p", { class: "meta", text: `At commit ${integration.commit}, scanned on ${integration.scanned_at}` }),
     el("div", { class: "facts" }, ...facts.map(([label, value, title]) => el("div", { class: "fact", title }, el("span", { class: "label", text: label }), el("span", { class: "value" }, ...value)))),
-    ...integration.findings.map(renderFinding),
+    el("div", { id: "findings" }),
     details(read),
   );
+  if (count) renderFindings(integration);
 }
+
+// The arrow keys step through the findings while the scan tab is open.
+document.addEventListener("keydown", (event) => {
+  if (document.body.dataset.tab !== "scan" || !["ArrowLeft", "ArrowRight"].includes(event.key) || event.target.closest("input, select, textarea")) return;
+  const integration = integrations.find((i) => i.name === document.querySelector("#integrations .integration.active")?.dataset.name);
+  if (!integration || integration.findings.length < 2) return;
+  const count = integration.findings.length;
+  findingIndex = (findingIndex + (event.key === "ArrowRight" ? 1 : -1) + count) % count;
+  renderFindings(integration);
+  event.preventDefault();
+});
 
 function details(files) {
   // Behind a disclosure: the note on what a finding is, and the files the agent opened, with their length.

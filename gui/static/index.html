@@ -28,24 +28,23 @@
 <main>
   <!-- 1. How the agent evolved -->
   <section id="tab-evolution" class="tab">
-    <div class="title-row">
-      <div class="intro">
+    <div class="hero">
+      <div class="hero-text">
         <h2>How the agent evolved</h2>
-        <p>An AI optimizer rewrote a deliberately weak agent seven times. Each version was tested on pairs of small
-          repositories, one with a planted vulnerability and its fixed twin; a pair counts only when the agent flags the
-          first and leaves the second alone.</p>
+        <p><strong>An AI rewrote this security agent, and made it better.</strong> Seven rewrites by an AI optimizer,
+          each tested on small repositories with a planted vulnerability and on their fixed twins, within fixed bounds;
+          a person approved what was kept.</p>
       </div>
-      <div class="result">
-        <p class="result-head">On <span id="n-test"></span> test pairs nothing in the loop had seen, from the start to version 4</p>
-        <div class="kpis">
-          <div class="kpi">
-            <span class="label">Pairs right</span>
-            <span class="figures"><span id="test-from" class="from"></span><span class="arrow">→</span><span id="test-to"></span></span>
-          </div>
-          <div class="kpi">
-            <span class="label">Fixed twins flagged by mistake</span>
-            <span class="figures"><span id="alarm-from" class="from"></span><span class="arrow">→</span><span id="alarm-to"></span><span class="unit">of <span id="n-test-twins"></span></span></span>
-          </div>
+      <div class="kpis">
+        <div class="kpi" title="A pair counts as correct when the agent finds the planted vulnerability and raises no alarm on the fixed twin">
+          <span class="figures"><span id="test-from" class="from"></span><span class="arrow">→</span><span id="test-to"></span></span>
+          <span class="label">Correct</span>
+          <span class="sub">on <span id="n-test"></span> test pairs it had never seen</span>
+        </div>
+        <div class="kpi" title="Fixed repositories the agent flagged although they hold no vulnerability">
+          <span class="figures"><span id="alarm-from" class="from"></span><span class="arrow">→</span><span id="alarm-to"></span></span>
+          <span class="label">False alarms</span>
+          <span class="sub">on <span id="n-test-twins"></span> fixed repositories</span>
         </div>
       </div>
     </div>
@@ -53,7 +52,7 @@
       <div class="chart-head">
         <div class="legend">
           <span><i class="dot train"></i><span id="legend-train">pairs the optimizer learns from</span></span>
-          <span><i class="dot val"></i><span id="legend-val">held-out pairs it never sees</span></span>
+          <span><i class="dot val"></i><span id="legend-val">pairs it never sees</span></span>
           <span><i class="line"></i>best so far on the learning pairs</span>
         </div>
         <button id="replay-chart">Replay</button>
@@ -62,8 +61,8 @@
         <svg id="chart" viewBox="0 0 1000 540" role="img" aria-label="Pairs right per version of the agent"></svg>
         <aside id="detail" class="detail" aria-label="What the optimizer changed"></aside>
       </div>
-      <p class="chart-foot">Version 4 is the one we present, with the most held-out pairs right (<span id="n-picked"></span>).
-        <span id="note"></span></p>
+      <p class="chart-foot">Version 4 is the one we present: it did best on pairs it had never seen (<span id="n-picked"></span>).
+        Later versions scored higher only on the pairs they learned from.</p>
     </div>
   </section>
 
@@ -128,16 +127,9 @@
           </div>
           <a id="pair-commit" class="code-link" target="_blank" rel="noopener noreferrer">See the fix on GitHub</a>
         </div>
-        <div id="pair-question" class="pair-question">
-          <p>Which one is vulnerable?</p>
-          <div class="row">
-            <button id="guess-a">A is vulnerable</button>
-            <button id="guess-b">B is vulnerable</button>
-            <button id="reveal" class="link-button">Just show me</button>
-          </div>
-        </div>
+        <div id="pair-question" class="pair-question"></div>
         <div id="functions" class="functions"></div>
-        <div id="pair-outcome" class="pair-outcome hidden"></div>
+        <p id="pair-legend" class="legend-note hidden">Amber: the lines that differ between the two. Blue: the lines the agent pointed at.</p>
       </div>
     </div>
   </section>

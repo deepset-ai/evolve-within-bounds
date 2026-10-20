@@ -195,5 +195,5 @@
    "presented": 1
   }
  },
- "note": "The numbers cover all the pairs the loop ran on: our public synthetic benchmark and two benchmarks we can't publish."
+ "note": "The counts include two benchmarks we can't publish."
 }

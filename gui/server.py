@@ -291,7 +291,7 @@ def _whole_words(text: str, limit: int) -> str:
 
 
 def finding_view(finding: dict[str, Any], root: Path) -> dict[str, Any]:
-    """One finding as the page shows it: where, what, why, and the code."""
+    """One finding as the page shows it: where, what it noticed, why it matters, the call to check, and the code."""
     start, end = int(finding["line_start"]), int(finding["line_end"])
     title = str(finding["title"])
     why = str(finding.get("missing_control") or finding.get("evidence") or "")
@@ -306,6 +306,7 @@ def finding_view(finding: dict[str, Any], root: Path) -> dict[str, Any]:
         "severity": finding.get("severity"),
         "why": _whole_words(why, 200),
         "fix": _whole_words(str(finding.get("fix") or ""), 200),
+        "sink": _whole_words(str(finding.get("sink") or ""), 120),
         "excerpt": _excerpt(root / finding["path"], start, end),
     }
 
