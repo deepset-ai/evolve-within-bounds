@@ -30,4 +30,7 @@ repository, and 8 parallel requests. It uses only the Python standard library, s
 ## Qdrant
 
 [`qdrant/compose.yaml`](qdrant/compose.yaml) runs Qdrant 1.19.0, the document store of the PrimeVul agents' knowledge
-base, on `127.0.0.1:6333`: `hatch run primevul:qdrant up -d`. It needs no GPU. See [`docs/primevul.md`](../docs/primevul.md).
+base, on `127.0.0.1:6333`: `hatch run primevul:qdrant up -d`, which runs [`qdrant/qdrant.sh`](qdrant/qdrant.sh). Like
+the model servers, it also listens on the gateway of OpenShell's Docker bridge when that bridge exists, so that the
+agent in the sandbox reaches it; the sandbox's policy allows reads only. It needs no GPU. See
+[`docs/primevul.md`](../docs/primevul.md).

@@ -11,5 +11,7 @@ if [ -f /tmp/nemoclaw-security-triage-env.sh ]; then
   # shellcheck disable=SC1091
   . /tmp/nemoclaw-security-triage-env.sh || true
 fi
+# The knowledge base's retrieval models, baked into the image; nothing may be downloaded here.
+export HF_HUB_CACHE=/opt/kb-models/hub FASTEMBED_CACHE_PATH=/opt/kb-models/fastembed HF_HUB_OFFLINE=1
 
 exec /opt/venv/bin/security-agent "$@"

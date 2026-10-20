@@ -8,7 +8,8 @@ The `security-agent primevul` commands.
   kb build [--qdrant-url URL]
   kb query TEXT [--agent DIR] [--top-k N]
   run --agent DIR [--split train|val|test] [--pairs N] [--concurrency N] [--thinking-budget N] [--run-dir DIR]
-  loop run [--config loop.yaml] [--run-dir DIR] [--iterations N] [--gpu-hours H] [--smoke]
+      [--sandbox NAME]
+  loop run [--config loop.yaml] [--run-dir DIR] [--iterations N] [--gpu-hours H] [--smoke] [--sandbox NAME]
   loop status --run-dir DIR
   gym export [--split train|val|test] [--pairs N] [--out FILE]
 
@@ -17,6 +18,10 @@ positive rates and a budget summary. Its run directory keeps every task's record
 resumable), the summary (`summary.json`) and one label per pair (`pairs.jsonl`). The test split is PrimeVul's paired
 test split (`holdout` in the benchmark file). `loop run` is the prompt loop (`security_agent.primevul.task` on the
 shared loop, `security_agent.optimize`). `gym export` writes the chosen pairs as NeMo Gym rows (gym/).
+
+`--sandbox NAME` judges every function inside that OpenShell sandbox (`security_agent.primevul.sandbox`), after checking
+that the agent reaches the model and the knowledge base from there. Without it, the agent runs in this process.
+`sandbox run-job` is what runs inside the sandbox.
 """
 
 from __future__ import annotations
@@ -46,6 +51,19 @@ def _kb_tool_parameters(agent_dir: Path) -> dict[str, Any]:
         if component.get("type", "").endswith("SecurityKbSearch"):
             return dict(component.get("init_parameters") or {})
     raise ValueError(f"{agent_dir} has no search_security_kb tool")
+
+
+def _sandbox(name: str | None, config: dict[str, Any]) -> Any:
+    """The sandbox to judge in, once it reached the model and the knowledge base with `config`; None without a name."""
+    if not name:
+        return None
+    from security_agent.primevul.sandbox import OpenShell
+
+    sandbox = OpenShell(name)
+    found = sandbox.check(config)
+    reached = "the model and the knowledge base" if "documents" in found else "the model"
+    print(f"sandbox {name}: the agent reaches {reached}", flush=True)
+    return sandbox
 
 
 def cmd_kb_build(args: argparse.Namespace) -> int:
@@ -81,6 +99,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     tasks = load_tasks(Path(args.data), FILE_SPLIT[args.split], args.pairs)
     name = agent_path.name if agent_path.is_dir() else agent_path.stem
     run_dir = Path(args.run_dir) if args.run_dir else RUNS_DIR / f"{name}-{args.split}-{args.pairs or 'all'}"
+    sandbox = _sandbox(args.sandbox, agents.with_thinking_budget(config, budget))
     run_dir.mkdir(parents=True, exist_ok=True)
     print(f"{args.split}: {len(pair_up(tasks))} pairs, {len(tasks)} functions -> {run_dir}", flush=True)
     started = time.monotonic()
@@ -91,6 +110,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         log=lambda line: print(line, flush=True),
         cache=run_dir / "tasks.json",
         load_agent=agents.load_agent,
+        sandbox=sandbox,
     )
     usage = tool_usage(records, config)
     summary = {
@@ -99,6 +119,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         "split": args.split,
         "pairs": args.pairs,
         "thinking_budget": budget,
+        "sandbox": args.sandbox,
         "metrics": metrics.to_dict(with_pairs=False),
         "usage": usage,
     }
@@ -108,6 +129,10 @@ def cmd_run(args: argparse.Namespace) -> int:
             handle.write(json.dumps({"pair_id": pair.pair_id, "label": pair.label}) + "\n")
     print(f"{name}: {headline(metrics)}  ({time.monotonic() - started:.0f}s this session)")
     print(f"{name} budget: {json.dumps({k: usage[k] for k in USAGE_KEYS})}")
+    missing = sum(t.id not in records for t in tasks)
+    if missing:
+        print(f"{missing} functions were not judged because the sandbox failed: run the same command again")
+        return 1
     return 0
 
 
@@ -124,14 +149,15 @@ def cmd_loop_run(args: argparse.Namespace) -> int:
     from security_agent.optimize.loop import Experiment
     from security_agent.optimize.proposer import agent_proposer
     from security_agent.optimize.runs import claim_run_dir
+    from security_agent.primevul import agent as agents
     from security_agent.primevul.task import BENCHMARK, PrimeVulTask
     from security_agent.primevul.tasks import load_tasks, pair_up
 
-    given = Path(args.run_dir) if args.run_dir else None
-    if given is not None and (given / "preregistration.json").is_file():
+    run_dir = Path(args.run_dir) if args.run_dir else None
+    if run_dir is not None and (run_dir / "preregistration.json").is_file():
         # Resuming: the pre-registered configuration and training pairs win over the command line.
-        data = json.loads((given / "preregistration.json").read_text(encoding="utf-8"))
-        config, train, run_dir = data["config"], data["train"], given
+        data = json.loads((run_dir / "preregistration.json").read_text(encoding="utf-8"))
+        config, train = data["config"], data["train"]
     else:
         path = Path(args.config)
         path = path if path.parent != Path() or path.is_absolute() else CONFIG_DIR / path
@@ -145,13 +171,18 @@ def cmd_loop_run(args: argparse.Namespace) -> int:
         if args.smoke:  # mechanics check: two training pairs, one candidate
             train = {BENCHMARK: pairs[:2]}
             config["iterations"] = args.iterations or 1
+    reference = _resolve(config["reference"])
+    budget = config.get("thinking_budget")
+    sandbox = _sandbox(args.sandbox, agents.with_thinking_budget(agents.load_config(reference), budget))
+    if run_dir is None:
         runs = _resolve(config.get("runs_dir", "runs/primevul/loop"))
-        run_dir = given or claim_run_dir(runs, "opt-smoke-" if args.smoke else "opt-")
+        run_dir = claim_run_dir(runs, "opt-smoke-" if args.smoke else "opt-")
     task = PrimeVulTask(
-        _resolve(config["reference"]),
+        reference,
         data=Path(args.data),
         concurrency=int(config.get("concurrency", 4)),
-        thinking_budget=config.get("thinking_budget"),
+        thinking_budget=budget,
+        sandbox=sandbox,
         log=lambda m: print(m, flush=True),
     )
     proposer = agent_proposer(
@@ -161,7 +192,7 @@ def cmd_loop_run(args: argparse.Namespace) -> int:
         run_dir,
         config=config,
         train=train,
-        reference=_resolve(config["reference"]),
+        reference=reference,
         proposer=proposer,
         task=task,
         log=lambda m: print(m, flush=True),
@@ -198,7 +229,15 @@ def cmd_gym_export(args: argparse.Namespace) -> int:
     return 0
 
 
-def add_commands(parser: argparse.ArgumentParser) -> None:
+def cmd_run_job(args: argparse.Namespace) -> int:
+    """Inside the sandbox: run one uploaded job."""
+    from security_agent.primevul.sandbox import run_job
+
+    run_job(Path(args.job), Path(args.out))
+    return 0
+
+
+def add_commands(parser: argparse.ArgumentParser) -> None:  # noqa: PLR0915 - one statement per option
     """The `primevul` command group."""
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -229,6 +268,7 @@ def add_commands(parser: argparse.ArgumentParser) -> None:
         "results ran)",
     )
     run.add_argument("--run-dir", help="default: runs/primevul/<agent>-<split>-<pairs>; an existing one is resumed")
+    run.add_argument("--sandbox", help="judge every function inside this OpenShell sandbox")
     run.set_defaults(handler=cmd_run)
 
     loop = sub.add_parser("loop", help="the prompt loop")
@@ -240,6 +280,7 @@ def add_commands(parser: argparse.ArgumentParser) -> None:
     loop_run.add_argument("--iterations", type=int)
     loop_run.add_argument("--gpu-hours", type=float)
     loop_run.add_argument("--smoke", action="store_true", help="two training pairs, one candidate")
+    loop_run.add_argument("--sandbox", help="judge every function inside this OpenShell sandbox")
     loop_run.set_defaults(handler=cmd_loop_run)
     loop_status = loop_sub.add_parser("status", help="summarize an experiment's journal")
     loop_status.add_argument("--run-dir", required=True)
@@ -254,9 +295,17 @@ def add_commands(parser: argparse.ArgumentParser) -> None:
     gym_export.add_argument("--out", help="default: work/gym/primevul/<split>-<pairs>.jsonl")
     gym_export.set_defaults(handler=cmd_gym_export)
 
+    sandbox = sub.add_parser("sandbox", help="the OpenShell sandbox")
+    sandbox_sub = sandbox.add_subparsers(dest="sandbox_command", required=True)
+    job = sandbox_sub.add_parser("run-job", help="inside the sandbox: run one uploaded job and write its result")
+    job.add_argument("--job", required=True, help="the uploaded job directory; it is removed")
+    job.add_argument("--out", required=True, help="where the result goes, as JSON")
+    job.set_defaults(handler=cmd_run_job)
+
 
 def errors() -> tuple[type[Exception], ...]:
     """The errors the command line reports as a message, not a traceback."""
     from security_agent.knowledge_base.store import KbStoreError
+    from security_agent.sandbox import SandboxError
 
-    return (KbStoreError, FileNotFoundError)
+    return (KbStoreError, FileNotFoundError, SandboxError)

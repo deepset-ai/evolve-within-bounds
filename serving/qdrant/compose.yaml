@@ -1,10 +1,11 @@
 # Qdrant, the document store of the PrimeVul agents' knowledge base.
 #
-#   hatch run primevul:qdrant up -d     # docker compose -f serving/qdrant/compose.yaml up -d
+#   hatch run primevul:qdrant up -d     # serving/qdrant/qdrant.sh: docker compose with this file
 #   hatch run primevul:kb build
 #
 # Pinned: a Qdrant upgrade can change scoring internals. Bound to localhost, without an API key: it holds public
-# reference text only. The collection survives `down` in the named volume.
+# reference text only. When OpenShell's bridge exists, qdrant.sh also publishes the REST port on the bridge's gateway
+# (compose.sandbox.yaml), for the PrimeVul agent in the sandbox. The collection survives `down` in the named volume.
 services:
   qdrant:
     image: qdrant/qdrant:v1.19.0

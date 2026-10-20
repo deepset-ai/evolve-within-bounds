@@ -1,0 +1,6 @@
+# Qdrant on the gateway of OpenShell's Docker bridge as well, for the PrimeVul agent in the sandbox. qdrant.sh adds this
+# file, with the gateway's address, when the bridge exists.
+services:
+  qdrant:
+    ports:
+      - "${QDRANT_SANDBOX_GATEWAY:?}:6333:6333"   # REST only: the sandbox's policy allows nothing else

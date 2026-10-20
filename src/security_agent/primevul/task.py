@@ -398,6 +398,7 @@ class PrimeVulTask:
     :param concurrency: functions judged in parallel.
     :param thinking_budget: reasoning tokens per reply, sent with each request.
     :param load_agent: builds an agent from a config (tests pass a fake).
+    :param sandbox: a `security_agent.primevul.sandbox.OpenShell`; every function is then judged inside it.
     """
 
     name = BENCHMARK
@@ -411,6 +412,7 @@ class PrimeVulTask:
         concurrency: int = 4,
         thinking_budget: int | None = agents.THINKING_BUDGET,
         load_agent: Callable[[dict[str, Any]], Any] = agents.load_agent,
+        sandbox: Any = None,
         log: Callable[[str], None] = print,
     ) -> None:
         self.reference = agents.load_config(Path(reference))
@@ -419,6 +421,7 @@ class PrimeVulTask:
         self.concurrency = concurrency
         self.thinking_budget = thinking_budget
         self.load_agent = load_agent
+        self.sandbox = sandbox
         self.log = log
 
     def _tasks(self, pair_ids: list[str]) -> list[Task]:
@@ -453,6 +456,7 @@ class PrimeVulTask:
                 concurrency=self.concurrency,
                 cache=cache,
                 load_agent=self.load_agent,
+                sandbox=self.sandbox,
                 log=lambda line: self.log(f"  [{label}]{line}"),
             )
             m.seconds += metrics.seconds
@@ -469,7 +473,11 @@ class PrimeVulTask:
         return m
 
     def _fill(self, m: Measurement, pair_ids: list[str], records: dict[str, dict]) -> None:
-        """Outcomes, instances, findings, cost and incomplete functions of the measured pairs."""
+        """
+        Outcomes, instances, findings, cost and incomplete functions of the measured pairs.
+
+        Incomplete: lost to a model-server outage, or not judged because the sandbox failed.
+        """
         from security_agent.generator import server_error_text
 
         m.outcomes, m.instances, m.findings, m.incomplete = {}, 0, 0, 0
@@ -484,7 +492,7 @@ class PrimeVulTask:
             record = records.get(task.id) or {}
             m.instances += 1
             m.findings += label(record.get("verdict")) is True
-            m.incomplete += server_error_text(record.get("error"))
+            m.incomplete += task.id not in records or server_error_text(record.get("error"))
             for key, value in (record.get("usage") or {}).items():
                 m.cost[key] = m.cost.get(key, 0) + int(value)
 
@@ -526,10 +534,14 @@ class PrimeVulTask:
         }
 
     def spoiled(self, measurement: Measurement) -> int:
-        """Drop functions a model-server outage spoiled from the measurement's records; how many will run again."""
+        """
+        Drop functions a model-server outage spoiled from the measurement's records; how many will run again.
+
+        Those run again with the functions the sandbox failed to judge, which have no record.
+        """
         from security_agent.generator import server_error_text
 
-        dropped = 0
+        judged: set[str] = set()
         for run_dir in measurement.run_dirs:
             cache = Path(run_dir) / "tasks.json"
             if not cache.is_file():
@@ -537,9 +549,10 @@ class PrimeVulTask:
             records = json.loads(cache.read_text(encoding="utf-8"))
             kept = [r for r in records if not server_error_text(r.get("error"))]
             if len(kept) != len(records):
-                dropped += len(records) - len(kept)
                 cache.write_text(json.dumps(kept, default=str), encoding="utf-8")
-        return dropped
+            judged |= {r["task_id"] for r in kept}
+        measured = [key.split("/", 1)[1] for key in measurement.outcomes]
+        return sum(t.id not in judged for p in measured if p in self.pairs for t in self.pairs[p].values())
 
     def system_prompt(self, values: dict[str, Any]) -> str:
         """The optimizer's system prompt with the experiment's numbers filled in."""

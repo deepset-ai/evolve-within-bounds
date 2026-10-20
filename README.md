@@ -33,10 +33,10 @@ There are two benchmarks:
 | Folder | What it holds |
 |---|---|
 | [`docs/`](docs/) | DGX Spark setup, one runbook per benchmark, and the architecture |
-| [`src/security_agent/`](src/security_agent/) | the Python package: the self-improvement loop the benchmarks share (`optimize/`), the repository scan agent and its benchmark task (`synthetic/`), the PrimeVul triage agent's runner and scoring (`primevul/`) and its knowledge base (`knowledge_base/`), the model servers' smoke check, the PrimeVul data |
+| [`src/security_agent/`](src/security_agent/) | the Python package: the self-improvement loop the benchmarks share (`optimize/`), the OpenShell sandbox driver they share (`sandbox.py`), the repository scan agent and its benchmark task (`synthetic/`), the PrimeVul triage agent's runner and scoring (`primevul/`) and its knowledge base (`knowledge_base/`), the model servers' smoke check, the PrimeVul data |
 | [`agents/`](agents/) | the agents behind the results: the seed and the improved agents for each benchmark |
 | [`serving/`](serving/) | one folder per model: pinned revision and image, serve script, smoke check; and Qdrant, for PrimeVul's knowledge base |
-| [`sandbox/`](sandbox/) | the OpenShell sandbox, created through NemoClaw, that the synthetic benchmark's scans run in: the image, its policy, the inference route |
+| [`sandbox/`](sandbox/) | the OpenShell sandbox, created through NemoClaw, that both benchmarks' agents run in: the image, its policy, the inference route |
 | [`gym/`](gym/) | the NeMo Gym environments for both benchmarks: resources servers that score rollouts with each benchmark's own scoring, and agent servers that run our agents (PrimeVul's agent files through Gym's Haystack harness, the synthetic benchmark's scanner as a black-box harness) |
 | [`data/`](data/) | PrimeVul pair-id manifests and the synthetic custom-component dataset |
 | [`scripts/`](scripts/) | setup, data preparation, evaluation, one entry point per experiment |
@@ -60,8 +60,8 @@ There are two benchmarks:
   the agents out with NeMo Gym.
 - **The demo:** see [`demo/README.md`](demo/README.md).
 - **PrimeVul:** see [`docs/primevul.md`](docs/primevul.md). Build the benchmark file and the knowledge base, serve
-  Flash-Next with vLLM, measure both agents on the test pairs, run the prompt loop, and roll the agents out with NeMo
-  Gym.
+  Flash-Next with vLLM, create the sandbox, measure both agents inside it on the test pairs, run the prompt loop, and
+  roll the agents out with NeMo Gym.
 
 ## Development
 

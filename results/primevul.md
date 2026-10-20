@@ -69,4 +69,4 @@ vulnerable in 64% of the functions; every step moved the same way.
   counted only if it ranked above its starting agent on the training pairs and then got more validation pairs right.
 
 
-To rerun the test numbers: steps 1 to 4 of the [runbook](../docs/primevul.md).
+To rerun the test numbers: steps 1 to 5 of the [runbook](../docs/primevul.md).

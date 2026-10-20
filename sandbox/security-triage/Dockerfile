@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# The sandbox image for the repository scan agent (security_agent.synthetic), as NemoClaw's `security-triage` agent. It
-# follows the contract of NemoClaw's own agent images (NVIDIA NemoClaw, Apache-2.0).
+# The sandbox image for both benchmarks' agents, the repository scan agent (security_agent.synthetic) and the PrimeVul
+# triage agent (security_agent.primevul), as NemoClaw's `security-triage` agent. It follows the contract of NemoClaw's
+# own agent images (NVIDIA NemoClaw, Apache-2.0).
 #
 # Build context: the root of a NemoClaw checkout, with this directory at agents/security-triage/ and this repository's
 # Python package (pyproject.toml, README.md, LICENSE, src/) copied to agents/security-triage/security-agent/.
@@ -31,14 +32,23 @@ RUN groupadd --gid 999 sandbox \
     && useradd --uid 999 --gid 999 --create-home --home-dir /sandbox --shell /bin/bash sandbox \
     && mkdir -p /sandbox/.security-triage /sandbox/security-agent
 
-# The package and all its dependencies are baked in: at run time the sandbox reaches the model and nothing else. Root
-# owns the virtual environment: the sandbox user can read it but not change it.
-COPY agents/security-triage/security-agent /opt/security-agent
+# The package and all its dependencies are baked in: at run time the sandbox reaches the model, the PrimeVul knowledge
+# base's Qdrant, and nothing else. Root owns the virtual environment: the sandbox user can read it but not change it.
+# torch comes first, in a layer of its own that a code change does not rebuild, and from PyTorch's CPU index: the
+# knowledge base's models run on the CPU, and PyPI's build would pull in the CUDA libraries.
 RUN python3 -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \
-    && /opt/venv/bin/pip install "/opt/security-agent[synthetic]" \
+    && /opt/venv/bin/pip install --index-url https://download.pytorch.org/whl/cpu torch
+COPY agents/security-triage/security-agent /opt/security-agent
+RUN /opt/venv/bin/pip install "/opt/security-agent[synthetic,primevul]" \
     && /opt/venv/bin/python3 -m compileall -q /opt/venv/lib \
     && /opt/venv/bin/security-agent --version
+
+# The PrimeVul knowledge base's retrieval models, at the agents' pinned revisions: the sandbox cannot download them.
+# The wrapper points the libraries here and keeps them offline.
+RUN HF_HUB_CACHE=/opt/kb-models/hub FASTEMBED_CACHE_PATH=/opt/kb-models/fastembed \
+    /opt/venv/bin/python3 -c "from security_agent.knowledge_base.search import download_models; download_models()" \
+    && chmod -R a+rX /opt/kb-models
 
 COPY agents/security-triage/security-agent-wrapper.sh /usr/local/bin/security-agent
 COPY agents/security-triage/health.py /opt/nemoclaw-security-triage/health.py

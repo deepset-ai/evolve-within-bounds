@@ -3,13 +3,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# The OpenShell sandbox for the repository scan agent, created through NVIDIA NemoClaw on the DGX Spark.
+# The OpenShell sandbox for both benchmarks' agents, created through NVIDIA NemoClaw on the DGX Spark.
 #
 #   sandbox.sh setup      clone NemoClaw at the pinned commit and apply our patch, install OpenShell 0.0.106 and the
 #                         nemoclaw command from that checkout. Safe to run again.
 #   sandbox.sh create     build the sandbox image and create the sandbox (about 6 minutes). The model server must be
-#                         running (serving/); afterwards it must also listen on OpenShell's bridge, see below.
-#   sandbox.sh status     the sandbox, the inference route, and whether the model server answers on the bridge
+#                         running (serving/); afterwards it must also listen on OpenShell's bridge, see below. For
+#                         PrimeVul, so must Qdrant.
+#   sandbox.sh status     the sandbox, the inference route, and whether the model server and Qdrant answer on the bridge
 #   sandbox.sh destroy    remove the sandbox
 #
 # Settings: SANDBOX (default security-agent), MODEL (the served model name, default qwen3.8-flash-next), NEMOCLAW_DIR (default
@@ -32,11 +33,31 @@ gateway() {
   docker network inspect openshell-docker -f '{{(index .IPAM.Config 0).Gateway}}' 2>/dev/null || true
 }
 
-# Does the model server answer where the sandbox's inference route sends it?
-model_on_bridge() {
+# Where the sandbox's traffic to host.openshell.internal arrives on this host: the bridge's gateway, or the loopback
+# when the bridge lives in a VM (Docker Desktop), which forwards it there.
+host_address() {
   local gw
   gw="$(gateway)"
-  [ -n "$gw" ] && curl -fsS -m 10 "http://$gw:8000/v1/models" >/dev/null 2>&1
+  [ -n "$gw" ] || return 0
+  if { ip -o addr show 2>/dev/null || ifconfig 2>/dev/null; } | grep -qE "inet $gw[/ ]"; then
+    echo "$gw"
+  else
+    echo 127.0.0.1
+  fi
+}
+
+# Does the model server answer where the sandbox's inference route sends it?
+model_on_bridge() {
+  local address
+  address="$(host_address)"
+  [ -n "$address" ] && curl -fsS -m 10 "http://$address:8000/v1/models" >/dev/null 2>&1
+}
+
+# Does Qdrant, the PrimeVul knowledge base's store, answer where the sandbox's policy lets the agent reach it?
+qdrant_on_bridge() {
+  local address
+  address="$(host_address)"
+  [ -n "$address" ] && curl -fsS -m 10 "http://$address:6333/collections" >/dev/null 2>&1
 }
 
 setup() {
@@ -95,10 +116,13 @@ create() {
     NEMOCLAW_POLICY_MODE=skip NEMOCLAW_LOCAL_INFERENCE_TIMEOUT=600 \
     nemoclaw onboard --agent security-triage --from agents/security-triage/Dockerfile --name "$SANDBOX" \
       --no-sandbox-gpu --fresh --recreate-sandbox --yes --non-interactive)
+  if curl -fsS -m 10 http://127.0.0.1:6333/collections >/dev/null 2>&1 && ! qdrant_on_bridge; then
+    echo "note: Qdrant runs, but not on OpenShell's bridge; for PrimeVul, start it again: hatch run primevul:qdrant up -d"
+  fi
   if model_on_bridge; then
     echo "ready: sandbox $SANDBOX; the model server answers on OpenShell's bridge"
   else
-    echo "sandbox $SANDBOX created, but the model server does not listen on OpenShell's bridge ($(gateway)) yet." >&2
+    echo "sandbox $SANDBOX created, but the model server does not listen on OpenShell's bridge ($(host_address)) yet." >&2
     echo "Restart it once, now that the bridge exists: hatch run serving:flash-next stop, then start." >&2
     exit 1
   fi
@@ -107,8 +131,10 @@ create() {
 status() {
   openshell sandbox list 2>/dev/null | grep -E "NAME|$SANDBOX" || echo "no sandbox $SANDBOX"
   openshell inference get 2>/dev/null || true
-  if model_on_bridge; then echo "model server: answers on OpenShell's bridge ($(gateway):8000)"
+  if model_on_bridge; then echo "model server: answers on OpenShell's bridge ($(host_address):8000)"
   else echo "model server: not reachable on OpenShell's bridge"; fi
+  if qdrant_on_bridge; then echo "qdrant (PrimeVul): answers on OpenShell's bridge ($(host_address):6333)"
+  else echo "qdrant (PrimeVul): not reachable on OpenShell's bridge"; fi
 }
 
 case "${1:-}" in

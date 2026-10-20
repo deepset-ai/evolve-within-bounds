@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# The sandbox's policy, added to NemoClaw's base policy at onboarding. Deny by default: the only network destination is
-# the managed inference route to the model server on the host. The installed package is read-only; jobs and results
-# live under /sandbox/security-agent, scratch copies under /tmp.
+# The sandbox's policy, added to NemoClaw's base policy at onboarding. Deny by default: the network destinations are the
+# managed inference route to the model server on the host, and reads from the PrimeVul knowledge base's Qdrant on the
+# host. The installed package and the retrieval models are read-only; jobs and results live under
+# /sandbox/security-agent, scratch copies under /tmp.
 
 version: 1
 
@@ -18,6 +19,7 @@ filesystem_policy:
     - /dev/urandom
     - /opt/venv
     - /opt/security-agent
+    - /opt/kb-models
     - /opt/nemoclaw-security-triage
     - /opt/nemoclaw-security-triage-config
     - /var/log
@@ -48,6 +50,36 @@ network_policies:
     binaries:
       # OpenShell attributes traffic to the binary the kernel resolves: /opt/venv/bin/python3 is a symlink to the
       # base image's /usr/local/bin/python3.12, so both are listed.
+      - { path: /usr/local/bin/security-agent }
+      - { path: /opt/venv/bin/python3* }
+      - { path: /usr/local/bin/python3* }
+
+  # The PrimeVul knowledge base: Qdrant on the host, published on OpenShell's bridge (serving/qdrant/). Reads only: the
+  # collection's description, searches, scrolls, counts and points by id; nothing that writes or deletes.
+  knowledge_base:
+    name: knowledge_base
+    endpoints:
+      - host: host.openshell.internal
+        port: 6333
+        protocol: rest
+        enforcement: enforce
+        # OpenShell's SSRF guard rejects the bridge gateway's private address unless the policy allows it, as in
+        # NemoClaw's own presets for host services; it checks every address the name resolves to. Docker Desktop
+        # also resolves it to an IPv6 unique local address. Host, port, methods, paths and binaries are still enforced.
+        allowed_ips:
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+          - fc00::/7
+        rules:
+          - allow: { method: GET, path: "/" }
+          - allow: { method: GET, path: "/collections/**" }
+          - allow: { method: POST, path: "/collections/*/points" }
+          - allow: { method: POST, path: "/collections/*/points/count" }
+          - allow: { method: POST, path: "/collections/*/points/query" }
+          - allow: { method: POST, path: "/collections/*/points/query/groups" }
+          - allow: { method: POST, path: "/collections/*/points/scroll" }
+    binaries:
       - { path: /usr/local/bin/security-agent }
       - { path: /opt/venv/bin/python3* }
       - { path: /usr/local/bin/python3* }

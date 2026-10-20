@@ -10,4 +10,4 @@ The agents behind the results, as Haystack YAML. Treat them as code, see [SECURI
 - [`primevul/seed/`](primevul/seed/) and [`primevul/looped/`](primevul/looped/): the PrimeVul triage agent before
   and after the prompt loop, a serialized Haystack `Agent` (`agent.yaml`) with one tool, `search_security_kb`. The loop
   changed its system prompt and the tool's description. Load them with `Agent.from_dict`, or run them with
-  `security_agent.primevul`: [`docs/primevul.md`](../docs/primevul.md).
+  `security_agent.primevul`, inside the OpenShell sandbox: [`docs/primevul.md`](../docs/primevul.md).
