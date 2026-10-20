@@ -12,6 +12,8 @@ here unless this file says so; each keeps its own license.
 Software
 - Haystack (deepset-ai/haystack): Apache-2.0
 - monty-haystack (deepset-ai/haystack-core-integrations): Apache-2.0
+- haystack-core-integrations (deepset-ai/haystack-core-integrations): Apache-2.0. Short excerpts of its code at commit
+  44ffad5, around the scanned findings, are shipped in gui/shipped/integrations.json
 - pydantic-monty (pydantic/monty), installed by monty-haystack: MIT
 - vLLM (vllm-project/vllm), container images vllm/vllm-openai: Apache-2.0
 - dime-online/qwen3.8-Flash-DGX-UltraFast serving recipe (cloned at a pinned commit and patched by
@@ -46,8 +48,9 @@ Models
 - Qdrant/bm25, the knowledge base's sparse embedder: Apache-2.0
 
 Datasets
-- PrimeVul (DLVulDet/PrimeVul, mirrored as colin/PrimeVul on the Hugging Face Hub): MIT. Only manifests are shipped
-  (data/primevul/); the functions are downloaded from the pinned mirror by security_agent.data.primevul.
+- PrimeVul (DLVulDet/PrimeVul, mirrored as colin/PrimeVul on the Hugging Face Hub): MIT. Manifests are shipped
+  (data/primevul/), and the 24 functions of the GUI's 12 pairs (gui/shipped/pairs.json); all other functions are
+  downloaded from the pinned mirror by security_agent.data.primevul.
 - CWE List (The MITRE Corporation): the names and short descriptions of 969 CWE entries are shipped in
   src/security_agent/knowledge_base/cwe_reference.json under the CWE Terms of Use, reproduced at the end of this file
 - SEI CERT C Coding Standard (cmu-sei/secure-coding-standards, Carnegie Mellon University Software Engineering

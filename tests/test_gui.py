@@ -47,6 +47,7 @@ def results(tmp_path, monkeypatch):
     """A checkout with one integration, and somewhere to keep its scans."""
     monkeypatch.setattr(gui, "RESULTS", tmp_path / "results")
     monkeypatch.setattr(gui, "CHECKOUT", tmp_path / "checkout")
+    monkeypatch.setattr(gui, "SHIPPED", tmp_path / "shipped")  # not the repository's own snapshot
     code = tmp_path / "checkout" / "integrations" / "store" / "src"
     code.mkdir(parents=True)
     (code / "store.py").write_text("".join(f"line {n}\n" for n in range(1, 31)))
@@ -104,10 +105,34 @@ def test_a_sentence_the_agent_cut_short_is_shown_once_and_ends_on_a_word(results
     whole = why.removesuffix(" (store.py:3, store.py:9)") + "; here the value is passed on without it"
     view = gui.finding_view({**_finding(12), "title": whole[:110], "missing_control": whole}, gui.CHECKOUT)
     assert view["title"] == whole  # the whole sentence, though it is long and ends in a letter
-    cut = ("words " * 40)[:200]  # as the agent cuts it: at 200 characters, in a word
+    cut = ("words " * 60)[:298] + "wo"  # as the scanner cuts it: at 300 characters, in a word
     view = gui.finding_view({**_finding(12), "title": "SQL", "missing_control": cut}, gui.CHECKOUT)
-    assert view["title"] == "SQL" and view["why"].endswith("words …") and len(view["why"]) < 200
+    assert view["title"] == "SQL" and view["why"].endswith("words …") and len(view["why"]) < 300
+    after_a_word = ("words " * 50)[:300]  # cut just after a word: still marked as cut
+    view = gui.finding_view({**_finding(12), "title": "SQL", "missing_control": after_a_word}, gui.CHECKOUT)
+    assert view["why"].endswith("words …")
+    short = "words " * 40 + "end"  # shorter than the scanner keeps: whole, though it ends in a letter
+    assert gui.finding_view({**_finding(12), "title": "SQL", "missing_control": short}, gui.CHECKOUT)["why"] == short
     assert gui.finding_view(_finding(12), gui.CHECKOUT)["title"] == "SQL"  # a short title stays as it is
+
+
+def test_an_explanation_the_scanner_cut_is_shown_whole_from_the_agents_own_call():
+    whole = "Untrusted metadata is merged after the trusted timestamp, so it overrides the field. " * 10
+    finding = {**_finding(12), "missing_control": whole[:300]}  # what the scanner keeps: cut inside a word
+    call = {"tool": "report_finding", "args": json.dumps({**_finding(12), "explanation": whole})}
+    result = {"findings": [finding], "record": {"agent": {"trajectory": [{"role": "assistant", "calls": [call]}]}}}
+    known = gui.explanations(result)
+    assert gui.finding_view(finding, gui.CHECKOUT, known)["why"] == whole
+    assert gui.finding_view(finding, gui.CHECKOUT)["why"].endswith(" …")  # without the record: cut at a word
+    other = {**finding, "line_start": 13, "line_end": 13}  # another finding's call is not used
+    assert gui.finding_view(other, gui.CHECKOUT, known)["why"] != whole
+    cut_call = {
+        "tool": "report_finding",
+        "args": json.dumps({**_finding(12), "explanation": whole})[:800],
+    }  # as the record cuts it
+    longer = gui.explanations({"record": {"agent": {"trajectory": [{"calls": [cut_call]}]}}})
+    partial = gui.finding_view(finding, gui.CHECKOUT, longer)["why"]
+    assert len(partial) > 300 and whole.startswith(partial.removesuffix(" …").rstrip()) and partial.endswith(" …")
 
 
 def test_a_pair_shows_both_functions_the_diff_and_the_agents_two_verdicts(tmp_path, monkeypatch):
@@ -320,6 +345,29 @@ def test_the_evolution_data_is_consistent():
     assert versions[0]["parent"] is None and all(v["parent"] in ids[:i] for i, v in enumerate(versions) if i)
     assert all(0 <= v["train"] <= data["train_pairs"] and 0 <= v["val"] <= data["val_pairs"] for v in versions)
     assert data["presented"]["id"] in ids
+
+
+def test_without_its_own_results_the_page_shows_the_shipped_ones_and_a_snapshot_writes_them(results, monkeypatch):
+    monkeypatch.setattr(gui, "PAIRS", results / "no-pairs.jsonl")
+    config = {"repository": "https://example.org/repo.git", "commit": "a" * 40, "integrations": [{"name": "store"}]}
+    shown = gui.Gui()
+    shown.config = config
+    assert shown.integrations() == [] and shown.pairs() == []  # nothing here, nothing shipped
+
+    _write(results, [_finding(12)])
+    gui.set_approval(["store"], "Reviewer")
+    assert gui.snapshot(config, shown.pairs_config, ["store", "other"]) == 1  # "other" is not approved: nothing written
+    assert not gui.SHIPPED.exists()
+    assert gui.snapshot(config, shown.pairs_config, ["store"]) == 0
+    written = json.loads((gui.SHIPPED / "integrations.json").read_text())
+    assert [i["name"] for i in written] == ["store"] and written[0]["findings"][0]["excerpt"]
+    assert "record" not in json.dumps(written)  # what the page shows, not the scan's own record
+
+    gui.set_approval(["store"], "", approve=False)
+    assert shown.integrations() == written  # no approved scan here: the shipped one
+    assert shown.pairs() == []  # no pairs judged, here or shipped
+    gui.set_approval(["store"], "Reviewer")
+    assert shown.integrations() == [gui.integration_view({"name": "store"}, config)]  # this machine's own wins
 
 
 @pytest.fixture

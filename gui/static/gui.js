@@ -799,7 +799,12 @@ function codeBlock(excerpt, file) {
 }
 
 const plain = (text) => text.replace(/`/g, ""); // the agent writes Markdown
-const shorten = (text, max) => (text.length > max ? `${text.slice(0, max)}…` : text);
+// `text`, at most `max` characters, ended at a whole word.
+const shorten = (text, max) => {
+  if (text.length <= max) return text;
+  const cut = text.lastIndexOf(" ", max);
+  return `${text.slice(0, cut > 0 ? cut : max)} …`;
+};
 
 const SEVERITY = { high: "error", medium: "warning" };
 
@@ -845,7 +850,7 @@ function renderFinding(integration) {
         el("p", { class: "place", text: `${shortPath(finding.file)}, ${lines}` }),
         finding.excerpt.length ? codeBlock(finding.excerpt, finding.file) : null,
       ),
-      ...(why ? part("Why it matters", el("p", { text: shorten(why, 360) })) : []),
+      ...(why ? part("Why it matters", el("p", { text: shorten(why, 600) })) : []),
       ...(check ? part("What to check", el("p", {}, ...check)) : []),
     ),
   );
