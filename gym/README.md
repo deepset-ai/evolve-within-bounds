@@ -1,7 +1,7 @@
 # NeMo Gym
 
 Both benchmarks' agents as [NeMo Gym](https://github.com/NVIDIA-NeMo/Gym) environments (nemo-gym 0.7.0). The runbook
-steps are [`docs/primevul.md`](../docs/primevul.md), step 6, and [`docs/synthetic.md`](../docs/synthetic.md), step 7.
+steps are [`docs/primevul.md`](../docs/primevul.md), step 7, and [`docs/synthetic.md`](../docs/synthetic.md), step 7.
 
 | Folder | What it holds |
 |---|---|

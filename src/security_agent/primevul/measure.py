@@ -5,9 +5,13 @@
 """
 Running an agent over the tasks, resumably, and scoring the pairs.
 
-Each worker thread builds its own agent and judges one function per call. A task whose answer has no verdict gets one
-more request for the final answer (`agent.force_final_answer`). Every finished task is written to the cache file, so an
-interrupted measurement resumes where it stopped.
+Each worker thread builds its own agent and judges one function per call (`judge`). A task whose answer has no verdict
+gets one more request for the final answer (`agent.force_final_answer`). Every finished task is written to the cache
+file, so an interrupted measurement resumes where it stopped.
+
+With a sandbox (`security_agent.primevul.sandbox`), each function is judged inside it instead, by the same `judge`. A
+function whose job fails in the sandbox itself, not in the agent, is left out of the cache: it counts as a parse error
+now and is judged again when the measurement resumes.
 
 A task's record keeps its answer, verdict, steps and seconds, the tokens it cost (the agent's calls and the
 knowledge-base sub-agent's), and a compressed trajectory: each tool call with the head of its arguments and result,
@@ -29,6 +33,7 @@ from security_agent.primevul import agent as agents
 from security_agent.primevul.scoring import PairMetrics, aggregate
 from security_agent.primevul.tasks import Task, pair_up
 from security_agent.primevul.verdict import parse_verdict
+from security_agent.sandbox import SandboxError
 
 MAX_TOOL_ARG_CHARS = 200
 MAX_TOOL_RESULT_CHARS = 400
@@ -177,7 +182,7 @@ def tool_usage(records: dict[str, dict[str, Any]], config: dict[str, Any] | None
     }
 
 
-def _sub_agent_trace_taker() -> Callable[[str], dict[str, Any] | None]:
+def sub_agent_trace_taker() -> Callable[[str], dict[str, Any] | None]:
     """The knowledge-base tool's trace sink, emptied."""
     try:
         from security_agent.knowledge_base.search import SUB_AGENT_TRACES
@@ -205,6 +210,34 @@ def generation_stats(messages: list[Any] | None) -> dict[str, Any]:
     }
 
 
+def judge(agent: Any, question: str, take_sub_agent_trace: Callable[[str], dict[str, Any] | None]) -> dict[str, Any]:
+    """
+    One function, judged by a warmed-up agent: the answer, the verdict, the steps, the trajectory and what it cost.
+
+    An answer without a verdict gets one more request for it (`agent.force_final_answer`), and the record says so.
+    """
+    from haystack.dataclasses import ChatMessage
+
+    record: dict[str, Any] = {}
+    out = agent.run(messages=[ChatMessage.from_user(question)])
+    answer = out["last_message"].text or ""
+    if parse_verdict(answer)["parse_error"]:
+        out = agents.force_final_answer(agent, out)
+        answer = out["last_message"].text or ""
+        record["forced"] = True
+    messages = agents.openai_messages(out.get("messages"))
+    trajectory = attach_sub_agent_traces(compress_trajectory(messages), take_sub_agent_trace, messages)
+    record.update(
+        answer=answer,
+        steps=out.get("step_count"),
+        verdict=parse_verdict(answer),
+        trajectory=trajectory,
+        generation=generation_stats(out.get("messages")),
+        usage=record_usage(out.get("messages"), trajectory),
+    )
+    return record
+
+
 def measure(
     config: dict[str, Any],
     tasks: list[Task],
@@ -213,11 +246,14 @@ def measure(
     log: Callable[[str], None] = print,
     cache: Path | None = None,
     load_agent: Callable[[dict[str, Any]], Any] = agents.load_agent,
+    sandbox: Any = None,
 ) -> tuple[PairMetrics, dict[str, dict[str, Any]]]:
-    """Run the agent on every task not yet in `cache`, then score the pairs. Returns the metrics and the records."""
-    from haystack.dataclasses import ChatMessage
+    """
+    Run the agent on every task not yet in `cache`, then score the pairs. Returns the metrics and the records.
 
-    take_sub_agent_trace = _sub_agent_trace_taker()
+    With `sandbox` (a `security_agent.primevul.sandbox.OpenShell`), each task is judged inside it.
+    """
+    take_sub_agent_trace = sub_agent_trace_taker()
     records: dict[str, dict[str, Any]] = {}
     if cache and cache.exists():
         records = {r["task_id"]: r for r in json.loads(cache.read_text(encoding="utf-8"))}
@@ -237,40 +273,37 @@ def measure(
         t0 = time.monotonic()
         record: dict[str, Any] = {"task_id": task.id, "pair_id": task.gold.get("pair_id")}
         try:
-            agent = agent_for_thread()
-            out = agent.run(messages=[ChatMessage.from_user(task.question)])
-            answer = out["last_message"].text or ""
-            if parse_verdict(answer)["parse_error"]:
-                out = agents.force_final_answer(agent, out)
-                answer = out["last_message"].text or ""
-                record["forced"] = True
-            messages = agents.openai_messages(out.get("messages"))
-            trajectory = attach_sub_agent_traces(compress_trajectory(messages), take_sub_agent_trace, messages)
-            record.update(
-                answer=answer,
-                steps=out.get("step_count"),
-                verdict=parse_verdict(answer),
-                trajectory=trajectory,
-                generation=generation_stats(out.get("messages")),
-                usage=record_usage(out.get("messages"), trajectory),
-            )
+            if sandbox is not None:
+                record.update(sandbox.judge(config, task.question))
+            else:
+                record.update(judge(agent_for_thread(), task.question, take_sub_agent_trace))
+        except SandboxError as exc:  # not the agent's doing: judged again when the measurement resumes
+            return {**record, "sandbox_error": str(exc)}
         except Exception as exc:  # one task must not stop the measurement
             record.update(answer="", error=f"{type(exc).__name__}: {exc}", verdict={"parse_error": True})
-        record["seconds"] = round(time.monotonic() - t0, 1)
+        # The sandbox times the judgement itself, without starting the job and loading the agent.
+        record.setdefault("seconds", round(time.monotonic() - t0, 1))
         return record
 
     lock = threading.Lock()
     done = 0
+    lost = 0
     with ThreadPoolExecutor(max_workers=concurrency) as pool:
         for record in pool.map(run_one, todo):
             with lock:
-                records[record["task_id"]] = record
                 done += 1
-                if cache:
-                    cache.parent.mkdir(parents=True, exist_ok=True)
-                    cache.write_text(json.dumps(list(records.values()), default=str), encoding="utf-8")
+                if "sandbox_error" in record:
+                    lost += 1
+                    log(f"    {record['task_id']}: not judged, the sandbox failed: {record['sandbox_error'][-300:]}")
+                else:
+                    records[record["task_id"]] = record
+                    if cache:
+                        cache.parent.mkdir(parents=True, exist_ok=True)
+                        cache.write_text(json.dumps(list(records.values()), default=str), encoding="utf-8")
                 if done % 20 == 0 or done == len(todo):
                     log(f"    {done}/{len(todo)} tasks, {time.monotonic() - started:.0f}s")
+    if lost:
+        log(f"    {lost} tasks not judged because the sandbox failed; they count as parse errors until resumed")
     verdicts = {tid: r["verdict"] for tid, r in records.items()}
     metrics = aggregate(pair_up(tasks), verdicts, seconds=time.monotonic() - started)
     secs = sorted(r["seconds"] for r in records.values() if r.get("seconds"))

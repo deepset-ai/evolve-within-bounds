@@ -204,6 +204,22 @@ def make_llm(config: SecurityKbSearch) -> Any:
     )
 
 
+def download_models() -> None:
+    """
+    Download the retrieval models the agents' tool loads, at their pinned revisions, into the local caches.
+
+    The sandbox image runs this when it is built (sandbox/security-triage/Dockerfile): the sandbox downloads nothing.
+    """
+    from security_agent.knowledge_base.sources import MODEL_REVISIONS
+
+    tool = SecurityKbSearch(
+        embedding_revision=MODEL_REVISIONS[DEFAULT_EMBEDDING_MODEL],
+        reranker_revision=MODEL_REVISIONS[DEFAULT_RERANKER_MODEL],
+    )
+    for make in (make_text_embedder, make_sparse_text_embedder, make_ranker):
+        make(tool).warm_up()
+
+
 class _SubAgentTraces:
     """
     What the sub-agent did per query, for whoever measures the outer agent.

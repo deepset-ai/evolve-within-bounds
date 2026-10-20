@@ -3,112 +3,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
-import re
 import shutil
 import subprocess
-from pathlib import Path
 
 import pytest
 from fake_vllm import FakeVllm
 from helpers import SEED, STORE, UTIL, FakeBenchmark, OnePairBench, candidate, model
+from openshell_fake import FakeOpenShell, Finished
 from test_agent import CHECK, SEARCH, _with_code
 
+import security_agent.sandbox as base_module
 import security_agent.synthetic.sandbox as sandbox_module
 from security_agent.synthetic.agent import AgentScanner
 from security_agent.synthetic.bench.runner import run
 from security_agent.synthetic.examples import Examples
 from security_agent.synthetic.sandbox import OpenShell, SandboxError, SandboxScanner, run_job
-
-
-class _Finished:
-    def __init__(self, returncode):
-        self.returncode = returncode
-
-    def wait(self, timeout=None):
-        return self.returncode
-
-    def poll(self):
-        return self.returncode
-
-    def kill(self):
-        pass
-
-
-class _Hung:
-    """An exec that never starts its command and never returns, until killed."""
-
-    returncode = None
-
-    def wait(self, timeout=None):
-        if self.returncode is None:
-            raise subprocess.TimeoutExpired("openshell", timeout)
-        return self.returncode
-
-    def poll(self):
-        return self.returncode
-
-    def kill(self):
-        self.returncode = -9
-
-
-class FakeOpenShell:
-    """The `openshell` CLI (0.0.106) against a directory standing in for the sandbox's filesystem. Like the real one, it
-    uploads a directory into `<dest>/<its name>` and downloads a file into a directory. The first `fail_execs` job
-    executions fail; the first `hang_execs` hang."""
-
-    def __init__(self, root: Path, fail_execs: int = 0, hang_execs: int = 0):
-        self.root, self.fail_execs, self.hang_execs = root, fail_execs, hang_execs
-        self.calls: list[list[str]] = []
-
-    def spawn(self, args, stderr):
-        if self.hang_execs:
-            self.hang_execs -= 1
-            self.calls.append(args)
-            return _Hung()
-        done = self(args, 0)
-        stderr.write(done.stderr)
-        return _Finished(done.returncode)
-
-    def path(self, remote: str) -> Path:
-        if remote.startswith(str(self.root)):  # the deployed agent, as a job sees it
-            return Path(remote)
-        assert remote.startswith("/sandbox/")
-        return self.root / remote.removeprefix("/sandbox/")
-
-    def __call__(self, args, timeout_s):
-        self.calls.append(args)
-        assert args[:2] == ["openshell", "sandbox"]
-        verb, rest = args[2], args[3:]
-        if verb == "upload":
-            assert rest[0] == "--no-git-ignore" and rest[1] == "sbx"
-            local, dest = Path(rest[2]), self.path(rest[3])
-            shutil.copytree(local, dest / local.name)
-        elif verb == "download":
-            source, dest = self.path(rest[1]), Path(rest[2])
-            if not source.is_file():
-                return subprocess.CompletedProcess(args, 1, "", "no such file")
-            shutil.copy2(source, dest / source.name)
-        elif verb == "exec":
-            command = rest[rest.index("--") + 1 :]
-            if tuple(command[:4]) == sandbox_module.RUN_JOB:
-                if self.fail_execs:
-                    self.fail_execs -= 1
-                    return subprocess.CompletedProcess(args, 255, "", "relay closed")
-                run_job(self.path(command[command.index("--job") + 1]), self.path(command[command.index("--out") + 1]))
-            elif command[:2] == ["sh", "-c"]:  # the host's check on a running job
-                result, started = re.findall(r'"([^"]+)"', command[2])[:2]
-                state = "done" if self.path(result).exists() else "running 0" if self.path(started).exists() else ""
-                return subprocess.CompletedProcess(args, 0, state + "\n", "")
-            elif command[:2] == ["rm", "-rf"]:
-                for remote in command[2:]:
-                    target = self.path(remote)
-                    shutil.rmtree(target) if target.is_dir() else target.unlink(missing_ok=True)
-            else:
-                raise AssertionError(command)
-        return subprocess.CompletedProcess(args, 0, "", "")
-
-    def leftovers(self) -> list[str]:
-        return sorted(p.relative_to(self.root).as_posix() for p in self.root.rglob("*") if p.is_file())
 
 
 @pytest.fixture(autouse=True)
@@ -213,7 +122,7 @@ def test_the_cli_runs_a_job(tmp_path):
 
     job = tmp_path / "job"
     shutil.copytree(SEED, job / "candidate")
-    (job / "job.json").write_text(json.dumps({"kind": "contract", "code_version": sandbox_module.code_version()}))
+    (job / "job.json").write_text(json.dumps({"kind": "contract", "code_version": base_module.code_version()}))
     with pytest.raises(SystemExit) as code:
         main(["synthetic", "sandbox", "run-job", "--job", str(job), "--out", str(tmp_path / "out.json")])
     assert (
@@ -230,8 +139,8 @@ def test_a_deployed_agent_scans_repositories(tmp_path, monkeypatch):
     from security_agent import cli
 
     shell = FakeOpenShell(tmp_path / "sandbox-fs")
-    monkeypatch.setattr(sandbox_module, "_run", shell)
-    monkeypatch.setattr(sandbox_module, "_spawn", shell.spawn)
+    monkeypatch.setattr(base_module, "_run", shell)
+    monkeypatch.setattr(base_module, "_spawn", shell.spawn)
     repo = tmp_path / "repo"
     for rel, text in {"src/pkg/store.py": STORE, "src/pkg/util.py": UTIL}.items():
         (repo / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -273,8 +182,8 @@ def test_a_deployed_agent_scans_repositories(tmp_path, monkeypatch):
 
 
 def test_a_job_whose_exec_hangs_is_retried(tmp_path, monkeypatch):
-    monkeypatch.setattr(sandbox_module, "POLL_S", 0.01)
-    monkeypatch.setattr(sandbox_module, "START_TIMEOUT_S", 0.05)
+    monkeypatch.setattr(base_module, "POLL_S", 0.01)
+    monkeypatch.setattr(base_module, "START_TIMEOUT_S", 0.05)
     sandbox, shell = _sandbox(tmp_path, "http://127.0.0.1:1/v1", hang_execs=1)
     assert sandbox.contract_test(SEED) == []
     jobs = [c for c in shell.calls if "run-job" in c]
@@ -285,8 +194,8 @@ def test_a_job_whose_exec_hangs_is_retried(tmp_path, monkeypatch):
 
 
 def test_the_watchdog_outlasts_an_exec_that_returns_early(monkeypatch):
-    monkeypatch.setattr(sandbox_module, "POLL_S", 0.01)
-    sandbox = OpenShell("sbx", runner=lambda args, timeout: None, spawner=lambda args, err: _Finished(255))
+    monkeypatch.setattr(base_module, "POLL_S", 0.01)
+    sandbox = OpenShell("sbx", runner=lambda args, timeout: None, spawner=lambda args, err: Finished(255))
     states = iter(["running", "running", "done"])
     monkeypatch.setattr(sandbox, "_state", lambda result, started: next(states))
     assert sandbox._run_job("job", "result", "started").startswith("exit 255")  # it waited for the result

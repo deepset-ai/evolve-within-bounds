@@ -1,8 +1,9 @@
 # Runbook: PrimeVul
 
 This runbook reruns our PrimeVul results on one DGX Spark: build the benchmark file and the knowledge base, serve the
-model, measure the two agents on the test pairs, run the prompt loop that turned the seed into the looped agent, and
-roll the agents out as a NeMo Gym environment.
+model, create the OpenShell sandbox, measure the two agents on the test pairs, run the prompt loop that turned the seed
+into the looped agent, and roll the agents out as a NeMo Gym environment. Every function is judged inside the sandbox;
+only the NeMo Gym rollouts of step 7 run on the host.
 
 ## What is being measured
 
@@ -42,7 +43,8 @@ were produced: [`results/primevul.md`](../results/primevul.md).
 
 ## Requirements
 
-- An NVIDIA DGX Spark with Docker and [Hatch](https://hatch.pypa.io/latest/install/).
+- An NVIDIA DGX Spark with Docker, [Hatch](https://hatch.pypa.io/latest/install/), and Node.js 22.19 or newer for
+  NemoClaw.
 - About 140 GB of disk for the model and the server image, and a few GB for the knowledge base's models and torch.
 
 All commands run from the repository root.
@@ -92,22 +94,39 @@ hatch run serving:smoke              # optional: 8 checks against the server, th
 ```
 
 Details in [`serving/qwen3.8-flash-next/`](../serving/qwen3.8-flash-next/). The agents call it at
-`http://127.0.0.1:8000/v1` as `qwen3.8-flash-next`.
+`http://127.0.0.1:8000/v1` as `qwen3.8-flash-next`; inside the sandbox, through OpenShell's inference route.
 
-## 4. Measure both agents
+## 4. Create the sandbox
+
+```bash
+sandbox/sandbox.sh setup    # once: NemoClaw at the pinned commit with our patch, OpenShell 0.0.106
+sandbox/sandbox.sh create   # about 6 minutes: builds the image and creates the sandbox "security-agent"
+```
+
+The sandbox reaches the model server and Qdrant through OpenShell's Docker bridge, which the first sandbox creates. If
+they were started before that, restart them once: `hatch run serving:flash-next stop`, then `start`, and `hatch run
+primevul:qdrant up -d` again (the knowledge base stays). `sandbox/sandbox.sh status` checks both. The image holds the
+knowledge base's retrieval models; the knowledge base itself stays in Qdrant on the host, which the sandbox may only
+read. The synthetic benchmark uses the same sandbox. How it works, and what leaves it: [`sandbox/`](../sandbox/).
+
+## 5. Measure both agents
 
 Try the mechanics on one training pair first:
 
 ```bash
-hatch run primevul:run --agent agents/primevul/seed --split train --pairs 1
+hatch run primevul:run --agent agents/primevul/seed --split train --pairs 1 --sandbox security-agent
 ```
 
 Then the first 100 test pairs:
 
 ```bash
-hatch run primevul:run --agent agents/primevul/seed   --split test --pairs 100
-hatch run primevul:run --agent agents/primevul/looped --split test --pairs 100
+hatch run primevul:run --agent agents/primevul/seed   --split test --pairs 100 --sandbox security-agent
+hatch run primevul:run --agent agents/primevul/looped --split test --pairs 100 --sandbox security-agent
 ```
+
+First, a command with `--sandbox` checks that the agent reaches the model and the knowledge base from inside the
+sandbox, and stops if it does not: the knowledge-base tool would otherwise answer every call with an error, and the run
+would go on without it.
 
 Each command judges the 200 functions, 4 at a time, and prints aggregates only: pairs right, the split rate (pairs whose
 twins got different verdicts) times the right-way rate (of those, the right way round), false positives per function
@@ -124,20 +143,21 @@ The run directory, `runs/primevul/<agent>-test-100/`, keeps:
 
 An interrupted run resumes where it stopped: run the same command again. A function whose answer has no verdict gets
 one more request for the final answer, with no tools; one that still has none counts as a parse error, and its pair as
-wrong.
+wrong. A function the sandbox failed to judge (not the agent) is not stored: the command says so and exits with 1, and
+running it again judges what is missing.
 
-## 5. Run the prompt loop
+## 6. Run the prompt loop
 
 Try the mechanics first, on two training pairs and one candidate (about 15 minutes):
 
 ```bash
-hatch run primevul:loop run --smoke
+hatch run primevul:loop run --smoke --sandbox security-agent
 ```
 
 Then the experiment as configured in [`loop.yaml`](../src/security_agent/primevul/config/loop.yaml):
 
 ```bash
-hatch run primevul:loop run
+hatch run primevul:loop run --sandbox security-agent
 hatch run primevul:loop status --run-dir runs/primevul/loop/opt-1   # in a second terminal
 ```
 
@@ -149,13 +169,14 @@ specific to PrimeVul is in [`primevul/task.py`](../src/security_agent/primevul/t
 2. **The seed** is measured on the training pairs: 200 functions, about 8 hours.
 3. **Turns.** The optimizer, a Haystack Agent on the same model, gets the outcomes so far and up to 12 failing pairs:
    both verdicts, the patch between the two functions, and what the agent did on each, down to the knowledge-base
-   sub-agent's searches. It can read what the agent did on any training function (`read_reasoning`). It edits
+   sub-agent's searches. It can read what the agent did on any training function (`read_reasoning`). It runs on the
+   host and edits
    `agent.yaml`: the system prompt, the tool's description, the step budget, the output limit. The model, the
    temperature, the tool's settings and the JSON verdict stay fixed; `validate_candidate` checks that, and that the
    draft copies no code or function names from the training pairs. It submits one candidate per turn.
-4. **Gates.** A candidate is measured on half the training pairs first and stopped there if it has 4 or more fewer
-   pairs right than the seed on that half. It is eligible only if it loses no more functions to model-server errors than
-   the seed and stays within 1.5 estimated GPU-minutes per function, counting the tokens of the agent and of its
+4. **Gates.** Each candidate is measured inside the sandbox, on half the training pairs first, and stopped there if it
+   has 4 or more fewer pairs right than the seed on that half. It is eligible only if it loses no more functions to
+   model-server errors or sandbox failures than the seed and stays within 1.5 estimated GPU-minutes per function, counting the tokens of the agent and of its
    sub-agent (the seed needs about 0.4). It becomes the next turn's starting point only if it gets more pairs right, or
    as many with fewer functions called vulnerable, or with less GPU time.
 5. **Stop** after 3 candidates, 40 GPU-hours, or when the optimizer finishes. `decision.json` lists every candidate.
@@ -163,15 +184,15 @@ specific to PrimeVul is in [`primevul/task.py`](../src/security_agent/primevul/t
 The validation pairs never enter the loop. Pick among the candidates afterwards, on the first 50 validation pairs:
 
 ```bash
-hatch run primevul:run --agent agents/primevul/seed --split val --pairs 50
-hatch run primevul:run --agent runs/primevul/loop/opt-1/candidates/<c00N-...> --split val --pairs 50
+hatch run primevul:run --agent agents/primevul/seed --split val --pairs 50 --sandbox security-agent
+hatch run primevul:run --agent runs/primevul/loop/opt-1/candidates/<c00N-...> --split val --pairs 50 --sandbox security-agent
 ```
 
 Take a candidate only if it has more validation pairs right than the seed, and look at the test pairs once, with that
 candidate only. The run directory keeps every turn's conversation (`turns/`), every candidate (`candidates/`) and every
 measurement (`measure/`), and resumes when started again with the same `--run-dir`.
 
-## 6. Roll out the agents with NeMo Gym
+## 7. Roll out the agents with NeMo Gym
 
 The same agents as [NeMo Gym](https://github.com/NVIDIA-NeMo/Gym) rollouts ([`gym/`](../gym/)): a resources server that
 scores each rollout with this repository's scoring, Gym's vLLM model server in front of Flash-Next, and one agent server
@@ -202,10 +223,28 @@ thinking budget, the knowledge-base tool and the scoring are the same. Gym's har
 answer: our runner asks once more when a reply has no verdict, and Gym's harness does not, so expect a few more parse
 errors. Our reported numbers come from `primevul run`.
 
+**Not in the sandbox.** Gym's agent server runs the agent files in its own process, and a rollout's model calls have to
+go through Gym's model server; from inside the sandbox they would go straight to the model server it was created with.
+
+## Without the sandbox
+
+Without `--sandbox`, `run` and `loop run` judge every function in the command's own process, with the same agent file,
+the same model and the same knowledge base. The agents have no code of their own, so a candidate of the prompt loop
+changes text and budgets only; the sandbox keeps the agent, which reads untrusted code and untrusted briefings, away
+from the host.
+
 ## Troubleshooting
 
-- **Every briefing says "Cannot reach Qdrant" or "No knowledge base":** the tool reports instead of failing, so the run
-  goes on without it. Start Qdrant and build the knowledge base (step 2); `kb query` checks both.
+- **Every briefing says "Cannot reach Qdrant" or "No knowledge base":** the tool reports instead of failing, so a run
+  without `--sandbox` goes on without it. Start Qdrant and build the knowledge base (step 2); `kb query` checks both.
+- **`run --sandbox` stops: "the knowledge base at http://host.openshell.internal:6333 does not answer":** Qdrant does not
+  listen on OpenShell's bridge. Run `hatch run primevul:qdrant up -d` again once the sandbox exists (step 4);
+  `sandbox/sandbox.sh status` checks it.
+- **`run --sandbox` stops: "the model does not answer at https://inference.local/v1":** restart the model server once
+  the sandbox exists (step 4).
+- **"the sandbox runs security_agent …, the host …":** the code changed since the sandbox was created;
+  `sandbox/sandbox.sh create` again.
+- **The sandbox is gone** (after a restart of the OpenShell gateway): `sandbox/sandbox.sh create`.
 - **The model downloads fail offline:** fill `HF_HOME` once with network access, then set `KB_OFFLINE=1`.
 - **`gym:start` stops with `address already in use` on port 11000:** another service holds the port of Gym's head
   server. Pick a free one and pass it to both commands: `hatch run gym:start ++head_server.port=11100`, and the same
