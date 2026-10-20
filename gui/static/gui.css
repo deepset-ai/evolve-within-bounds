@@ -142,6 +142,8 @@ main { padding: 28px var(--margin) 48px; max-width: 1440px; margin: 0 auto; }
 #chart .tag { fill: var(--text); font-weight: 600; font-size: 14px; }
 #chart .seed-tag { fill: var(--text); font-weight: 600; font-size: 15px; }
 #chart .axis-title { font-size: 14px; }
+#chart .stage { fill: var(--pale); font-size: 13px; }
+#chart .stage-divider { stroke: var(--control); stroke-dasharray: 2 5; }
 #chart .appear { opacity: 0; transition: opacity .35s ease; }
 #chart .appear.on { opacity: 1; }
 #chart .point { cursor: pointer; outline: none; }

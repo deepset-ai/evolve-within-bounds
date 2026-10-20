@@ -318,8 +318,12 @@ def test_the_evolution_data_is_consistent():
     versions = data["versions"]
     ids = [v["id"] for v in versions]
     assert versions[0]["parent"] is None and all(v["parent"] in ids[:i] for i, v in enumerate(versions) if i)
-    assert all(0 <= v["train"] <= data["train_pairs"] and 0 <= v["val"] <= data["val_pairs"] for v in versions)
-    assert data["presented"]["id"] in ids
+    assert all(0 <= v["train"] <= data["train_pairs"] for v in versions)
+    assert all(v["val"] is None or 0 <= v["val"] <= data["val_pairs"] for v in versions)
+    presented = next(v for v in versions if v["id"] == data["presented"]["id"])
+    assert presented["val"] == max(v["val"] for v in versions if v["val"] is not None)  # picked on validation
+    staged = [i for stage in data.get("stages", []) for i in stage["versions"]]
+    assert len(staged) == len(set(staged)) and set(staged) <= set(ids[1:])
 
 
 @pytest.fixture
@@ -343,7 +347,7 @@ def test_the_page_its_files_and_nothing_else_are_served(served):
     status, page = get("/")
     assert status == 200 and page.startswith(b"<!doctype html>")
     assert get("/static/gui.js")[0] == 200
-    assert json.loads(get("/api/evolution")[1])["presented"]["id"] == "c004"
+    assert json.loads(get("/api/evolution")[1])["presented"]["id"] == "v5"
     assert get("/recording/timing.log")[0] == 200
     assert get("/api/integrations") == (200, b"[]")  # nothing approved
     assert get("/api/pairs") == (200, b"[]")  # nothing judged

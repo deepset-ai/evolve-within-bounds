@@ -2,12 +2,11 @@
 
 A web page for showing the project. Four tabs:
 
-1. **How the agent evolved:** a self-improvement loop run, version by version: pairs right on the training pairs and
-   on the validation pairs, the best so far, and the agent it picked with its test result. The data is
-   [`evolution.json`](evolution.json): aggregate counts over all the pairs the loop ran on, our public synthetic
-   benchmark and two we can't publish. It is an earlier run, on Qwen3.8 Flash-Next;
-   [`results/synthetic.md`](../results/synthetic.md) and [`agents/synthetic/looped`](../agents/synthetic/looped/) are
-   from a later one, on Nemotron 3.5 Super VL.
+1. **How the agent evolved:** the self-improvement loop run behind [`results/synthetic.md`](../results/synthetic.md),
+   version by version and in its two stages: pairs right on the training pairs and on the validation pairs, the best
+   so far, and the agent we present with its test result. The data is [`evolution.json`](evolution.json): aggregate
+   counts over all the pairs the loop ran on, our public synthetic benchmark and two we can't publish, so the test
+   result (19 → 26 of 46 pairs) is the pooled one on the results page.
 2. **Watch it improve:** the live demo ([`demo/README.md`](../demo/README.md)) in the page, as the terminal shows it, next
    to a plain-language list of its steps. At rest the terminal holds the run recorded in
    [`demo/recording/`](../demo/recording/), and each step opens its part. The visitor clicks Approve or Decline when the
