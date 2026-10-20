@@ -55,6 +55,3 @@ hatch run serving:super-vl stop
   under load.
 - About 110 GB of the Spark's memory in use, so nothing else large runs beside it.
 - Ready about 13 minutes after `start`.
-- **Heat.** Under a full benchmark load the GPU peaked at 79 °C. A single DGX Spark has been reported to switch itself
-  off during long prefills at 82 to 85 °C; if yours runs hotter, lower `--max-num-seqs` (and `concurrency` in the model
-  config with it).
