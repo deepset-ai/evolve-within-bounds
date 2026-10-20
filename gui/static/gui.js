@@ -150,7 +150,7 @@ async function drawChart() {
     }
     const name = seed ? "Start" : `Version ${v.label}`;
     const hit = svg("rect", { x: x(i) - band / 2, y: T, width: band, height: H - T - B, fill: "transparent", class: "point", tabindex: "0", role: "button" });
-    hit.setAttribute("aria-label", `${name}: ${v.train} of ${data.train_pairs} learning pairs right, ${v.val} of ${data.val_pairs} it never saw`);
+    hit.setAttribute("aria-label", `${name}: ${v.train} of ${data.train_pairs} training pairs right, ${v.val} of ${data.val_pairs} validation pairs`);
     hit.addEventListener("mouseenter", () => show(i));
     hit.addEventListener("mouseleave", () => show(pinned()));
     hit.addEventListener("focus", () => show(i));
@@ -198,7 +198,7 @@ function detailPanel(v, data) {
       "div",
       { class: "name" },
       name,
-      el("span", { text: ` (${percent(v.val, data.val_pairs)} on pairs it never saw)` }),
+      el("span", { text: ` (${percent(v.val, data.val_pairs)} on validation pairs)` }),
       v.id === data.presented.id ? el("span", { class: "presented badge success", text: "the agent we present" }) : null,
     ),
     el(
@@ -209,7 +209,7 @@ function detailPanel(v, data) {
     el("div", { class: "summary", text: v.summary || "" }),
     el("div", {
       class: "scores",
-      text: `Correct on ${v.train} of ${data.train_pairs} pairs it learned from · ${v.val} of ${data.val_pairs} it never saw · ${v.val_flagged} false alarm${v.val_flagged === 1 ? "" : "s"}`,
+      text: `Correct on ${v.train} of ${data.train_pairs} training pairs · ${v.val} of ${data.val_pairs} validation pairs · ${v.val_flagged} false alarm${v.val_flagged === 1 ? "" : "s"}`,
     }),
     v.added != null ? el("div", { class: "size" }, el("b", { text: `+${v.added}` }), " ", el("i", { text: `−${v.removed}` }), ` lines in ${v.files.length} files`) : null,
     v.files ? el("div", { class: "files", text: v.files.join(" · ") }) : null,
@@ -225,9 +225,10 @@ async function fillCards() {
   $("#alarm-from").textContent = p.test_flagged.seed;
   $("#alarm-to").textContent = p.test_flagged.presented;
   const picked = evolution.versions.find((v) => v.id === p.id);
-  $("#legend-train").textContent = `pairs the optimizer learns from (${evolution.train_pairs})`;
-  $("#legend-val").textContent = `pairs it never sees (${evolution.val_pairs})`;
+  $("#legend-train").textContent = `training pairs (${evolution.train_pairs})`;
+  $("#legend-val").textContent = `validation pairs (${evolution.val_pairs})`;
   $("#n-test").textContent = $("#n-test-twins").textContent = p.test_pairs;
+  $("#n-test-right").textContent = p.test.presented;
   $("#n-picked").textContent = `${picked.val} of ${evolution.val_pairs}`;
 }
 
@@ -570,7 +571,7 @@ async function loadPairs() {
     list.append(el("li", {}, row));
   }
   const right = pairs.filter((p) => p.right).length;
-  list.append(el("li", { class: "note", text: `${pairs.length} pairs chosen for short functions; the agent got ${right} of them right. On 100 held-out pairs it gets 21 right, the agent it started from 16.` }));
+  list.append(el("li", { class: "note", text: `${pairs.length} PrimeVul pairs; the agent got ${right} of them right. On the full 100-pair PrimeVul test it gets 21 right, the agent it started from 16.` }));
   selectPair(pairs[0].id);
 }
 

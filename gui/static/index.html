@@ -39,21 +39,21 @@
         <div class="kpi" title="A pair counts as correct when the agent finds the planted vulnerability and raises no alarm on the fixed twin">
           <span class="figures"><span id="test-from" class="from"></span><span class="arrow">→</span><span id="test-to"></span></span>
           <span class="label">Correct</span>
-          <span class="sub">on <span id="n-test"></span> test pairs it had never seen</span>
+          <span class="sub"><span id="n-test-right"></span> of <span id="n-test"></span> test pairs, used once at the end</span>
         </div>
         <div class="kpi" title="Fixed repositories the agent flagged although they hold no vulnerability">
           <span class="figures"><span id="alarm-from" class="from"></span><span class="arrow">→</span><span id="alarm-to"></span></span>
           <span class="label">False alarms</span>
-          <span class="sub">on <span id="n-test-twins"></span> fixed repositories</span>
+          <span class="sub">on the <span id="n-test-twins"></span> fixed twins of the test pairs</span>
         </div>
       </div>
     </div>
     <div class="chart-card">
       <div class="chart-head">
         <div class="legend">
-          <span><i class="dot train"></i><span id="legend-train">pairs the optimizer learns from</span></span>
-          <span><i class="dot val"></i><span id="legend-val">pairs it never sees</span></span>
-          <span><i class="line"></i>best so far on the learning pairs</span>
+          <span><i class="dot train"></i><span id="legend-train">training pairs</span></span>
+          <span><i class="dot val"></i><span id="legend-val">validation pairs</span></span>
+          <span><i class="line"></i>best so far on the training pairs</span>
         </div>
         <button id="replay-chart">Replay</button>
       </div>
@@ -61,8 +61,8 @@
         <svg id="chart" viewBox="0 0 1000 540" role="img" aria-label="Pairs right per version of the agent"></svg>
         <aside id="detail" class="detail" aria-label="What the optimizer changed"></aside>
       </div>
-      <p class="chart-foot">Version 4 is the one we present: it did best on pairs it had never seen (<span id="n-picked"></span>).
-        Later versions scored higher only on the pairs they learned from.</p>
+      <p class="chart-foot">The optimizer learns from the training pairs and is judged on the validation pairs. Version 4 did best
+        there (<span id="n-picked"></span>), so it is the one we present.</p>
     </div>
   </section>
 
@@ -115,7 +115,9 @@
     <div class="intro">
       <h2>Spot the vulnerability</h2>
       <p>Real C functions from <a href="https://github.com/DLVulDet/PrimeVul" target="_blank" rel="noopener noreferrer">PrimeVul</a>,
-        one before a public security fix and one after. Which one is vulnerable? Then see what the agent said about each.</p>
+        one before a public security fix and one after. Which one is vulnerable? Then see what the agent said about each.
+        PrimeVul is a different benchmark from the synthetic repositories on the evolution tab, and a harder one: real C
+        functions, judged one at a time.</p>
     </div>
     <div class="pairs-grid">
       <ul id="pair-list" class="integrations" aria-label="Pairs"></ul>

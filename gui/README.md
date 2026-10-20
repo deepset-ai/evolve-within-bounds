@@ -3,7 +3,7 @@
 A web page for showing the project. Four tabs:
 
 1. **How the agent evolved:** the self-improvement loop run behind [`results/synthetic.md`](../results/synthetic.md),
-   version by version: pairs right on the pairs the optimizer learns from and on held-out pairs, the best so far, and
+   version by version: pairs right on the training pairs and on the validation pairs, the best so far, and
    the agent we present with its test result. The data is [`evolution.json`](evolution.json): aggregate counts over all
    the pairs the loop ran on, our public synthetic benchmark and two we can't publish. That is why its test result
    (16 → 26 of 46 pairs) differs from the synthetic-only one on the results page (7 → 8 of 12).
