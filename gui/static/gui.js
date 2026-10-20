@@ -50,6 +50,7 @@ function showTab(name) {
   document.querySelectorAll(".tab-button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.id === `tab-${name}`));
   history.replaceState(null, "", `${location.search}#${name}`);
+  document.body.dataset.tab = name;
   if (name === "evolution") drawChart();
 }
 
@@ -69,12 +70,10 @@ async function refreshStatus() {
     status.textContent = spark.live ? `DGX Spark ready${data.busy ? ` · ${data.busy} running` : ""}` : "Recordings only";
     const missing = [data.model ? null : "the model server is offline", data.sandbox ? null : "the sandbox is missing"].filter(Boolean);
     status.title = spark.live ? "The DGX Spark's model server and sandbox are ready" : `On the DGX Spark, ${missing.join(" and ")}`;
-    $("#idle-text").textContent = spark.live ? "Click a step to jump to it, play the recording, or run it live." : "Click a step to jump to it, or play the recording.";
   } catch {
     spark.live = false;
     status.className = "status off";
     status.textContent = "Server unreachable";
-    $("#idle-text").textContent = "The server is unreachable: reload the page once it runs again.";
   }
   updateDemoButtons();
 }
@@ -394,7 +393,6 @@ function startDemo(mode) {
   demo.run += 1;
   demo.started = Date.now();
   term.clear();
-  $("#idle").classList.add("hidden");
   viewing = null;
   document.querySelectorAll("#step-list li").forEach((item) => item.classList.remove("viewing"));
   $("#approval").classList.add("hidden");
@@ -545,7 +543,7 @@ let revealed = false;
 
 async function loadPairs() {
   pairs = await (await fetch("/api/pairs")).json();
-  const list = $("#pairs");
+  const list = $("#pair-list");
   list.replaceChildren();
   list.classList.toggle("is-empty", !pairs.length);
   if (!pairs.length) {
@@ -569,19 +567,87 @@ async function loadPairs() {
     row.addEventListener("click", () => selectPair(p.id));
     list.append(el("li", {}, row));
   }
+  const right = pairs.filter((p) => p.right).length;
+  list.append(el("li", { class: "note", text: `${pairs.length} pairs chosen for short functions; the agent got ${right} of them right. On 100 held-out pairs it gets 21 right, the agent it started from 16.` }));
   selectPair(pairs[0].id);
 }
 
 function selectPair(id) {
   pair = pairs.find((p) => p.id === id);
   revealed = false;
-  document.querySelectorAll("#pairs .integration").forEach((row) => row.classList.toggle("active", row.dataset.name === id));
+  document.querySelectorAll("#pair-list .integration").forEach((row) => row.classList.toggle("active", row.dataset.name === id));
   $("#pair-view").classList.remove("hidden");
   $("#pair-name").textContent = pair.project ? `${pair.project}${pair.file ? ` · ${pair.file}` : ""}` : pair.id;
-  $("#pair-about").textContent = `${pair.cwe_name} (${pair.cwe}). The lines that differ between the two are marked.`;
+  $("#pair-about").textContent = `${pair.cwe_name} (${pair.cwe}).`;
   $("#pair-commit").classList.toggle("hidden", !pair.commit_url);
   if (pair.commit_url) $("#pair-commit").href = pair.commit_url;
   renderPair();
+}
+
+// Syntax highlighting by a small tokenizer per language: comments, strings, preprocessor lines and decorators,
+// keywords, types, macros and calls. The language comes from the file's extension; unknown ones stay plain.
+const WORDS = (list) => new Set(list.split(" "));
+const LANGS = {
+  c: {
+    token: /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|^[ \t]*#[^\n]*|0[xX][0-9a-fA-F]+[uUlL]*|\d+(?:\.\d+)?[uUlLfF]*|[A-Za-z_]\w*|\s+|[\s\S]/gm,
+    comment: (t) => t.startsWith("/*") || t.startsWith("//"),
+    string: (t) => t[0] === '"' || t[0] === "'",
+    directive: (t) => /^[ \t]*#/.test(t),
+    keywords: WORDS("auto break case const continue default do else enum extern for goto if inline register restrict return sizeof static struct switch typedef union volatile while class namespace new delete template typename this public private protected virtual override nullptr try catch throw using"),
+    types: WORDS("void char short int long float double signed unsigned bool size_t ssize_t off_t FILE"),
+  },
+  python: {
+    token: /#[^\n]*|[rRbBuUfF]{0,2}(?:"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|@[A-Za-z_][\w.]*|0[xX][0-9a-fA-F]+|\d+(?:\.\d+)?[jJ]?|[A-Za-z_]\w*|\s+|[\s\S]/gm,
+    comment: (t) => t[0] === "#",
+    string: (t) => /^[rRbBuUfF]{0,2}["']/.test(t),
+    directive: (t) => t[0] === "@",
+    keywords: WORDS("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case self cls"),
+    types: WORDS("int str float bool list dict set tuple bytes object type Any Optional Union Callable Path Exception BaseException ValueError TypeError KeyError RuntimeError OSError"),
+  },
+  conf: {
+    token: /#[^\n]*|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|^[ \t]*-?[ \t]*[\w.\-\[\]]+(?=[ \t]*[:=])|[\s\S]/gm,
+    comment: (t) => t[0] === "#",
+    string: (t) => t[0] === '"' || t[0] === "'",
+    directive: () => false,
+    keywords: new Set(),
+    types: new Set(),
+    key: true,
+  },
+};
+const LANG_OF_EXT = { c: "c", h: "c", cc: "c", cpp: "c", cxx: "c", hpp: "c", py: "python", yaml: "conf", yml: "conf", toml: "conf", ini: "conf", cfg: "conf", sh: "conf", env: "conf" };
+const langOf = (file) => LANG_OF_EXT[String(file || "").split(".").pop().toLowerCase()] || null;
+
+function tokenize(code, lang) {
+  // The code as lines of [class, text] pieces; a token that spans lines (a comment, a docstring) is split between them.
+  const spec = LANGS[lang];
+  if (!spec) return [];
+  const lines = [[]];
+  const push = (cls, text) =>
+    text.split("\n").forEach((part, i) => {
+      if (i) lines.push([]);
+      if (part) lines[lines.length - 1].push([cls, part]);
+    });
+  for (const match of code.matchAll(spec.token)) {
+    const t = match[0];
+    let cls = "";
+    if (spec.comment(t)) cls = "c-cm";
+    else if (spec.string(t)) cls = "c-str";
+    else if (spec.directive(t)) cls = "c-pp";
+    else if (spec.key && t.trim() && /[\w\]]$/.test(t)) cls = "c-ty";
+    else if (/^\d/.test(t)) cls = "c-num";
+    else if (/^[A-Za-z_]/.test(t)) {
+      if (spec.keywords.has(t)) cls = "c-kw";
+      else if (spec.types.has(t) || /_t$/.test(t) || (/^[A-Z]/.test(t) && /[a-z]/.test(t))) cls = "c-ty";
+      else if (/^[A-Z][A-Z0-9_]+$/.test(t)) cls = "c-mac";
+      else if (/^\s*\(/.test(code.slice(match.index + t.length))) cls = "c-fn";
+    }
+    push(cls, t);
+  }
+  return lines;
+}
+
+function codeLine(line, pieces) {
+  return pieces.length ? pieces.map(([cls, text]) => (cls ? el("span", { class: cls, text }) : text)) : [line.text];
 }
 
 // The two functions, as "A" and "B" in the pair's fixed order; after the reveal, which is which and the verdicts.
@@ -590,6 +656,7 @@ function renderPair() {
   $("#functions").replaceChildren(
     ...order.map((which, i) => {
       const fn = pair[which];
+      const pieces = tokenize(fn.lines.map((line) => line.text).join("\n"), /^c/.test(pair.lang) ? "c" : langOf(pair.file));
       return el(
         "div",
         { class: `function${revealed ? ` ${which}` : ""}` },
@@ -602,12 +669,12 @@ function renderPair() {
         el(
           "div",
           { class: "code" },
-          ...fn.lines.map((line) =>
+          ...fn.lines.map((line, i) =>
             el(
               "div",
-              { class: `${line.changed ? "hit" : ""}${revealed && fn.flagged.includes(line.n) ? " flagged" : ""}` },
+              { class: `${revealed && line.changed ? "hit" : ""}${revealed && fn.flagged.includes(line.n) ? " flagged" : ""}` },
               el("span", { class: "n", text: String(line.n) }),
-              line.text,
+              ...codeLine(line, pieces.length === fn.lines.length ? pieces[i] : []),
             ),
           ),
         ),
@@ -621,13 +688,13 @@ function renderPair() {
 
 function verdictBox(fn) {
   const said = fn.verdict === null ? "gave no verdict" : fn.verdict === "vulnerable" ? "called it vulnerable" : "called it safe";
+  const pointed = fn.flagged.length ? ` · pointed at line${fn.flagged.length === 1 ? "" : "s"} ${fn.flagged.join(", ")}` : "";
   return el(
     "div",
-    { class: `verdict-box ${fn.right ? "right" : "wrong"}` },
-    el("p", { class: "said" }, el("b", { text: `The agent ${said}` }), fn.right ? " · right" : " · wrong"),
+    { class: "verdict-box" },
+    el("p", { class: "said" }, el("b", { text: `The agent ${said}` }), " · ", el("span", { class: fn.right ? "ok" : "ko", text: fn.right ? "right" : "wrong" })),
     fn.rationale ? el("p", { class: "why", text: plain(fn.rationale) }) : null,
-    el("p", { class: "meta" }, ...duration(fn.seconds), fn.lookups ? ` · ${fn.lookups} knowledge-base lookup${fn.lookups === 1 ? "" : "s"}` : " · no knowledge-base lookup"),
-    fn.flagged.length ? el("p", { class: "meta", text: `It pointed at line${fn.flagged.length === 1 ? "" : "s"} ${fn.flagged.join(", ")} (marked in blue).` }) : null,
+    el("p", { class: "meta" }, ...duration(fn.seconds), fn.lookups ? ` · ${fn.lookups} knowledge-base lookup${fn.lookups === 1 ? "" : "s"}` : " · no knowledge-base lookup", pointed),
   );
 }
 
@@ -647,6 +714,7 @@ function reveal(guess) {
   $("#pair-outcome").replaceChildren(
     el("p", { class: "outcome-head", text: `${you}The agent got this pair ${pair.right ? "right" : "wrong"}.` }),
     el("p", { class: "muted", text: pair.right ? "It called the vulnerable function vulnerable and the patched one safe, each judged on its own." : whyWrong() }),
+    el("p", { class: "legend-note", text: "Amber marks the lines that differ between the two functions; blue the lines the agent pointed at." }),
   );
 }
 
@@ -704,11 +772,14 @@ function select(name) {
   renderResult(integration);
 }
 
-function codeBlock(excerpt) {
+function codeBlock(excerpt, file) {
+  const pieces = tokenize(excerpt.map((line) => line.text).join("\n"), langOf(file));
   return el(
     "div",
     { class: "code" },
-    ...excerpt.map((line) => el("div", { class: line.hit ? "hit" : "" }, el("span", { class: "n", text: String(line.n) }), line.text)),
+    ...excerpt.map((line, i) =>
+      el("div", { class: line.hit ? "hit" : "" }, el("span", { class: "n", text: String(line.n) }), ...codeLine(line, pieces.length === excerpt.length ? pieces[i] : [])),
+    ),
   );
 }
 
@@ -721,20 +792,22 @@ function renderFinding(finding) {
   const why = plain(finding.why);
   const fix = plain(finding.fix);
   const lines = finding.lines[0] === finding.lines[1] ? `line ${finding.lines[0]}` : `lines ${finding.lines[0]}–${finding.lines[1]}`;
+  const where = `${finding.cwe_name} (${finding.cwe}) · ${shortPath(finding.file)}, ${lines}`;
+  const explanation = el("p", { class: "why" });
+  if (why) explanation.append(shorten(why, 360));
+  if (fix) explanation.append(why ? " " : "", el("b", { text: "Fix: " }), shorten(fix, 240));
   return el(
     "div",
     { class: "finding" },
-    el("div", { class: "ftitle", text: plain(finding.title) }),
     el(
-      "div",
-      { class: "kind" },
-      `${finding.cwe_name} (${finding.cwe})`,
+      "p",
+      { class: "ftitle" },
+      plain(finding.title),
       finding.severity ? el("span", { class: `badge ${SEVERITY[finding.severity] || ""}`, text: `${finding.severity} severity` }) : null,
     ),
-    el("div", { class: "where", text: `${finding.file}, ${lines}` }),
-    finding.excerpt.length ? codeBlock(finding.excerpt) : null,
-    why ? el("div", { class: "why" }, el("b", { text: "Why: " }), shorten(why, 360)) : null,
-    fix ? el("div", { class: "why" }, el("b", { text: "Fix: " }), shorten(fix, 240)) : null,
+    el("p", { class: "where", text: where }),
+    finding.excerpt.length ? codeBlock(finding.excerpt, finding.file) : null,
+    why || fix ? explanation : null,
   );
 }
 
@@ -748,36 +821,36 @@ function renderResult(integration) {
   const facts = [
     ["Files read", [integration.files != null ? `${read.length} of ${integration.files}` : number(read.length)], "The files the agent opened, of all the files in the integration"],
     ["Lines read", [number(lines)], "The lines in the files it opened"],
-    ["Model calls", [number(integration.calls)], "How many times the agent asked the language model during the scan: once per step of reasoning or tool use"],
+    ["Model calls", [number(integration.calls)], "How many times the agent asked the language model: once per step of reasoning or tool use"],
     ["Scan time", duration(integration.seconds), "How long the scan took, inside the sandbox"],
   ];
   $("#scan-result").replaceChildren(
-    el("p", {
-      class: "verdict",
-      text: count ? `The evolved agent reported ${count} finding${count === 1 ? "" : "s"}` : "The evolved agent found nothing to report",
-    }),
-    el("p", { class: "meta", text: `Scanned on ${integration.scanned_at}, at commit ${integration.commit}` }),
+    el("p", { class: "verdict", text: count ? `The agent reported ${count} finding${count === 1 ? "" : "s"}` : "The agent found nothing to report" }),
+    el("p", { class: "meta", text: `At commit ${integration.commit}, scanned on ${integration.scanned_at}` }),
     el("div", { class: "facts" }, ...facts.map(([label, value, title]) => el("div", { class: "fact", title }, el("span", { class: "label", text: label }), el("span", { class: "value" }, ...value)))),
     ...integration.findings.map(renderFinding),
-    read.length ? readList(read) : null,
+    details(read),
   );
 }
 
-function readList(files) {
-  // The files the agent opened, in path order, with their length.
+function details(files) {
+  // Behind a disclosure: the note on what a finding is, and the files the agent opened, with their length.
   const shown = files.slice(0, 10);
   return el(
-    "div",
-    { class: "read" },
-    el("h4", { text: "What it read" }),
-    el(
-      "ul",
-      {},
-      ...shown.map((file) =>
-        el("li", {}, el("span", { class: "path", text: shortPath(file.path) }), el("span", { class: "lines", text: file.lines == null ? "–" : `${number(file.lines)} lines` })),
-      ),
-    ),
-    files.length > shown.length ? el("p", { class: "more", text: `and ${files.length - shown.length} more` }) : null,
+    "details",
+    { class: "more" },
+    el("summary", { text: "Details" }),
+    el("p", { class: "footnote", text: `A finding is the agent's report, not a confirmed vulnerability.${files.length ? " The agent read these files:" : ""}` }),
+    files.length
+      ? el(
+          "ul",
+          { class: "read" },
+          ...shown.map((file) =>
+            el("li", {}, el("span", { class: "path", text: shortPath(file.path) }), el("span", { class: "lines", text: file.lines == null ? "–" : `${number(file.lines)} lines` })),
+          ),
+        )
+      : null,
+    files.length > shown.length ? el("p", { class: "footnote", text: `and ${files.length - shown.length} more` }) : null,
   );
 }
 
@@ -790,11 +863,11 @@ async function showRecording() {
   term.clear();
   term.write(body);
   $("#term").scrollTop = 0; // from its first step
-  $("#terminal-title").textContent = "the recorded run";
+  $("#terminal-title").textContent = "The recorded run";
   $("#step-list").classList.add("browsable");
   if (header && footer) {
     const took = (Date.parse(footer[1].replace(" ", "T")) - Date.parse(header[1].replace(" ", "T"))) / 1000;
-    if (took > 0) $("#idle-head").replaceChildren("The recorded run: ", ...duration(took), " on one DGX Spark");
+    if (took > 0) $("#terminal-title").replaceChildren("The recorded run · ", ...duration(took), " on one DGX Spark");
   }
 }
 

@@ -31,11 +31,9 @@
     <div class="title-row">
       <div class="intro">
         <h2>How the agent evolved</h2>
-        <p>
-          An AI optimizer rewrote a deliberately weak security agent seven times. Each version was tested on pairs of small
-          code repositories: one with a vulnerability we planted, and its fixed twin. A pair counts when the agent
-          <strong>finds the planted vulnerability</strong> and <strong>leaves the fixed code alone</strong>.
-        </p>
+        <p>An AI optimizer rewrote a deliberately weak agent seven times. Each version was tested on pairs of small
+          repositories, one with a planted vulnerability and its fixed twin; a pair counts only when the agent flags the
+          first and leaves the second alone.</p>
       </div>
       <div class="result">
         <p class="result-head">On <span id="n-test"></span> test pairs nothing in the loop had seen, from the start to version 4</p>
@@ -64,11 +62,8 @@
         <svg id="chart" viewBox="0 0 1000 540" role="img" aria-label="Pairs right per version of the agent"></svg>
         <aside id="detail" class="detail" aria-label="What the optimizer changed"></aside>
       </div>
-      <div class="chart-foot">
-        <p>Version 4 is the one we present: it has the most held-out pairs right (<span id="n-picked"></span>). Versions are
-          never picked on the pairs the optimizer learns from. <span id="note"></span></p>
-        <p class="hint">Point at a version to see what the optimizer changed; click to keep it.</p>
-      </div>
+      <p class="chart-foot">Version 4 is the one we present, with the most held-out pairs right (<span id="n-picked"></span>).
+        <span id="note"></span></p>
     </div>
   </section>
 
@@ -104,10 +99,6 @@
             <button id="stop" disabled>Stop</button>
           </div>
         </div>
-        <div id="idle" class="idle">
-          <p id="idle-head" class="idle-head">The recorded run</p>
-          <p id="idle-text">Click a step to jump to it, or play the recording.</p>
-        </div>
         <pre id="term" class="term"></pre>
         <div id="approval" class="approval hidden" role="dialog" aria-labelledby="approval-question">
           <p id="approval-question">The new version passed every check. Deploy it into the sandbox?</p>
@@ -124,14 +115,11 @@
   <section id="tab-pairs" class="tab">
     <div class="intro">
       <h2>Spot the vulnerability</h2>
-      <p>Pairs of real C functions from <a href="https://github.com/DLVulDet/PrimeVul" target="_blank" rel="noopener noreferrer">PrimeVul</a>:
-        a function as it was before a public security fix, and the patched version. The agent judges each function on
-        its own, and a pair only counts when it calls the vulnerable one vulnerable and the patched one safe. On 100
-        held-out pairs the evolved agent gets 21 right; the agent it started from got 16. The pairs here were picked for
-        short functions, half of them ones it got right, with its verdicts from that run.</p>
+      <p>Real C functions from <a href="https://github.com/DLVulDet/PrimeVul" target="_blank" rel="noopener noreferrer">PrimeVul</a>,
+        one before a public security fix and one after. Which one is vulnerable? Then see what the agent said about each.</p>
     </div>
     <div class="pairs-grid">
-      <ul id="pairs" class="integrations" aria-label="Pairs"></ul>
+      <ul id="pair-list" class="integrations" aria-label="Pairs"></ul>
       <div id="pair-view" class="scan-view hidden">
         <div class="scan-head">
           <div>
@@ -141,7 +129,7 @@
           <a id="pair-commit" class="code-link" target="_blank" rel="noopener noreferrer">See the fix on GitHub</a>
         </div>
         <div id="pair-question" class="pair-question">
-          <p>One of these two functions has the vulnerability. Which one?</p>
+          <p>Which one is vulnerable?</p>
           <div class="row">
             <button id="guess-a">A is vulnerable</button>
             <button id="guess-b">B is vulnerable</button>
@@ -158,8 +146,7 @@
   <section id="tab-scan" class="tab">
     <div class="intro">
       <h2>Scan a Haystack integration</h2>
-      <p>Haystack's integrations connect it to model providers, databases and tools: real code, in use every day. Pick
-        one to see what the evolved agent reported when it scanned it, inside the sandbox.</p>
+      <p>Real code in daily use, scanned by the evolved agent inside the sandbox. Pick one to see what it reported.</p>
     </div>
     <div class="scan-grid">
       <ul id="integrations" class="integrations" aria-label="Integrations"></ul>
@@ -172,7 +159,6 @@
           <a id="scan-code" class="code-link" target="_blank" rel="noopener noreferrer">See the code on GitHub</a>
         </div>
         <div id="scan-result"></div>
-        <p class="footnote">A finding is the agent's report, not a confirmed vulnerability.</p>
       </div>
     </div>
   </section>
