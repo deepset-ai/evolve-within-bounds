@@ -16,10 +16,10 @@ normalizer, so its agent server runs it the way Gym runs other black-box harness
 Gym's model server for the rollout, and builds the response from the scan's conversation. The scan's findings travel
 with the response (`metadata.findings`); the answer key never leaves the resources server.
 
-Each config starts six servers: the resources server, Gym's vLLM model server (pointed at the Flash-Next server from
-[`serving/`](../serving/)), one agent server per agent, and an environment server in front of each agent. For PrimeVul
-the model server adds the thinking budget the agents ran with; on the synthetic benchmark, each request brings its
-agent's own.
+Each config starts six servers: the resources server, Gym's vLLM model server (pointed at the model server from
+[`serving/`](../serving/): Flash-Next for PrimeVul, Super VL for the synthetic benchmark), one agent server per agent,
+and an environment server in front of each agent. For PrimeVul the model server adds the thinking budget the agents
+ran with; on the synthetic benchmark, each request brings its agent's own.
 
 ```bash
 # PrimeVul

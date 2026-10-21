@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import inspect
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -14,7 +15,7 @@ from haystack.dataclasses import ChatMessage
 from helpers import model
 
 import security_agent.generator as gen
-from security_agent.generator import Generator, make_generator, thinking_kwargs
+from security_agent.generator import EMPTY_ANSWER, Generator, make_generator, thinking_kwargs, tolerate_empty_answers
 
 REQUEST = httpx.Request("POST", "http://127.0.0.1:8000/v1/chat/completions")
 
@@ -52,6 +53,37 @@ def test_extra_kwargs_merge_into_extra_body():
         ).run([ChatMessage.from_user("Reply with exactly the word OK and nothing else.")])
         request = server.requests[-1]
         assert request["thinking_token_budget"] == 64 and request["top_k"] == 20 and request["top_p"] == 0.95
+
+
+def test_greedy_with_thinking_budget_forces_temperature_zero():
+    plain = model("http://127.0.0.1:9/v1")
+    greedy = {**plain, "greedy_with_thinking_budget": True}
+
+    def temperature(config, **kwargs):
+        return make_generator(config, max_tokens=64, **kwargs).generation_kwargs["temperature"]
+
+    assert temperature(greedy, thinking_budget=32, temperature=0.6) == 0.0
+    assert temperature(greedy, thinking_budget=32, extra={"temperature": 0.7}) == 0.0
+    assert temperature(greedy, thinking_budget=None, temperature=0.6) == 0.6  # no budget, no bug
+    assert temperature(plain, thinking_budget=32, temperature=0.6) == 0.6
+
+
+def test_empty_answers_are_asked_again_then_end_the_loop():
+    attempts = []
+
+    def run(messages, tools=None):  # noqa: ARG001 - the generator's signature
+        attempts.append(messages)
+        raise ValueError("A `ChatMessage` must contain at least one `TextContent`, `ToolCall`, ...")
+
+    out = tolerate_empty_answers(run)(["m"])
+    assert len(attempts) == 2 and out["replies"][0].text == EMPTY_ANSWER
+    assert "tools" in inspect.signature(tolerate_empty_answers(run)).parameters  # the Agent still sees `tools`
+
+    def other(messages, tools=None):  # noqa: ARG001
+        raise ValueError("other")
+
+    with pytest.raises(ValueError, match="other"):
+        tolerate_empty_answers(other)(["m"])
 
 
 def test_generator_logs_every_call():

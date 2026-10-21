@@ -3,7 +3,7 @@
 #
 #   hatch run gym:collect-synthetic --agent synthetic_seed --input work/gym/synthetic/test-all.jsonl --output runs/synthetic/gym/seed.jsonl
 #
-# The model server is the one serving/qwen3.8-flash-next starts; the benchmark must be materialized
+# The model server is the one serving/nemotron-3.5-super-vl starts; the benchmark must be materialized
 # (hatch run synthetic:bench prepare, docs/synthetic.md).
 
 # Each server's environment goes here (relative to the repository), not next to the server.
@@ -21,11 +21,11 @@ synthetic_model:
   responses_api_models:
     vllm_model:
       entrypoint: app.py
-      # The local Flash-Next server (serving/qwen3.8-flash-next) unless --model-url, --model-api-key or --model say
+      # The local Super VL server (serving/nemotron-3.5-super-vl) unless --model-url, --model-api-key or --model say
       # otherwise.
       base_url: ${oc.select:policy_base_url,"http://127.0.0.1:8000/v1"}
       api_key: ${oc.select:policy_api_key,EMPTY}
-      model: ${oc.select:policy_model_name,qwen3.8-flash-next}
+      model: ${oc.select:policy_model_name,nemotron-3.5-super-vl}
       return_token_id_information: false
       uses_reasoning_parser: true
       # Earlier reasoning is not sent back with the conversation, as in our scanner.

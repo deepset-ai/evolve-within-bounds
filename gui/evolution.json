@@ -1,6 +1,6 @@
 {
  "_comment": [
-  "How the repository scan agent evolved: the self-improvement loop run behind results/synthetic.md, on all the pairs",
+  "How the repository scan agent evolved: an earlier self-improvement loop run (Qwen3.8 Flash-Next), on all the pairs",
   "it ran on: the public synthetic benchmark and two benchmarks we can't publish, as aggregate counts only. Per version",
   "of the agent: pairs right of the 36 training pairs the loop measured it on, and of the 47 held-out validation pairs;",
   "fixed twins flagged on each. A pair is right when the agent reports the planted lines in the vulnerable repository",

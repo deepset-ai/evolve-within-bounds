@@ -19,57 +19,65 @@ The pairs are split by repository into 25 training, 13 validation and 12 test pa
 
 - **seed:** the starting point, deliberately weak. The agent gets the repository's file list, a size-capped
   `read_file`, Monty's sandboxed `run_python`, a short generic prompt and low limits.
-- **looped:** what the self-improvement loop made of the seed. The optimizer, an agent on the same model, wrote three
-  pipeline steps (`guards`, `hunter`, `verifier`) and three tools for the agent (`search`, `outline`, `rare`), about
-  1,500 lines of Python, rewrote the system prompt and raised the agent's limits. Of the loop's candidates, it had the
-  most validation pairs right (counted over all benchmarks our loop ran on, see below).
+- **looped:** what the self-improvement loop made of the seed. The optimizer, an agent on the same model, wrote a
+  long system prompt that names vulnerability classes and their safe forms, a `search` tool, and two pipeline steps:
+  `verifier`, which retracts findings on code a control makes safe, and `hunter`, whose notes never reach the agent
+  (see its `pipeline.yaml`). It also raised the agent's limits. Of the loop's candidates, it had the most validation
+  pairs right (counted over all benchmarks our loop ran on, see below).
 
-**Our numbers** (Qwen3.8 Flash-Next, one run each):
+**Our numbers** (Nemotron 3.5 Super VL, one run each):
 
 | Pairs right | seed | looped |
 |---|---|---|
-| test (12 pairs) | 7 (58.3%) | 8 (66.7%) |
-| validation (13 pairs) | 7 (53.8%) | 9 (69.2%) |
-| tokens per repository scan, test | 45k | 81k |
+| test (12 pairs) | 4 (33.3%) | 9 (75.0%) |
+| validation (13 pairs) | 8 (61.5%) | 10 (76.9%) |
+| fixed twins flagged, test | 7 of 12 | 1 of 12 |
+| tokens per repository scan, test | 18k | 25k |
 
 One pair is 8 points on 12 pairs, and runs vary: expect a rerun to land within one or two pairs of these. What the
 numbers do and do not show, and how they were produced: [`results/synthetic.md`](../results/synthetic.md).
 
 **How our run differs from a rerun:**
 
-Our loop trained on these 12 synthetic training pairs together with 24 pairs from two internal benchmarks that we
-cannot publish. The looped agent comes from that run. A loop run from this repository trains on the 12 synthetic
-pairs alone, so it will produce different candidates.
+- **Data.** Our loop trained on 24 of these synthetic training pairs together with 48 pairs from two benchmarks we
+  can't publish, and was picked on their validation pairs too. A loop run from this repository trains on the 24
+  synthetic pairs alone, so it will produce different candidates.
+- **Two stages.** Our loop first accepted a candidate only if it got at least 3 more validation pairs right than the
+  best so far, and stopped after three candidates without that, none accepted. It then went on as this repository's
+  loop does, from the best of those three on the training pairs, and we picked the looped agent afterwards on
+  validation. [`results/synthetic.md`](../results/synthetic.md) has the details.
 
 
 ## Requirements
 
 - An NVIDIA DGX Spark with Docker and the NVIDIA Container Toolkit, Node.js 22.19 or newer, and
   [Hatch](https://hatch.pypa.io/latest/install/).
-- About 140 GB of disk for the model and the server image.
+- About 100 GB of disk for the model and the server image.
 
 All commands run from the repository root.
 
 ## 1. Serve the model
 
 ```bash
-hatch run serving:flash-next setup   # once: recipe, checkpoint (about 130 GB), image
-hatch run serving:flash-next start   # about 4 to 7 minutes until it answers
+hatch run serving:super-vl setup     # once: image and checkpoint (about 70 GB)
+hatch run serving:super-vl start     # about 13 minutes until it answers
 hatch run serving:smoke              # optional: 8 checks against the server
 ```
 
-Details in [`serving/qwen3.8-flash-next/`](../serving/qwen3.8-flash-next/). The server takes 8 requests at a time;
-the scans below run 8 repositories in parallel to match.
+Details in [`serving/nemotron-3.5-super-vl/`](../serving/nemotron-3.5-super-vl/). The server takes 8 requests at a
+time; the scans below run 8 repositories in parallel to match.
 
 ## 2. Create the sandbox
 
 ```bash
 sandbox/sandbox.sh setup    # once: NemoClaw at the pinned commit with our patch, OpenShell 0.0.106
-sandbox/sandbox.sh create   # about 6 minutes: builds the image and creates the sandbox "security-agent"
+MODEL=nemotron-3.5-super-vl sandbox/sandbox.sh create   # about 6 minutes: the image and the sandbox "security-agent"
 ```
 
+`MODEL` is the model the sandbox's inference route serves; the default is Flash-Next, which PrimeVul uses.
+
 The sandbox reaches the model server through OpenShell's Docker bridge, which the first sandbox creates. If the server
-was started before that, `create` says so: restart it once (`hatch run serving:flash-next stop`, then `start`).
+was started before that, `create` says so: restart it once (`hatch run serving:super-vl stop`, then `start`).
 `sandbox/sandbox.sh status` checks the route. How the sandbox works, and what leaves it: [`sandbox/`](../sandbox/).
 
 ## 3. Prepare the benchmark
@@ -98,9 +106,9 @@ takes well under an hour per agent.
 An interrupted run resumes where it stopped: pass the same `--run-dir`. Scans the model server dropped are scanned
 again.
 
-`--split val` scans the validation pairs, `--pair <id>` a single pair. Nemotron 3.5 Lightning on NIM works too
-(`--model-config model.lightning.yaml`, and `MODEL=nemotron-3.5-lightning` for `sandbox.sh create`), but our numbers
-are from Flash-Next.
+`--split val` scans the validation pairs, `--pair <id>` a single pair. Qwen3.8 Flash-Next and Nemotron 3.5 Lightning on
+NIM work too (`--model-config model.flash-next.yaml` or `model.lightning.yaml`, and the model's name in `MODEL` for
+`sandbox.sh create`), but our numbers are from Super VL.
 
 ## 5. Run the self-improvement loop
 
@@ -120,7 +128,7 @@ hatch run synthetic:loop status --run-dir runs/synthetic/loop/opt-1   # in a sec
 What happens (details in [`optimize/loop.py`](../src/security_agent/optimize/loop.py), the loop the benchmarks
 share, and [`synthetic/task.py`](../src/security_agent/synthetic/task.py), what is specific to this one):
 
-1. **Pre-registration.** The rules, the 12 training pairs, the starting candidate and the budget go to
+1. **Pre-registration.** The rules, the 24 training pairs, the starting candidate and the budget go to
    `preregistration.json` before anything is measured.
 2. **The starting candidate** (the seed) is measured on the training pairs.
 3. **Turns.** The optimizer, a Haystack Agent on the same model, gets the outcomes so far and a failure digest for each
@@ -158,7 +166,7 @@ repository with the deployed agent and prints its findings; the full result, wit
 
 ## 7. Roll out the agents with NeMo Gym
 
-The same agents as [NeMo Gym](https://github.com/NVIDIA-NeMo/Gym) rollouts ([`gym/`](../gym/)). Flash-Next must be up
+The same agents as [NeMo Gym](https://github.com/NVIDIA-NeMo/Gym) rollouts ([`gym/`](../gym/)). Super VL must be up
 (step 1) and the benchmark prepared (step 3).
 
 ```bash
@@ -199,9 +207,10 @@ security boundary; the sandbox is.
 - **Scans end incomplete with connection errors:** the model server crashed or is restarting. Scans wait for it up to a
   limit, then count as incomplete; rerun with the same `--run-dir`.
 - **`sandbox.sh status` says the model server is not reachable on the bridge:** restart the server (step 2).
-- **The sandbox is gone** (after a restart of the OpenShell gateway): `sandbox/sandbox.sh create`.
-- **"the sandbox runs security_agent …, the host …":** the code changed since the sandbox was created; `sandbox/sandbox.sh
-  create` again.
+- **The sandbox is gone** (after a restart of the OpenShell gateway): `MODEL=nemotron-3.5-super-vl sandbox/sandbox.sh
+  create`.
+- **"the sandbox runs security_agent …, the host …":** the code changed since the sandbox was created; create it again
+  (step 2).
 - **`gym:start-synthetic` stops with `address already in use` on port 11000:** another service holds the port of Gym's
   head server. Pick a free one and pass it to both commands: `hatch run gym:start-synthetic ++head_server.port=11100`,
   and the same `++head_server.port=11100` after `gym:collect-synthetic`.

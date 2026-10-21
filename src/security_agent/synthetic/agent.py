@@ -70,7 +70,7 @@ from haystack import Pipeline, component
 from haystack.core.serialization import allow_deserialization_module
 from haystack.dataclasses import ChatMessage
 
-from security_agent.generator import Generator, malformed_tool_calls, server_down
+from security_agent.generator import Generator, malformed_tool_calls, server_down, tolerate_empty_answers
 from security_agent.synthetic.codecheck import MAX_LINES as MAX_CODE_LINES
 from security_agent.synthetic.codecheck import check_code
 from security_agent.synthetic.config import load_yaml, resolve
@@ -592,7 +592,7 @@ class ScanAgent:
             temperature=self.temperature,
             before_call=guard,
         )
-        generator.run = _retrying_malformed(generator.run, log)  # type: ignore[method-assign]
+        generator.run = _retrying_malformed(tolerate_empty_answers(generator.run), log)  # type: ignore[method-assign]
         tools = self._builtin_tools(ctx, log, reads) + self._code_tools(ctx, log, load_errors)
         agent = Agent(
             chat_generator=generator,
@@ -933,7 +933,16 @@ def _resolved(data: dict[str, Any], directory: Path, model: dict[str, Any], scan
     out = json.loads(json.dumps(data))
     model_kwargs = {
         k: model[k]
-        for k in ("api_base_url", "model", "timeout_s", "max_retries", "temperature", "concurrency", "gym_model_server")
+        for k in (
+            "api_base_url",
+            "model",
+            "timeout_s",
+            "max_retries",
+            "temperature",
+            "concurrency",
+            "gym_model_server",
+            "greedy_with_thinking_budget",
+        )
         if k in model
     }
     for spec in out["components"].values():

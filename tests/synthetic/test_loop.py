@@ -321,14 +321,14 @@ def test_measure_scores_parts_digests_failures_and_aborts(tmp_path):
 def test_loop_config_and_system_prompt():
     config = load_yaml("loop.yaml")
     train = subsample(pairs("train", split()), config["train_per_benchmark"], config["seed"])
-    assert len(train["hvbench"]) == 12 and train == subsample(pairs("train", split()), 12, config["seed"])
+    assert len(train["hvbench"]) == 24 and train == subsample(pairs("train", split()), 24, config["seed"])
     assert resolve(config["reference"]) == SEED
     assert set(Rules.__dataclass_fields__) == set(config["rules"])
     task = SyntheticTask(model_config={"api_base_url": "http://127.0.0.1:1/v1", "model": "fake"})
     prompt = task.system_prompt(task.prompt_values(config, train))
     assert (
         "$" not in prompt
-        and "12 pairs (24 repositories)" in prompt
+        and "24 pairs (48 repositories)" in prompt
         and "`security_agent.synthetic.agent.CodeStep`" in prompt
     )
     assert "Allowed component types" in prompt  # the contract

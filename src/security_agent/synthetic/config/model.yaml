@@ -1,10 +1,10 @@
-# The model server for scans and for the optimizer: Qwen3.8 Flash-Next on vLLM with the UltraFast recipe, as set up by
-# serving/qwen3.8-flash-next (loopback only). Start it from the repository root with
-# `hatch run serving:flash-next start` (about 4 to 7 minutes until ready).
+# The model server for scans and for the optimizer: Nemotron 3.5 Super VL on vLLM, as set up by
+# serving/nemotron-3.5-super-vl (loopback only). Start it from the repository root with
+# `hatch run serving:super-vl start` (about 13 minutes until ready). The reported synthetic numbers use this file.
 
 api_base_url: http://127.0.0.1:8000/v1
-model: qwen3.8-flash-next
-timeout_s: 600
+model: nemotron-3.5-super-vl
+timeout_s: 900          # a long answer at 8 parallel sequences can take several minutes
 max_retries: 3
 
 # = the server's --max-num-seqs; one global limit shared by all steps and repositories.
@@ -12,11 +12,16 @@ concurrency: 8
 
 temperature: 0.0
 
+# On this server, a thinking budget and a temperature above 0 lose the answer (serving/nemotron-3.5-super-vl): every
+# call with a budget runs at temperature 0, whatever its step or the optimizer asks for.
+greedy_with_thinking_budget: true
+
 # Thinking budgets and output limits are per step (the candidate's pipeline.yaml). Always set one: without a budget
-# Flash-Next can think for thousands of tokens and never answer.
+# the model can think for thousands of tokens.
 
 fingerprint:
-  server: vllm
-  image: qwen38-flash-dgx:iter6d-20260910
-  recipe: dime-online/qwen3.8-Flash-DGX-UltraFast@0c391a3 v16b
-  served_name: qwen3.8-flash-next
+  server: vllm 0.32.0rc1.dev190 (nightly-3f1bcfd82bb2e93fcd364fc7a5491718453a77e2)
+  image: vllm/vllm-openai@sha256:cb9bc64f0f038c2c2ebf13b31248fb87aca40c356c3d20f363be087cfcff1fcd
+  checkpoint: nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4@579ffa0b659bc681b89e649fa7c2d5089399602e
+  speculative_decoding: mtp, 3 tokens
+  served_name: nemotron-3.5-super-vl

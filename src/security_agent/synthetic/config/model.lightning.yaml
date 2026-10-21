@@ -14,7 +14,7 @@ concurrency: 8
 temperature: 0.0
 
 # Thinking is switched with the chat template's `enable_thinking` and capped per request with vLLM's
-# `thinking_token_budget`, as for Qwen.
+# `thinking_token_budget`, as for the other models.
 
 fingerprint:
   server: nim-2.0.9 (vllm 0.25.1)

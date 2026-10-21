@@ -87,6 +87,17 @@ def test_the_shipped_candidates_are_valid(directory):
     assert check_candidate(directory) == [] and contract_test(directory) == []
 
 
+def test_a_greedy_model_config_overrides_the_agents_temperature(tmp_path):
+    def warm(data):
+        data["components"]["agent"]["init_parameters"]["temperature"] = 0.6
+
+    directory = candidate(tmp_path, warm)
+    with FakeVllm() as server:
+        greedy = {**model(server.base_url), "greedy_with_thinking_budget": True}
+        run(_bench(tmp_path), AgentScanner(directory, model_config=greedy), tmp_path / "run", log=lambda *_: None)
+    assert server.requests and all(r["temperature"] == 0.0 for r in server.requests)
+
+
 def test_seed_reports_through_report_finding(tmp_path):
     bench = _bench(tmp_path)
     with FakeVllm() as server:
