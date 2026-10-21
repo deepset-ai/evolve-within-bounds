@@ -14,7 +14,7 @@ The GUI: how the agent evolved, the live demo, and the agent's verdict on real H
   hatch run synthetic:gui --import-pairs F   take their verdicts from an earlier run's tasks.json instead
 
 The page (static/) has three parts:
-- **How the agent evolved:** evolution.json, an earlier loop run (Qwen3.8 Flash-Next), as aggregates.
+- **How the agent evolved:** evolution.json, the loop run behind results/synthetic.md, as aggregates.
 - **Watch it improve:** demo/run_demo.sh in a pseudo-terminal, streamed to the page as it prints (server-sent events);
   the page's Approve button answers the demo's prompt. Without a model server or sandbox, the page plays the recorded
   run in demo/recording instead.

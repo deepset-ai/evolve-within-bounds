@@ -98,7 +98,8 @@ async function drawChart() {
   const [lo, hi] = [20, 100];
   const y = (pct) => T + (H - T - B) * (1 - (pct - lo) / (hi - lo));
   const trainPct = versions.map((v) => (100 * v.train) / data.train_pairs);
-  const valPct = versions.map((v) => (100 * v.val) / data.val_pairs);
+  const valPct = versions.map((v) => (v.val == null ? null : (100 * v.val) / data.val_pairs));
+  const index = (id) => versions.findIndex((v) => v.id === id);
 
   chart.append(svg("rect", { x: L, y: T, width: band, height: H - T - B, class: "band" }));
   const focus = svg("rect", { x: L, y: T, width: band, height: H - T - B, class: "focus" });
@@ -115,6 +116,12 @@ async function drawChart() {
     chart.append(svg("text", { x: L - 12, y: y(p) + 4, "text-anchor": "end" }, `${p}%`));
   }
   versions.forEach((v, i) => chart.append(svg("text", { x: x(i), y: H - B + 26, "text-anchor": "middle" }, v.label)));
+  // The loop's stages, if it had more than one: a divider before each later stage, and each stage's name above it.
+  (data.stages || []).forEach((stage, s) => {
+    const [first, last] = [index(stage.versions[0]), index(stage.versions[stage.versions.length - 1])];
+    if (s > 0) chart.append(svg("line", { x1: L + band * first, y1: T - 22, x2: L + band * first, y2: H - B, class: "stage-divider" }));
+    chart.append(svg("text", { x: L + band * (first + last + 1) / 2, y: T - 12, "text-anchor": "middle", class: "stage" }, stage.label));
+  });
   chart.append(svg("text", { x: L + (W - L - R) / 2, y: H - 14, "text-anchor": "middle", class: "axis-title" }, "Version written by the optimizer"));
   const ax = 18;
   chart.append(svg("text", { x: ax, y: T + (H - T - B) / 2, transform: `rotate(-90 ${ax} ${T + (H - T - B) / 2})`, "text-anchor": "middle", class: "axis-title" }, "Correct"));
@@ -132,14 +139,15 @@ async function drawChart() {
     const previous = best;
     best = Math.max(best, trainPct[i]);
     if (i > 0) {
-      add(i, svg("line", { x1: x(i - 1) - off, y1: y(trainPct[i - 1]), x2: x(i) - off, y2: y(trainPct[i]), class: "lineage" }));
+      const p = index(v.parent);
+      add(i, svg("line", { x1: x(p) - off, y1: y(trainPct[p]), x2: x(i) - off, y2: y(trainPct[i]), class: "lineage" }));
       add(i, svg("line", { x1: x(i) - band / 2, y1: y(previous), x2: x(i) - band / 2, y2: y(best), class: "best" }));
     }
     add(i, svg("line", { x1: x(i) - band / 2, y1: y(best), x2: x(i) + band / 2, y2: y(best), class: "best" }));
   });
   versions.forEach((v, i) => {
     const seed = i === 0;
-    add(i, svg("circle", { cx: x(i) + off, cy: y(valPct[i]), r: rr, class: "val" }));
+    if (valPct[i] != null) add(i, svg("circle", { cx: x(i) + off, cy: y(valPct[i]), r: rr, class: "val" }));
     add(i, svg("circle", { cx: x(i) - off, cy: y(trainPct[i]), r: seed ? rr + 3 : rr, class: seed ? "seed" : "train" }));
     if (seed) add(i, svg("text", { x: x(i) - off, y: y(trainPct[i]) + 32, "text-anchor": "middle", class: "seed-tag" }, `${Math.round(trainPct[i])}%`));
     if (v.id === data.presented.id) {
@@ -150,7 +158,8 @@ async function drawChart() {
     }
     const name = seed ? "Start" : `Version ${v.label}`;
     const hit = svg("rect", { x: x(i) - band / 2, y: T, width: band, height: H - T - B, fill: "transparent", class: "point", tabindex: "0", role: "button" });
-    hit.setAttribute("aria-label", `${name}: ${v.train} of ${data.train_pairs} training pairs right, ${v.val} of ${data.val_pairs} validation pairs`);
+    const val = v.val == null ? "not scanned on the validation pairs" : `${v.val} of ${data.val_pairs} validation pairs`;
+    hit.setAttribute("aria-label", `${name}: ${v.train} of ${data.train_pairs} training pairs right, ${val}`);
     hit.addEventListener("mouseenter", () => show(i));
     hit.addEventListener("mouseleave", () => show(pinned()));
     hit.addEventListener("focus", () => show(i));
@@ -198,7 +207,7 @@ function detailPanel(v, data) {
       "div",
       { class: "name" },
       name,
-      el("span", { text: ` (${percent(v.val, data.val_pairs)} on validation pairs)` }),
+      el("span", { text: v.val == null ? " (not scanned on validation pairs)" : ` (${percent(v.val, data.val_pairs)} on validation pairs)` }),
       v.id === data.presented.id ? el("span", { class: "presented badge success", text: "the agent we present" }) : null,
     ),
     el(
@@ -209,7 +218,10 @@ function detailPanel(v, data) {
     el("div", { class: "summary", text: v.summary || "" }),
     el("div", {
       class: "scores",
-      text: `Correct on ${v.train} of ${data.train_pairs} training pairs · ${v.val} of ${data.val_pairs} validation pairs · ${v.val_flagged} false alarm${v.val_flagged === 1 ? "" : "s"}`,
+      text:
+        v.val == null
+          ? `Correct on ${v.train} of ${data.train_pairs} training pairs · not scanned on the validation pairs`
+          : `Correct on ${v.train} of ${data.train_pairs} training pairs · ${v.val} of ${data.val_pairs} validation pairs · ${v.val_flagged} false alarm${v.val_flagged === 1 ? "" : "s"}`,
     }),
     v.added != null ? el("div", { class: "size" }, el("b", { text: `+${v.added}` }), " ", el("i", { text: `−${v.removed}` }), ` lines in ${v.files.length} files`) : null,
     v.files ? el("div", { class: "files", text: v.files.join(" · ") }) : null,
@@ -230,6 +242,7 @@ async function fillCards() {
   $("#n-test").textContent = $("#n-test-twins").textContent = p.test_pairs;
   $("#n-test-right").textContent = p.test.presented;
   $("#n-picked").textContent = `${picked.val} of ${evolution.val_pairs}`;
+  $("#n-picked-label").textContent = picked.label;
 }
 
 $("#replay-chart").addEventListener("click", drawChart);
