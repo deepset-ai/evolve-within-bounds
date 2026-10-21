@@ -27,6 +27,11 @@ A web page for showing the project. Four tabs:
 
 ## Running it
 
+**Right after cloning**, every tab works, with `hatch run synthetic:gui` alone. The scan tab and the pairs tab show
+[`shipped/`](shipped/): the integrations we scanned and approved, and the 12 pairs with the PrimeVul agent's verdicts.
+A machine with its own approved scans or judged pairs shows those instead (below). The live demo needs the Spark;
+without it, the demo tab plays the recording.
+
 On the DGX Spark, with the demo set up ([`demo/README.md`](../demo/README.md), "Before the talk"):
 
 ```bash
@@ -57,6 +62,15 @@ pairs, edit `pairs.yaml` and run `--prepare-pairs` again: an earlier run resumes
 [`results/primevul.md`](../results/primevul.md) for instance, so the page shows the verdicts that were measured; the
 pairs shipped in `pairs.yaml` were chosen from that run, six it got right and six it got wrong.
 
+The verdicts in [`shipped/pairs.json`](shipped/pairs.json) come from `--prepare-pairs` on the UltraFast vLLM server;
+the run behind the results page used llama.cpp. Five of the 24 verdicts came out differently there, so we judged those
+functions again, up to five times each, and kept the first verdict that matched the measured one. Three did; two
+stayed as they were, so 10 of the 12 pairs have their measured outcome, and 6 are right, as measured.
+
+**What ships.** `hatch run synthetic:gui --snapshot anthropic mariadb ...` writes what the page shows of these
+approved integrations, and of the judged pairs, to `shipped/`: each finding with its code excerpt, and each pair's two
+functions with the agent's verdicts. The scans' and the agent's own records stay on the machine.
+
 `--prepare` scans two integrations at a time (`--parallel`), each in about 5 to 10 minutes, and skips those scanned
 before (`--rescan` scans them all again). An approval holds for the exact result that was reviewed: after a new scan,
 the integration is off the page until it is approved again; a scan that did not finish cannot be approved. If a finding
@@ -65,8 +79,8 @@ looks real, don't approve it: report it as the project's
 is kept in `work/gui/`, the results and approvals in `runs/gui/integrations/`: both stay on the machine and out of
 git.
 
-Without the Spark (on a laptop, say), the page still works: the graph, the recording, and the integrations approved
-on that machine. The header shows whether the model server and the sandbox are there.
+Without the Spark (on a laptop, say), the page still works: the graph, the recording, and the integrations and pairs
+of that machine, or the shipped ones. The header shows whether the model server and the sandbox are there.
 
 **Unattended:** `http://127.0.0.1:8765/?autoplay` plays the recording in a loop, approving by itself after 5 seconds.
 `#evolution`, `#demo` and `#scan` at the end of the address open a tab directly.

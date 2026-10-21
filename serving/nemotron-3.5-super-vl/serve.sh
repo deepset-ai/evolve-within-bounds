@@ -20,6 +20,9 @@ IMAGE=vllm/vllm-openai:nightly-3f1bcfd82bb2e93fcd364fc7a5491718453a77e2@sha256:c
 CHECKPOINT=nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
 REVISION=579ffa0b659bc681b89e649fa7c2d5089399602e
 MODEL_DIR="$HOME/models/nemotron-3.5-super-vl-nvfp4"
+# vLLM's compile and kernel-tuning cache, kept across starts. The first start tunes FlashInfer's kernels, which needs
+# memory on top of the model and its cache; later starts read the results from here and skip that step.
+CACHE_DIR="${VLLM_CACHE_DIR:-$HOME/.cache/vllm-super-vl}"
 NAME=nemotron-3.5-super-vl
 SERVED_NAME=nemotron-3.5-super-vl
 URL=http://127.0.0.1:8000/v1
@@ -80,11 +83,13 @@ start() {
   fi
   [ -f "$MODEL_DIR/config.json" ] || { echo "no checkpoint in $MODEL_DIR: run '$0 setup'" >&2; exit 1; }
   docker rm -f "$NAME" >/dev/null 2>&1 || true
+  mkdir -p "$CACHE_DIR"
   publish=(-p 127.0.0.1:8000:8000)
   gateway="$(sandbox_gateway)"
   [ -n "$gateway" ] && publish+=(-p "$gateway:8000:8000")
   docker run -d --name "$NAME" --gpus all --ipc=host --shm-size=16g \
-    -v "$MODEL_DIR:/models/nemotron-3.5-super-vl-nvfp4:ro" "${publish[@]}" "$IMAGE" "${ARGS[@]}" >/dev/null
+    -v "$MODEL_DIR:/models/nemotron-3.5-super-vl-nvfp4:ro" -v "$CACHE_DIR:/root/.cache/vllm" \
+    "${publish[@]}" "$IMAGE" "${ARGS[@]}" >/dev/null
   for _ in $(seq 1 150); do
     if probe; then
       echo "ready: $SERVED_NAME on $URL"

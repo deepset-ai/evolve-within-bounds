@@ -12,6 +12,8 @@ The GUI: how the agent evolved, the live demo, and the agent's verdict on real H
   hatch run synthetic:gui --approve NAME ... put reviewed integrations on the page (--revoke takes them off)
   hatch run synthetic:gui --prepare-pairs    judge the PrimeVul pairs in pairs.yaml with the PrimeVul agent
   hatch run synthetic:gui --import-pairs F   take their verdicts from an earlier run's tasks.json instead
+  hatch run synthetic:gui --snapshot NAME ...  write what the page shows of these approved integrations, and of the
+                                             judged pairs, to shipped/ for the repository
 
 The page (static/) has three parts:
 - **How the agent evolved:** evolution.json, the loop run behind results/synthetic.md, as aggregates.
@@ -21,11 +23,13 @@ The page (static/) has three parts:
 - **Scan a Haystack integration:** integrations from deepset-ai/haystack-core-integrations at a pinned commit, scanned
   by the evolved agent inside the sandbox. Real code can hold real, unreported vulnerabilities, so nothing is scanned
   live: every result is reviewed by a person first, and the page shows only approved ones. An approval holds for that
-  exact result. Results and approvals stay on this machine, in runs/gui/integrations/.
+  exact result. Results and approvals stay on this machine, in runs/gui/integrations/. Without any here, the page
+  shows the integrations in shipped/integrations.json, which we reviewed and approved.
 - **Spot the vulnerability:** pairs of real C functions from PrimeVul (pairs.yaml), a function before a public security
   fix and the patched version, side by side with the lines that differ marked. The visitor guesses which one is
   vulnerable; the page then shows the PrimeVul agent's verdict on each, from a run of the agent on those pairs
-  (--prepare-pairs). The functions and the verdicts stay on this machine, in work/gui/ and runs/gui/pairs/.
+  (--prepare-pairs). The functions and the verdicts stay on this machine, in work/gui/ and runs/gui/pairs/. Without
+  them, the page shows the pairs in shipped/pairs.json.
 
 Only the standard library and this repository's package.
 """
@@ -69,6 +73,8 @@ RESULTS = REPO / "runs" / "gui" / "integrations"
 AGENT = REPO / "agents" / "synthetic" / "looped"  # the evolved agent
 PAIRS = REPO / "work" / "gui" / "primevul-pairs.jsonl"  # the chosen pairs' functions, copied from the benchmark file
 PAIR_RUNS = REPO / "runs" / "gui" / "pairs"  # the PrimeVul agent's verdicts on them
+# What the page showed on our machine, for a fresh checkout: the integrations we approved, and the judged pairs.
+SHIPPED = HERE / "shipped"
 SANDBOX = os.environ.get("SANDBOX", "security-agent")
 MODEL_URL = "http://127.0.0.1:8000/v1"
 PROMPT = "Type 'yes' to approve: "
@@ -284,27 +290,96 @@ def _excerpt(path: Path, start: int, end: int) -> list[dict[str, Any]]:
 
 
 def _whole_words(text: str, limit: int) -> str:
-    """`text`, ended at its last whole word if the agent cut it at its character limit (`limit` characters)."""
-    if len(text) < limit or not (text[-1].isalnum() or text[-1] == "_") or " " not in text:
-        return text
-    return text[: text.rfind(" ")].rstrip(" ,;:(") + " …"
+    """`text`, ended at its last whole word and marked " …" if it was cut at its character limit (`limit`)."""
+    if len(text) < limit or " " not in text or not (text[-1].isalnum() or text[-1] in "_ "):
+        return text  # shorter than the limit, or ending on a sentence's last mark: whole
+    if text[-1] != " ":
+        text = text[: text.rfind(" ")]
+    return text.rstrip(" ,;:(") + " …"
 
 
-def finding_view(finding: dict[str, Any], root: Path) -> dict[str, Any]:
+def _finding_key(path: Any, line_start: Any, title: Any) -> tuple[str, str, str]:
+    return str(path), str(line_start), str(title)[:200]
+
+
+EXPLANATION_CHARS = 300  # what the scanner keeps of the agent's explanation with each finding
+
+
+def _call_args(text: str) -> tuple[dict[str, Any], bool]:
+    """
+    A recorded tool call's arguments, and whether they are whole.
+
+    The record keeps the first 800 characters of the arguments' JSON. The explanation comes last, so a cut call still
+    holds the rest and the start of the explanation: the JSON is closed after the last character that keeps it valid.
+    """
+    try:
+        args = json.loads(text)
+        return (args, True) if isinstance(args, dict) else ({}, False)
+    except ValueError:
+        pass
+    for end in range(len(text), max(0, len(text) - 8), -1):  # past a cut escape such as `\u00`
+        try:
+            args = json.loads(text[:end] + '"}')
+        except ValueError:
+            continue
+        return (args, False) if isinstance(args, dict) else ({}, False)
+    return {}, False
+
+
+def explanations(result: dict[str, Any]) -> dict[tuple[str, str, str], tuple[str, bool]]:
+    """
+    The agent's own explanation of each finding, and whether it is whole, from its calls in the scan's record.
+
+    The scanner keeps only the explanation's first 300 characters with the finding; its `report_finding` call holds
+    more of it.
+    """
+    found = {}
+    for step in ((result.get("record") or {}).get("agent") or {}).get("trajectory") or []:
+        for call in step.get("calls") or []:
+            if call.get("tool") != "report_finding":
+                continue
+            args, whole = _call_args(call.get("args") or "")
+            if args.get("explanation"):
+                key = _finding_key(args.get("path"), args.get("line_start"), args.get("title"))
+                found[key] = (str(args["explanation"]), whole)
+    return found
+
+
+def full_explanation(finding: dict[str, Any], known: dict[tuple[str, str, str], tuple[str, bool]]) -> tuple[str, bool]:
+    """
+    The finding's explanation, and whether it is whole.
+
+    That is the agent's own from its call, if the stored one is the start of it: all of it, or at least more of it
+    than the scanner kept. Otherwise it is the stored one, whole if shorter than what the scanner keeps.
+    """
+    why = str(finding.get("missing_control") or finding.get("evidence") or "")
+    longer, whole = known.get(
+        _finding_key(finding.get("path"), finding.get("line_start"), finding.get("title")), ("", False)
+    )
+    if why and longer.startswith(why) and len(longer) > len(why):
+        return longer, whole
+    return why, len(why) < EXPLANATION_CHARS
+
+
+def finding_view(
+    finding: dict[str, Any], root: Path, known: dict[tuple[str, str, str], tuple[str, bool]] | None = None
+) -> dict[str, Any]:
     """One finding as the page shows it: where, what it noticed, why it matters, the call to check, and the code."""
     start, end = int(finding["line_start"]), int(finding["line_end"])
-    title = str(finding["title"])
-    why = str(finding.get("missing_control") or finding.get("evidence") or "")
-    if len(why) > len(title) and why.startswith(title):
+    title = _whole_words(str(finding["title"]), 200)  # the scanner keeps 200 characters of the title
+    why, whole = full_explanation(finding, known or {})
+    if not whole:
+        why = _whole_words(why, min(len(why), EXPLANATION_CHARS))
+    if len(why) > len(title) and why.startswith(title.removesuffix(" …")):
         title, why = why, ""  # the title is the start of the agent's own sentence: show the sentence once
     return {
         "file": finding["path"],
         "lines": [start, end],
         "cwe": finding["cwe"],
         "cwe_name": cwe_name(finding["cwe"]),
-        "title": _whole_words(title, 200),
+        "title": title,
         "severity": finding.get("severity"),
-        "why": _whole_words(why, 200),
+        "why": why,
         "fix": _whole_words(str(finding.get("fix") or ""), 200),
         "sink": _whole_words(str(finding.get("sink") or ""), 120),
         "excerpt": _excerpt(root / finding["path"], start, end),
@@ -332,12 +407,13 @@ def integration_view(entry: dict[str, Any], config: dict[str, Any]) -> dict[str,
     coverage = result.get("coverage") or {}
     cost = result.get("cost") or {}
     root = CHECKOUT / "integrations" / name
+    known = explanations(result)
     return {
         "name": name,
         "title": entry.get("title", name),
         "about": entry.get("about", ""),
         "group": entry.get("group", ""),
-        "findings": [finding_view(f, root) for f in result.get("findings", [])],
+        "findings": [finding_view(f, root, known) for f in result.get("findings", [])],
         "read": _files_read(result, root),
         "seconds": round(float(cost.get("seconds") or 0)),
         "calls": int(cost.get("calls") or 0),
@@ -522,12 +598,41 @@ class Gui:
         return None
 
     def integrations(self) -> list[dict[str, Any]]:
-        """The integrations whose current result was approved, for the page."""
-        return [integration_view(e, self.config) for e in self.config["integrations"] if approved(e["name"])]
+        """The integrations whose current result was approved on this machine, for the page; else the shipped ones."""
+        local = [integration_view(e, self.config) for e in self.config["integrations"] if approved(e["name"])]
+        return local or shipped("integrations")
 
     def pairs(self) -> list[dict[str, Any]]:
-        """The PrimeVul pairs the agent has judged, for the page."""
-        return pairs_view(self.pairs_config)
+        """The PrimeVul pairs the agent has judged on this machine, for the page; else the shipped ones."""
+        return pairs_view(self.pairs_config) or shipped("pairs")
+
+
+def shipped(kind: str) -> list[dict[str, Any]]:
+    """What the page showed on our machine (`integrations` or `pairs`), as written by --snapshot."""
+    path = SHIPPED / f"{kind}.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else []
+
+
+def snapshot(config: dict[str, Any], pairs_config: dict[str, Any], names: list[str]) -> int:
+    """
+    Write what the page shows of the named approved integrations, and of the judged pairs, to shipped/.
+
+    Only what the page shows goes there: each finding with its code excerpt, and each pair's two functions with the
+    agent's verdicts. The scans' and the agent's own records stay on this machine.
+    """
+    unknown = [n for n in names if not approved(n)]
+    if unknown:
+        print(f"not approved on this machine, so not written: {', '.join(unknown)}")
+        return 1
+    integrations = [integration_view(e, config) for e in config["integrations"] if e["name"] in names]
+    pairs = pairs_view(pairs_config)
+    SHIPPED.mkdir(exist_ok=True)
+    for kind, views in (("integrations", integrations), ("pairs", pairs)):
+        text = json.dumps(views, indent=1, ensure_ascii=False) + "\n"
+        (SHIPPED / f"{kind}.json").write_text(text, encoding="utf-8")
+    shown = ", ".join(i["name"] for i in integrations)
+    print(f"{SHIPPED}: {len(integrations)} integrations ({shown}), {len(pairs)} pairs")
+    return 0
 
 
 def model_answers() -> bool:
@@ -710,10 +815,11 @@ def review(config: dict[str, Any]) -> int:
         if not result.get("complete", True):
             state = f"INCOMPLETE ({result.get('error')}), cannot be approved; scan again with --prepare --rescan"
         print(f"== {name}: {len(result['findings'])} findings, {state}")
+        known = explanations(result)
         for f in result["findings"]:
             print(f"   {f['path']}:{f['line_start']}-{f['line_end']}  {f['cwe']}  {f['title']}")
-            if f.get("missing_control"):
-                print(textwrap.indent(textwrap.fill(" ".join(f["missing_control"].split()), 110), "      "))
+            if why := full_explanation(f, known)[0]:
+                print(textwrap.indent(textwrap.fill(" ".join(why.split()), 110), "      "))
     print('\nPut integrations on the page: hatch run synthetic:gui --approve NAME [NAME ...] --by "Your Name"')
     return 0
 
@@ -738,8 +844,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--import-pairs", metavar="TASKS_JSON", help="take the pairs' verdicts from an earlier run, then exit"
     )
+    parser.add_argument(
+        "--snapshot",
+        nargs="+",
+        metavar="NAME",
+        help="write the page's view of these approved integrations, and of the pairs, to shipped/, then exit",
+    )
     args = parser.parse_args(argv)
     config = load_integrations()
+    if args.snapshot:
+        return snapshot(config, load_pairs_config(), args.snapshot)
     if args.prepare:
         return prepare(config, args.rescan, args.parallel)
     if args.prepare_pairs:
