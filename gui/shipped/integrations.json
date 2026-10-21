@@ -1,0 +1,1305 @@
+[
+ {
+  "name": "anthropic",
+  "title": "Anthropic",
+  "about": "Lets a Haystack app talk to Claude models.",
+  "group": "Models",
+  "findings": [
+   {
+    "file": "src/haystack_integrations/components/generators/anthropic/chat/chat_generator.py",
+    "lines": [
+     286,
+     286
+    ],
+    "cwe": "CWE-502",
+    "cwe_name": "Deserialization of Untrusted Data",
+    "title": "Deserialization of untrusted data via deserialize_callable in from_dict",
+    "severity": "medium",
+    "why": "The from_dict method calls deserialize_callable() on serialized_callback_handler, which is caller-controlled data from a serialized pipeline configuration. deserialize_callable likely uses import_module to import a callable from a serialized string, allowing an attacker to execute arbitrary code by providing a malicious serialized component dictionary. No allowlist or validation restricts which callables can be deserialized.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 283,
+      "text": "        init_params = data.get(\"init_parameters\", {})",
+      "hit": false
+     },
+     {
+      "n": 284,
+      "text": "        serialized_callback_handler = init_params.get(\"streaming_callback\")",
+      "hit": false
+     },
+     {
+      "n": 285,
+      "text": "        if serialized_callback_handler:",
+      "hit": false
+     },
+     {
+      "n": 286,
+      "text": "            data[\"init_parameters\"][\"streaming_callback\"] = deserialize_callable(serialized_callback_handler)",
+      "hit": true
+     },
+     {
+      "n": 287,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 288,
+      "text": "        return default_from_dict(cls, data)",
+      "hit": false
+     },
+     {
+      "n": 289,
+      "text": "",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/generators/anthropic/chat/foundry_chat_generator.py",
+    "lines": [
+     264,
+     264
+    ],
+    "cwe": "CWE-502",
+    "cwe_name": "Deserialization of Untrusted Data",
+    "title": "Deserialization of untrusted data via deserialize_callable in from_dict (streaming_callback)",
+    "severity": "medium",
+    "why": "The from_dict method calls deserialize_callable() on serialized_callback, which is caller-controlled data from a serialized pipeline configuration. This allows arbitrary code execution via a maliciously crafted serialized component. No allowlist restricts which callables can be deserialized.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 261,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 262,
+      "text": "        init_params = data.get(\"init_parameters\", {})",
+      "hit": false
+     },
+     {
+      "n": 263,
+      "text": "        if serialized_callback := init_params.get(\"streaming_callback\"):",
+      "hit": false
+     },
+     {
+      "n": 264,
+      "text": "            data[\"init_parameters\"][\"streaming_callback\"] = deserialize_callable(serialized_callback)",
+      "hit": true
+     },
+     {
+      "n": 265,
+      "text": "        if serialized_token_provider := init_params.get(\"azure_ad_token_provider\"):",
+      "hit": false
+     },
+     {
+      "n": 266,
+      "text": "            data[\"init_parameters\"][\"azure_ad_token_provider\"] = deserialize_callable(serialized_token_provider)",
+      "hit": false
+     },
+     {
+      "n": 267,
+      "text": "",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/generators/anthropic/chat/foundry_chat_generator.py",
+    "lines": [
+     266,
+     266
+    ],
+    "cwe": "CWE-502",
+    "cwe_name": "Deserialization of Untrusted Data",
+    "title": "Deserialization of untrusted data via deserialize_callable in from_dict (azure_ad_token_provider)",
+    "severity": "medium",
+    "why": "The from_dict method calls deserialize_callable() on serialized_token_provider, which is caller-controlled data from a serialized pipeline configuration. This allows arbitrary code execution via a maliciously crafted serialized component. No allowlist restricts which callables can be deserialized.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 263,
+      "text": "        if serialized_callback := init_params.get(\"streaming_callback\"):",
+      "hit": false
+     },
+     {
+      "n": 264,
+      "text": "            data[\"init_parameters\"][\"streaming_callback\"] = deserialize_callable(serialized_callback)",
+      "hit": false
+     },
+     {
+      "n": 265,
+      "text": "        if serialized_token_provider := init_params.get(\"azure_ad_token_provider\"):",
+      "hit": false
+     },
+     {
+      "n": 266,
+      "text": "            data[\"init_parameters\"][\"azure_ad_token_provider\"] = deserialize_callable(serialized_token_provider)",
+      "hit": true
+     },
+     {
+      "n": 267,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 268,
+      "text": "        return default_from_dict(cls, data)",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/generators/anthropic/chat/vertex_chat_generator.py",
+    "lines": [
+     218,
+     218
+    ],
+    "cwe": "CWE-502",
+    "cwe_name": "Deserialization of Untrusted Data",
+    "title": "Deserialization of untrusted data via deserialize_callable in from_dict",
+    "severity": "medium",
+    "why": "The from_dict method calls deserialize_callable() on serialized_callback_handler, which is caller-controlled data from a serialized pipeline configuration. This allows arbitrary code execution via a maliciously crafted serialized component. No allowlist restricts which callables can be deserialized.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 215,
+      "text": "        init_params = data.get(\"init_parameters\", {})",
+      "hit": false
+     },
+     {
+      "n": 216,
+      "text": "        serialized_callback_handler = init_params.get(\"streaming_callback\")",
+      "hit": false
+     },
+     {
+      "n": 217,
+      "text": "        if serialized_callback_handler:",
+      "hit": false
+     },
+     {
+      "n": 218,
+      "text": "            data[\"init_parameters\"][\"streaming_callback\"] = deserialize_callable(serialized_callback_handler)",
+      "hit": true
+     },
+     {
+      "n": 219,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 220,
+      "text": "        return default_from_dict(cls, data)",
+      "hit": false
+     }
+    ]
+   }
+  ],
+  "read": [
+   {
+    "path": "pyproject.toml",
+    "lines": 170
+   },
+   {
+    "path": "src/haystack_integrations/components/generators/anthropic/chat/chat_generator.py",
+    "lines": 657
+   },
+   {
+    "path": "src/haystack_integrations/components/generators/anthropic/chat/foundry_chat_generator.py",
+    "lines": 268
+   },
+   {
+    "path": "src/haystack_integrations/components/generators/anthropic/chat/utils.py",
+    "lines": 660
+   },
+   {
+    "path": "src/haystack_integrations/components/generators/anthropic/chat/vertex_chat_generator.py",
+    "lines": 220
+   },
+   {
+    "path": "src/haystack_integrations/token_counters/anthropic/token_counter.py",
+    "lines": 135
+   }
+  ],
+  "seconds": 2522,
+  "calls": 25,
+  "tokens": 615515,
+  "files": 25,
+  "reviewed": 6,
+  "commit": "44ffad5",
+  "url": "https://github.com/deepset-ai/haystack-core-integrations/tree/44ffad573352baf9293d36b5c2cc385e1ce9b2fb/integrations/anthropic",
+  "scanned_at": "2026-10-20"
+ },
+ {
+  "name": "mariadb",
+  "title": "MariaDB",
+  "about": "Stores documents in MariaDB, with vector search, and finds the ones that match a question.",
+  "group": "Databases",
+  "findings": [],
+  "read": [
+   {
+    "path": "src/haystack_integrations/components/retrievers/mariadb/embedding_retriever.py",
+    "lines": 112
+   },
+   {
+    "path": "src/haystack_integrations/components/retrievers/mariadb/keyword_retriever.py",
+    "lines": 105
+   },
+   {
+    "path": "src/haystack_integrations/document_stores/mariadb/document_store.py",
+    "lines": 547
+   },
+   {
+    "path": "src/haystack_integrations/document_stores/mariadb/filters.py",
+    "lines": 211
+   },
+   {
+    "path": "tests/test_document_store.py",
+    "lines": 294
+   },
+   {
+    "path": "tests/test_filters.py",
+    "lines": 174
+   }
+  ],
+  "seconds": 1375,
+  "calls": 9,
+  "tokens": 162178,
+  "files": 18,
+  "reviewed": 6,
+  "commit": "44ffad5",
+  "url": "https://github.com/deepset-ai/haystack-core-integrations/tree/44ffad573352baf9293d36b5c2cc385e1ce9b2fb/integrations/mariadb",
+  "scanned_at": "2026-10-20"
+ },
+ {
+  "name": "github",
+  "title": "GitHub",
+  "about": "Lets an agent read and change GitHub repositories, issues and pull requests.",
+  "group": "Tools and services",
+  "findings": [
+   {
+    "file": "src/haystack_integrations/components/connectors/github/repo_viewer.py",
+    "lines": [
+     158,
+     160
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled path and branch interpolated into URL without validation or encoding",
+    "severity": "medium",
+    "why": "In _fetch_contents(), the caller-controlled `path` parameter is interpolated into the URL path at line 158, and the caller-controlled `ref` (branch) is interpolated into the URL query string at line 160, without any validation or URL encoding. An attacker could inject additional path segments or query parameters to access unintended GitHub API resources or manipulate the request.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 155,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 156,
+      "text": "    def _fetch_contents(self, owner: str, repo: str, path: str, ref: str) -> Any:",
+      "hit": false
+     },
+     {
+      "n": 157,
+      "text": "        \"\"\"Fetch repository contents from GitHub API\"\"\"",
+      "hit": false
+     },
+     {
+      "n": 158,
+      "text": "        url = f\"https://api.github.com/repos/{owner}/{repo}/contents/{path}\"",
+      "hit": true
+     },
+     {
+      "n": 159,
+      "text": "        if ref:",
+      "hit": true
+     },
+     {
+      "n": 160,
+      "text": "            url += f\"?ref={ref}\"",
+      "hit": true
+     },
+     {
+      "n": 161,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 162,
+      "text": "        response = requests.get(url, headers=self._get_request_headers(), timeout=10)",
+      "hit": false
+     },
+     {
+      "n": 163,
+      "text": "        response.raise_for_status()",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/connectors/github/file_editor.py",
+    "lines": [
+     125,
+     125
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled payload path interpolated into URL without validation",
+    "severity": "medium",
+    "why": "In _get_file_content(), the caller-controlled `payload[\"path\"]` is interpolated into the GitHub API URL at line 125 without validation or URL encoding. This allows URL injection where an attacker could manipulate the path to access unintended resources or inject additional query parameters.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 122,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 123,
+      "text": "    def _get_file_content(self, owner: str, repo: str, path: str, branch: str) -> tuple[str, str]:",
+      "hit": false
+     },
+     {
+      "n": 124,
+      "text": "        \"\"\"Get file content and SHA from GitHub.\"\"\"",
+      "hit": false
+     },
+     {
+      "n": 125,
+      "text": "        url = f\"https://api.github.com/repos/{owner}/{repo}/contents/{path}\"",
+      "hit": true
+     },
+     {
+      "n": 126,
+      "text": "        response = requests.get(url, headers=self._get_request_headers(), params={\"ref\": branch}, timeout=10)",
+      "hit": false
+     },
+     {
+      "n": 127,
+      "text": "        response.raise_for_status()",
+      "hit": false
+     },
+     {
+      "n": 128,
+      "text": "        data = response.json()",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/connectors/github/file_editor.py",
+    "lines": [
+     213,
+     213
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled payload path interpolated into URL without validation",
+    "severity": "medium",
+    "why": "In _create_file(), the caller-controlled `payload['path']` is interpolated into the GitHub API URL at line 213 without validation or URL encoding. This allows URL injection where an attacker could manipulate the path to access unintended resources or inject additional query parameters.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 210,
+      "text": "    def _create_file(self, owner: str, repo: str, payload: dict[str, str], branch: str) -> str:",
+      "hit": false
+     },
+     {
+      "n": 211,
+      "text": "        \"\"\"Handle file creation.\"\"\"",
+      "hit": false
+     },
+     {
+      "n": 212,
+      "text": "        try:",
+      "hit": false
+     },
+     {
+      "n": 213,
+      "text": "            url = f\"https://api.github.com/repos/{owner}/{repo}/contents/{payload['path']}\"",
+      "hit": true
+     },
+     {
+      "n": 214,
+      "text": "            content = b64encode(payload[\"content\"].encode(\"utf-8\")).decode(\"utf-8\")",
+      "hit": false
+     },
+     {
+      "n": 215,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 216,
+      "text": "            data = {\"message\": payload[\"message\"], \"content\": content, \"branch\": branch}",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/connectors/github/file_editor.py",
+    "lines": [
+     231,
+     231
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled payload path interpolated into URL without validation",
+    "severity": "medium",
+    "why": "In _delete_file(), the caller-controlled `payload['path']` is interpolated into the GitHub API URL at line 231 without validation or URL encoding. This allows URL injection where an attacker could manipulate the path to access unintended resources or inject additional query parameters.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 228,
+      "text": "        \"\"\"Handle file deletion.\"\"\"",
+      "hit": false
+     },
+     {
+      "n": 229,
+      "text": "        try:",
+      "hit": false
+     },
+     {
+      "n": 230,
+      "text": "            _, sha = self._get_file_content(owner, repo, payload[\"path\"], branch)",
+      "hit": false
+     },
+     {
+      "n": 231,
+      "text": "            url = f\"https://api.github.com/repos/{owner}/{repo}/contents/{payload['path']}\"",
+      "hit": true
+     },
+     {
+      "n": 232,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 233,
+      "text": "            data = {\"message\": payload[\"message\"], \"sha\": sha, \"branch\": branch}",
+      "hit": false
+     },
+     {
+      "n": 234,
+      "text": "",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/connectors/github/pr_creator.py",
+    "lines": [
+     127,
+     127
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled base_branch interpolated into URL without validation",
+    "severity": "medium",
+    "why": "In _create_branch(), the caller-controlled `base_branch` parameter is interpolated into the GitHub API URL at line 127 without validation or URL encoding. An attacker could manipulate the branch name to inject additional path segments or query parameters into the request URL.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 124,
+      "text": "    def _create_branch(self, owner: str, repo: str, branch_name: str, base_branch: str) -> bool:",
+      "hit": false
+     },
+     {
+      "n": 125,
+      "text": "        \"\"\"Create a new branch in the repository.\"\"\"",
+      "hit": false
+     },
+     {
+      "n": 126,
+      "text": "        # Get the SHA of the base branch",
+      "hit": false
+     },
+     {
+      "n": 127,
+      "text": "        url = f\"https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{base_branch}\"",
+      "hit": true
+     },
+     {
+      "n": 128,
+      "text": "        try:",
+      "hit": false
+     },
+     {
+      "n": 129,
+      "text": "            response = requests.get(url, headers=self._get_request_headers(), timeout=10)",
+      "hit": false
+     },
+     {
+      "n": 130,
+      "text": "            response.raise_for_status()",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/connectors/github/pr_creator.py",
+    "lines": [
+     156,
+     156
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled branch_name interpolated into URL without validation",
+    "severity": "medium",
+    "why": "In _create_commit(), the caller-controlled `branch_name` parameter is interpolated into the GitHub API URL at line 156 without validation or URL encoding. An attacker could manipulate the branch name to inject additional path segments or query parameters into the request URL.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 153,
+      "text": "    ) -> bool:",
+      "hit": false
+     },
+     {
+      "n": 154,
+      "text": "        \"\"\"Create a commit with the file changes.\"\"\"",
+      "hit": false
+     },
+     {
+      "n": 155,
+      "text": "        # Get the current commit SHA",
+      "hit": false
+     },
+     {
+      "n": 156,
+      "text": "        url = f\"https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{branch_name}\"",
+      "hit": true
+     },
+     {
+      "n": 157,
+      "text": "        try:",
+      "hit": false
+     },
+     {
+      "n": 158,
+      "text": "            response = requests.get(url, headers=self._get_request_headers(), timeout=10)",
+      "hit": false
+     },
+     {
+      "n": 159,
+      "text": "            response.raise_for_status()",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/connectors/github/file_editor.py",
+    "lines": [
+     147,
+     147
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled branch interpolated into URL without validation",
+    "severity": "medium",
+    "why": "In _check_last_commit(), the caller-controlled `branch` parameter is interpolated into the GitHub API URL at line 147 without validation or URL encoding. An attacker could manipulate the branch name to inject additional path segments or query parameters into the request URL.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 144,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 145,
+      "text": "    def _check_last_commit(self, owner: str, repo: str, branch: str) -> bool:",
+      "hit": false
+     },
+     {
+      "n": 146,
+      "text": "        \"\"\"Check if last commit was made by the current token user.\"\"\"",
+      "hit": false
+     },
+     {
+      "n": 147,
+      "text": "        url = f\"https://api.github.com/repos/{owner}/{repo}/commits\"",
+      "hit": true
+     },
+     {
+      "n": 148,
+      "text": "        params: dict[str, str | int] = {\"per_page\": 1, \"sha\": branch}",
+      "hit": false
+     },
+     {
+      "n": 149,
+      "text": "        response = requests.get(url, headers=self._get_request_headers(), params=params, timeout=10)",
+      "hit": false
+     },
+     {
+      "n": 150,
+      "text": "        response.raise_for_status()",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/connectors/github/file_editor.py",
+    "lines": [
+     190,
+     190
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled branch interpolated into URL without validation",
+    "severity": "medium",
+    "why": "In _undo_changes(), the caller-controlled `branch` parameter is interpolated into the GitHub API URL at line 190 without validation or URL encoding. An attacker could manipulate the branch name to inject additional path segments or query parameters into the request URL.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 187,
+      "text": "                return \"Error: Last commit was not made by the current user\"",
+      "hit": false
+     },
+     {
+      "n": 188,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 189,
+      "text": "            # Reset to previous commit",
+      "hit": false
+     },
+     {
+      "n": 190,
+      "text": "            url = f\"https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{branch}\"",
+      "hit": true
+     },
+     {
+      "n": 191,
+      "text": "            commits_url = f\"https://api.github.com/repos/{owner}/{repo}/commits\"",
+      "hit": false
+     },
+     {
+      "n": 192,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 193,
+      "text": "            # Get the previous commit SHA",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/components/connectors/github/pr_creator.py",
+    "lines": [
+     187,
+     187
+    ],
+    "cwe": "CWE-20",
+    "cwe_name": "Missing input validation",
+    "title": "Caller-controlled branch_name interpolated into URL without validation",
+    "severity": "medium",
+    "why": "In _create_commit(), the caller-controlled `branch_name` parameter is interpolated into the GitHub API URL at line 187 without validation or URL encoding. An attacker could manipulate the branch name to inject additional path segments or query parameters into the request URL.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 184,
+      "text": "            commit_sha = response.json()[\"sha\"]",
+      "hit": false
+     },
+     {
+      "n": 185,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 186,
+      "text": "            # Update the branch reference",
+      "hit": false
+     },
+     {
+      "n": 187,
+      "text": "            url = f\"https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{branch_name}\"",
+      "hit": true
+     },
+     {
+      "n": 188,
+      "text": "            data = {\"sha\": commit_sha}",
+      "hit": false
+     },
+     {
+      "n": 189,
+      "text": "            response = requests.patch(url, headers=self._get_request_headers(), json=data, timeout=10)",
+      "hit": false
+     },
+     {
+      "n": 190,
+      "text": "            response.raise_for_status()",
+      "hit": false
+     }
+    ]
+   }
+  ],
+  "read": [
+   {
+    "path": "src/haystack_integrations/components/connectors/github/file_editor.py",
+    "lines": 305
+   },
+   {
+    "path": "src/haystack_integrations/components/connectors/github/issue_commenter.py",
+    "lines": 163
+   },
+   {
+    "path": "src/haystack_integrations/components/connectors/github/issue_viewer.py",
+    "lines": 218
+   },
+   {
+    "path": "src/haystack_integrations/components/connectors/github/pr_creator.py",
+    "lines": 284
+   },
+   {
+    "path": "src/haystack_integrations/components/connectors/github/repo_forker.py",
+    "lines": 307
+   },
+   {
+    "path": "src/haystack_integrations/components/connectors/github/repo_viewer.py",
+    "lines": 274
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/__init__.py",
+    "lines": 25
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/context_prompt.py",
+    "lines": 171
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/file_editor_prompt.py",
+    "lines": 122
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/issue_commenter_prompt.py",
+    "lines": 23
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/issue_viewer_prompt.py",
+    "lines": 25
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/pr_creator_prompt.py",
+    "lines": 83
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/repo_forker_prompt.py",
+    "lines": 61
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/repo_viewer_prompt.py",
+    "lines": 81
+   },
+   {
+    "path": "src/haystack_integrations/prompts/github/system_prompt.py",
+    "lines": 63
+   },
+   {
+    "path": "src/haystack_integrations/tools/github/file_editor_tool.py",
+    "lines": 126
+   },
+   {
+    "path": "src/haystack_integrations/tools/github/issue_commenter_tool.py",
+    "lines": 121
+   },
+   {
+    "path": "src/haystack_integrations/tools/github/issue_viewer_tool.py",
+    "lines": 121
+   },
+   {
+    "path": "src/haystack_integrations/tools/github/pr_creator_tool.py",
+    "lines": 115
+   },
+   {
+    "path": "src/haystack_integrations/tools/github/repo_forker_tool.py",
+    "lines": 117
+   },
+   {
+    "path": "src/haystack_integrations/tools/github/repo_viewer_tool.py",
+    "lines": 136
+   },
+   {
+    "path": "src/haystack_integrations/tools/github/utils.py",
+    "lines": 80
+   }
+  ],
+  "seconds": 1462,
+  "calls": 23,
+  "tokens": 553655,
+  "files": 46,
+  "reviewed": 22,
+  "commit": "44ffad5",
+  "url": "https://github.com/deepset-ai/haystack-core-integrations/tree/44ffad573352baf9293d36b5c2cc385e1ce9b2fb/integrations/github",
+  "scanned_at": "2026-10-20"
+ },
+ {
+  "name": "mcp",
+  "title": "MCP",
+  "about": "Connects an agent to tools on Model Context Protocol servers.",
+  "group": "Tools and services",
+  "findings": [
+   {
+    "file": "src/haystack_integrations/tools/mcp/mcp_tool.py",
+    "lines": [
+     1231,
+     1231
+    ],
+    "cwe": "CWE-470",
+    "cwe_name": "Use of Externally-Controlled Input to Select Classes or Code ('Unsafe Reflection')",
+    "title": "Unsafe deserialization via import_class_by_name on user-controlled type in MCPTool.from_dict",
+    "severity": "medium",
+    "why": "MCPTool.from_dict() calls import_class_by_name(server_info_dict[\"type\"]) on the \"type\" field from deserialized data with no allowlist restriction. An attacker controlling the serialized input can specify an arbitrary class name to be imported and instantiated, leading to unsafe deserialization (CWE-470/CWE-502). The fix would be to restrict the allowed classes to a registered set (e.g., SSEServerInfo, StreamableHttpServerInfo, StdioServerInfo) and reject unknown types.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 1228,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 1229,
+      "text": "        # Reconstruct the server_info object",
+      "hit": false
+     },
+     {
+      "n": 1230,
+      "text": "        # First get the appropriate class by name",
+      "hit": false
+     },
+     {
+      "n": 1231,
+      "text": "        server_info_class = import_class_by_name(server_info_dict[\"type\"])",
+      "hit": true
+     },
+     {
+      "n": 1232,
+      "text": "        # Then deserialize using that class's from_dict method",
+      "hit": false
+     },
+     {
+      "n": 1233,
+      "text": "        server_info = cast(MCPServerInfo, server_info_class).from_dict(server_info_dict)",
+      "hit": false
+     },
+     {
+      "n": 1234,
+      "text": "",
+      "hit": false
+     }
+    ]
+   },
+   {
+    "file": "src/haystack_integrations/tools/mcp/mcp_toolset.py",
+    "lines": [
+     487,
+     487
+    ],
+    "cwe": "CWE-470",
+    "cwe_name": "Use of Externally-Controlled Input to Select Classes or Code ('Unsafe Reflection')",
+    "title": "Unsafe deserialization via import_class_by_name on user-controlled type in MCPToolset.from_dict",
+    "severity": "medium",
+    "why": "MCPToolset.from_dict() calls import_class_by_name(server_info_dict[\"type\"]) on the \"type\" field from deserialized data with no allowlist restriction. An attacker controlling the serialized input can specify an arbitrary class name to be imported and instantiated, leading to unsafe deserialization (CWE-470/CWE-502). The fix would be to restrict the allowed classes to a registered set and reject unknown types.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 484,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 485,
+      "text": "        # Reconstruct the server_info object",
+      "hit": false
+     },
+     {
+      "n": 486,
+      "text": "        server_info_dict = inner_data.get(\"server_info\", {})",
+      "hit": false
+     },
+     {
+      "n": 487,
+      "text": "        server_info_class = import_class_by_name(server_info_dict[\"type\"])",
+      "hit": true
+     },
+     {
+      "n": 488,
+      "text": "        server_info = cast(MCPServerInfo, server_info_class).from_dict(server_info_dict)",
+      "hit": false
+     },
+     {
+      "n": 489,
+      "text": "",
+      "hit": false
+     },
+     {
+      "n": 490,
+      "text": "        # Deserialize state configuration parameters",
+      "hit": false
+     }
+    ]
+   }
+  ],
+  "read": [
+   {
+    "path": "src/haystack_integrations/tools/mcp/__init__.py",
+    "lines": 37
+   },
+   {
+    "path": "src/haystack_integrations/tools/mcp/compatibility_layer.py",
+    "lines": 74
+   },
+   {
+    "path": "src/haystack_integrations/tools/mcp/mcp_tool.py",
+    "lines": 1365
+   },
+   {
+    "path": "src/haystack_integrations/tools/mcp/mcp_toolset.py",
+    "lines": 519
+   }
+  ],
+  "seconds": 1265,
+  "calls": 21,
+  "tokens": 578011,
+  "files": 27,
+  "reviewed": 4,
+  "commit": "44ffad5",
+  "url": "https://github.com/deepset-ai/haystack-core-integrations/tree/44ffad573352baf9293d36b5c2cc385e1ce9b2fb/integrations/mcp",
+  "scanned_at": "2026-10-20"
+ },
+ {
+  "name": "firecrawl",
+  "title": "Firecrawl",
+  "about": "Fetches and crawls web pages, and searches the web, through the Firecrawl service.",
+  "group": "Tools and services",
+  "findings": [
+   {
+    "file": "src/haystack_integrations/components/fetchers/firecrawl/firecrawl_crawler.py",
+    "lines": [
+     159,
+     162
+    ],
+    "cwe": "CWE-915",
+    "cwe_name": "Improperly Controlled Modification of Dynamically-Determined Object Attributes",
+    "title": "Caller-controlled metadata overrides trusted timestamp field",
+    "severity": "medium",
+    "why": "The Document meta dict is built with the trusted \"timestamp\" field first, then untrusted metadata from the Firecrawl API response (page.metadata_dict) is spread after via **metadata. This allows untrusted retrieved document metadata to override the trusted timestamp field set by the component. Per the guidance, trusted fields must be merged last to prevent caller-controlled metadata from overriding them.",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 156,
+      "text": "            metadata = page.metadata_dict",
+      "hit": false
+     },
+     {
+      "n": 157,
+      "text": "            doc = Document(",
+      "hit": false
+     },
+     {
+      "n": 158,
+      "text": "                content=page.markdown,",
+      "hit": false
+     },
+     {
+      "n": 159,
+      "text": "                meta={",
+      "hit": true
+     },
+     {
+      "n": 160,
+      "text": "                    \"timestamp\": datetime.now(tz=UTC).isoformat(),",
+      "hit": true
+     },
+     {
+      "n": 161,
+      "text": "                    **metadata,",
+      "hit": true
+     },
+     {
+      "n": 162,
+      "text": "                },",
+      "hit": true
+     },
+     {
+      "n": 163,
+      "text": "            )",
+      "hit": false
+     },
+     {
+      "n": 164,
+      "text": "            documents.append(doc)",
+      "hit": false
+     },
+     {
+      "n": 165,
+      "text": "",
+      "hit": false
+     }
+    ]
+   }
+  ],
+  "read": [
+   {
+    "path": "src/haystack_integrations/components/fetchers/firecrawl/__init__.py",
+    "lines": 7
+   },
+   {
+    "path": "src/haystack_integrations/components/fetchers/firecrawl/firecrawl_crawler.py",
+    "lines": 166
+   },
+   {
+    "path": "src/haystack_integrations/components/websearch/firecrawl/__init__.py",
+    "lines": 7
+   },
+   {
+    "path": "src/haystack_integrations/components/websearch/firecrawl/firecrawl_websearch.py",
+    "lines": 194
+   },
+   {
+    "path": "tests/test_firecrawl_crawler.py",
+    "lines": 288
+   },
+   {
+    "path": "tests/test_firecrawl_websearch.py",
+    "lines": 301
+   }
+  ],
+  "seconds": 684,
+  "calls": 7,
+  "tokens": 90380,
+  "files": 14,
+  "reviewed": 6,
+  "commit": "44ffad5",
+  "url": "https://github.com/deepset-ai/haystack-core-integrations/tree/44ffad573352baf9293d36b5c2cc385e1ce9b2fb/integrations/firecrawl",
+  "scanned_at": "2026-10-20"
+ },
+ {
+  "name": "e2b",
+  "title": "E2B",
+  "about": "Gives an agent a cloud sandbox from E2B, to run shell commands and read and write files.",
+  "group": "Tools and services",
+  "findings": [],
+  "read": [
+   {
+    "path": "examples/e2b_agent_example.py",
+    "lines": 97
+   },
+   {
+    "path": "examples/e2b_pipeline_example.py",
+    "lines": 101
+   },
+   {
+    "path": "src/haystack_integrations/tools/e2b/__init__.py",
+    "lines": 19
+   },
+   {
+    "path": "src/haystack_integrations/tools/e2b/bash_tool.py",
+    "lines": 102
+   },
+   {
+    "path": "src/haystack_integrations/tools/e2b/e2b_sandbox.py",
+    "lines": 226
+   },
+   {
+    "path": "src/haystack_integrations/tools/e2b/list_directory_tool.py",
+    "lines": 89
+   },
+   {
+    "path": "src/haystack_integrations/tools/e2b/read_file_tool.py",
+    "lines": 84
+   },
+   {
+    "path": "src/haystack_integrations/tools/e2b/sandbox_toolset.py",
+    "lines": 97
+   },
+   {
+    "path": "src/haystack_integrations/tools/e2b/write_file_tool.py",
+    "lines": 84
+   },
+   {
+    "path": "tests/test_sandbox_toolset.py",
+    "lines": 544
+   }
+  ],
+  "seconds": 854,
+  "calls": 7,
+  "tokens": 121766,
+  "files": 18,
+  "reviewed": 10,
+  "commit": "44ffad5",
+  "url": "https://github.com/deepset-ai/haystack-core-integrations/tree/44ffad573352baf9293d36b5c2cc385e1ce9b2fb/integrations/e2b",
+  "scanned_at": "2026-10-20"
+ },
+ {
+  "name": "libreoffice",
+  "title": "LibreOffice",
+  "about": "Converts office documents to other formats with LibreOffice.",
+  "group": "Tools and services",
+  "findings": [
+   {
+    "file": "src/haystack_integrations/components/converters/libreoffice/converter.py",
+    "lines": [
+     189,
+     211
+    ],
+    "cwe": "CWE-22",
+    "cwe_name": "Path traversal: input decides which file is opened",
+    "title": "Path traversal via caller-controlled source file path in _get_conversion_args",
+    "severity": "medium",
+    "why": "The _get_conversion_args method accepts a caller-controlled `source` path (from run(sources=...)) and uses it as a filesystem path (line 189: Path(source)) and passes it to the soffice subprocess (line 209: str(source) in args) without any path containment check. The is_file() check (line 193) only verifies the file exists, not that it is within a restricted directory. An attacker can specify paths like ../../etc/passwd (with a valid extension) to read arbitrary files from the filesystem. No contained_path() or similar validation …",
+    "fix": "",
+    "sink": "",
+    "excerpt": [
+     {
+      "n": 186,
+      "text": "        :raises FileNotFoundError: If `source` does not exist.",
+      "hit": false
+     },
+     {
+      "n": 187,
+      "text": "        :raises OSError: If `output_directory` does not exist or is not writable.",
+      "hit": false
+     },
+     {
+      "n": 188,
+      "text": "        \"\"\"",
+      "hit": false
+     },
+     {
+      "n": 189,
+      "text": "        source_path = Path(source)",
+      "hit": true
+     },
+     {
+      "n": 190,
+      "text": "        output_path = Path(output_directory)",
+      "hit": true
+     },
+     {
+      "n": 191,
+      "text": "",
+      "hit": true
+     },
+     {
+      "n": 192,
+      "text": "        # Source file must exist",
+      "hit": true
+     },
+     {
+      "n": 193,
+      "text": "        if not source_path.is_file():",
+      "hit": true
+     },
+     {
+      "n": 194,
+      "text": "            msg = f\"{source=} does not exist\"",
+      "hit": true
+     },
+     {
+      "n": 195,
+      "text": "            raise FileNotFoundError(msg)",
+      "hit": true
+     },
+     {
+      "n": 196,
+      "text": "",
+      "hit": true
+     },
+     {
+      "n": 197,
+      "text": "        # Output directory must exist and be writable",
+      "hit": true
+     },
+     {
+      "n": 198,
+      "text": "        if not output_path.is_dir() or not os.access(output_path, os.W_OK):",
+      "hit": true
+     },
+     {
+      "n": 199,
+      "text": "            msg = f\"{output_directory=} must exist and be writable\"",
+      "hit": true
+     },
+     {
+      "n": 200,
+      "text": "            raise OSError(msg)",
+      "hit": true
+     },
+     {
+      "n": 201,
+      "text": "",
+      "hit": true
+     },
+     {
+      "n": 202,
+      "text": "        args = [",
+      "hit": true
+     },
+     {
+      "n": 203,
+      "text": "            self.soffice_path,",
+      "hit": false
+     },
+     {
+      "n": 204,
+      "text": "            \"--headless\",",
+      "hit": false
+     },
+     {
+      "n": 205,
+      "text": "            \"--convert-to\",",
+      "hit": false
+     }
+    ]
+   }
+  ],
+  "read": [
+   {
+    "path": "src/haystack_integrations/components/converters/libreoffice/__init__.py",
+    "lines": 7
+   },
+   {
+    "path": "src/haystack_integrations/components/converters/libreoffice/converter.py",
+    "lines": 394
+   },
+   {
+    "path": "tests/conftest.py",
+    "lines": 75
+   },
+   {
+    "path": "tests/test_converter.py",
+    "lines": 239
+   }
+  ],
+  "seconds": 1463,
+  "calls": 13,
+  "tokens": 190216,
+  "files": 11,
+  "reviewed": 4,
+  "commit": "44ffad5",
+  "url": "https://github.com/deepset-ai/haystack-core-integrations/tree/44ffad573352baf9293d36b5c2cc385e1ce9b2fb/integrations/libreoffice",
+  "scanned_at": "2026-10-20"
+ }
+]

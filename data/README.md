@@ -54,7 +54,8 @@ this.
 
 The PrimeVul files the experiments used: the self-improvement loop's train, validation and holdout pairs, the 400-pair
 dev set, and smaller validation and smoke sets. `hatch run primevul:build` rebuilds them byte for byte from the pinned
-Hugging Face mirror. This repository holds only manifests (ids, splits, upstream rows and hashes), no PrimeVul code.
+Hugging Face mirror. This repository holds only manifests (ids, splits, upstream rows and hashes), and no PrimeVul
+code except the 24 functions of the GUI's pairs tab (`gui/shipped/pairs.json`).
 See [primevul/README.md](primevul/README.md).
 
 ## Knowledge base

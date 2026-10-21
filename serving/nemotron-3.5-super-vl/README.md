@@ -25,6 +25,7 @@ hatch run serving:super-vl stop
 |---|---|
 | Image | `vllm/vllm-openai:nightly-3f1bcfd82bb2e93fcd364fc7a5491718453a77e2`, digest `sha256:cb9bc64f0f03…` (vLLM 0.32.0rc1.dev190) |
 | Checkpoint | `nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4` at `579ffa0`, in `~/models/nemotron-3.5-super-vl-nvfp4` |
+| Cache | vLLM's compile and kernel-tuning cache, kept across starts in `~/.cache/vllm-super-vl` (`VLLM_CACHE_DIR`) |
 
 ## Settings that differ from the model card
 
@@ -55,3 +56,6 @@ hatch run serving:super-vl stop
   under load.
 - About 110 GB of the Spark's memory in use, so nothing else large runs beside it.
 - Ready about 13 minutes after `start`.
+- **The first start tunes FlashInfer's kernels** for the GPU, which needs memory on top of the model and its cache.
+  Once, a first start was killed for lack of memory during that step (`docker inspect` showed `OOMKilled`). The
+  results go to the cache, so later starts skip the step.

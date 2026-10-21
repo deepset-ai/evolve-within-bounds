@@ -1,0 +1,3501 @@
+[
+ {
+  "id": "primevul-holdout-95",
+  "project": "tensorflow",
+  "file": "count_ops.cc",
+  "commit_url": "https://github.com/tensorflow/tensorflow/commit/701cfaca222a82afbeeb17496bd718baa65a67d2",
+  "cwe": "CWE-125",
+  "cwe_name": "Out-of-bounds read: data is read from past the end of a buffer",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "Status SparseCountSparseOutputShapeFn(InferenceContext *c) {",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "  auto rank = c->Dim(c->input(0), 1);",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "  auto nvals = c->UnknownDim();",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "  c->set_output(0, c->Matrix(nvals, rank));  // out.indices",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "  c->set_output(1, c->Vector(nvals));        // out.values",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "  c->set_output(2, c->Vector(rank));         // out.dense_shape",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "  return Status::OK();",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "The shape function reads dimension 1 of input(0) without validating that the input rank is at least 2, so a hostile shape with rank < 2 can cause an out-of-bounds read in the shape metadata.",
+   "cwe": "CWE-125",
+   "flagged": [
+    2
+   ],
+   "seconds": 213,
+   "lookups": 1
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "Status SparseCountSparseOutputShapeFn(InferenceContext *c) {",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "  ShapeHandle unused;",
+     "changed": true
+    },
+    {
+     "n": 3,
+     "text": "  TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 2, &unused));",
+     "changed": true
+    },
+    {
+     "n": 4,
+     "text": "  auto rank = c->Dim(c->input(0), 1);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "  auto nvals = c->UnknownDim();",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "  c->set_output(0, c->Matrix(nvals, rank));  // out.indices",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "  c->set_output(1, c->Vector(nvals));        // out.values",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "  c->set_output(2, c->Vector(rank));         // out.dense_shape",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "  return Status::OK();",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": true,
+   "rationale": "The only externally influenced value, c->input(0), is guarded by WithRank(...,2) before c->Dim(input(0),1) reads dimension index 1, so the index is always in range; the remaining calls only build shape handles with no memory or size arithmetic that can be corrupted.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 94,
+   "lookups": 0
+  },
+  "right": true,
+  "first": "patched"
+ },
+ {
+  "id": "primevul-holdout-52",
+  "project": "tensorflow",
+  "file": "mutable_graph_view.cc",
+  "commit_url": "https://github.com/tensorflow/tensorflow/commit/045deec1cbdebb27d817008ad5df94d96a08b1bf",
+  "cwe": "CWE-476",
+  "cwe_name": "Null pointer dereference: a missing pointer is used as if it were there",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "bool IsIdentityConsumingSwitch(const MutableGraphView& graph,",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "                               const NodeDef& node) {",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "  if ((IsIdentity(node) || IsIdentityNSingleInput(node)) &&",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "      node.input_size() > 0) {",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "    TensorId tensor_id = ParseTensorName(node.input(0));",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "    if (IsTensorIdControlling(tensor_id)) {",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "      return false;",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "    NodeDef* input_node = graph.GetNode(tensor_id.node());",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "    return IsSwitch(*input_node);",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "  }",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "  return false;",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "The node name taken from attacker-controlled graph data (node.input(0)) is passed to graph.GetNode(), which yields nullptr for an unknown/empty name; the result is dereferenced in IsSwitch(*input_node) with no NULL check anywhere on the path, giving a crash/DoS.",
+   "cwe": "CWE-476",
+   "flagged": [
+    10,
+    11
+   ],
+   "seconds": 120,
+   "lookups": 1
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "bool IsIdentityConsumingSwitch(const MutableGraphView& graph,",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "                               const NodeDef& node) {",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "  if ((IsIdentity(node) || IsIdentityNSingleInput(node)) &&",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "      node.input_size() > 0) {",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "    TensorId tensor_id = ParseTensorName(node.input(0));",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "    if (IsTensorIdControlling(tensor_id)) {",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "      return false;",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "    NodeDef* input_node = graph.GetNode(tensor_id.node());",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "    if (input_node == nullptr) {",
+     "changed": true
+    },
+    {
+     "n": 12,
+     "text": "      return false;",
+     "changed": true
+    },
+    {
+     "n": 13,
+     "text": "    }",
+     "changed": true
+    },
+    {
+     "n": 14,
+     "text": "    return IsSwitch(*input_node);",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "  }",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "  return false;",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": true,
+   "rationale": "The only externally influenced data (node.input(0), parsed into a TensorId) is guarded: input_size() is checked before indexing, and the pointer returned by graph.GetNode is tested for nullptr before being dereferenced. No copy, size arithmetic or pointer lifetime hazard exists in this function.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 54,
+   "lookups": 0
+  },
+  "right": true,
+  "first": "patched"
+ },
+ {
+  "id": "primevul-holdout-83",
+  "project": "vim",
+  "file": "register.c",
+  "commit_url": "https://github.com/vim/vim/commit/44db8213d38c39877d2148eff6a72f4beccfb94e",
+  "cwe": "CWE-787",
+  "cwe_name": "Out-of-bounds write: data is written past the end of a buffer",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "yank_copy_line(struct block_def *bd, long y_idx, int exclude_trailing_space)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "    char_u\t*pnew;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "    if (exclude_trailing_space)",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "\tbd->endspaces = 0;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "    if ((pnew = alloc(bd->startspaces + bd->endspaces + bd->textlen + 1))",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "\t\t\t\t\t\t\t\t      == NULL)",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\treturn FAIL;",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "    y_current->y_array[y_idx] = pnew;",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "    vim_memset(pnew, ' ', (size_t)bd->startspaces);",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "    pnew += bd->startspaces;",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "    mch_memmove(pnew, bd->textstart, (size_t)bd->textlen);",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "    pnew += bd->textlen;",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "    vim_memset(pnew, ' ', (size_t)bd->endspaces);",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "    pnew += bd->endspaces;",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "    if (exclude_trailing_space)",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "    {",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "\tint s = bd->textlen + bd->endspaces;",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 21,
+     "text": "\twhile (VIM_ISWHITE(*(bd->textstart + s - 1)) && s > 0)",
+     "changed": true
+    },
+    {
+     "n": 22,
+     "text": "\t{",
+     "changed": false
+    },
+    {
+     "n": 23,
+     "text": "\t    s = s - (*mb_head_off)(bd->textstart, bd->textstart + s - 1) - 1;",
+     "changed": false
+    },
+    {
+     "n": 24,
+     "text": "\t    pnew--;",
+     "changed": false
+    },
+    {
+     "n": 25,
+     "text": "\t}",
+     "changed": false
+    },
+    {
+     "n": 26,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 27,
+     "text": "    *pnew = NUL;",
+     "changed": false
+    },
+    {
+     "n": 28,
+     "text": "    return OK;",
+     "changed": false
+    },
+    {
+     "n": 29,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "With exclude_trailing_space, endspaces is zeroed, so s = textlen; for an empty line s == 0 and the while condition dereferences bd->textstart + s - 1 (i.e. textstart[-1]) before the s > 0 test, an out-of-bounds read; s can also go negative via mb_head_off, reading further before the buffer.",
+   "cwe": "CWE-125",
+   "flagged": [
+    21,
+    23
+   ],
+   "seconds": 135,
+   "lookups": 1
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "yank_copy_line(struct block_def *bd, long y_idx, int exclude_trailing_space)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "    char_u\t*pnew;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "    if (exclude_trailing_space)",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "\tbd->endspaces = 0;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "    if ((pnew = alloc(bd->startspaces + bd->endspaces + bd->textlen + 1))",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "\t\t\t\t\t\t\t\t      == NULL)",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\treturn FAIL;",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "    y_current->y_array[y_idx] = pnew;",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "    vim_memset(pnew, ' ', (size_t)bd->startspaces);",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "    pnew += bd->startspaces;",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "    mch_memmove(pnew, bd->textstart, (size_t)bd->textlen);",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "    pnew += bd->textlen;",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "    vim_memset(pnew, ' ', (size_t)bd->endspaces);",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "    pnew += bd->endspaces;",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "    if (exclude_trailing_space)",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "    {",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "\tint s = bd->textlen + bd->endspaces;",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 21,
+     "text": "\twhile (s > 0 && VIM_ISWHITE(*(bd->textstart + s - 1)))",
+     "changed": true
+    },
+    {
+     "n": 22,
+     "text": "\t{",
+     "changed": false
+    },
+    {
+     "n": 23,
+     "text": "\t    s = s - (*mb_head_off)(bd->textstart, bd->textstart + s - 1) - 1;",
+     "changed": false
+    },
+    {
+     "n": 24,
+     "text": "\t    pnew--;",
+     "changed": false
+    },
+    {
+     "n": 25,
+     "text": "\t}",
+     "changed": false
+    },
+    {
+     "n": 26,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 27,
+     "text": "    *pnew = NUL;",
+     "changed": false
+    },
+    {
+     "n": 28,
+     "text": "    return OK;",
+     "changed": false
+    },
+    {
+     "n": 29,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": true,
+   "rationale": "The trailing-space scan is bounded by s > 0 and by mb_head_off, which never exceeds the offset from textstart, so pnew-- can never pass the start of the alloc'd buffer; the allocation covers startspaces+endspaces+textlen+1 and the NUL lands inside it. No reachable out-of-bounds write or read in this function.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 279,
+   "lookups": 1
+  },
+  "right": true,
+  "first": "vulnerable"
+ },
+ {
+  "id": "primevul-holdout-81",
+  "project": "barebox",
+  "file": "digest.c",
+  "commit_url": "https://github.com/saschahauer/barebox/commit/0a9f9a7410681e55362f8311537ebc7be9ad0fbe",
+  "cwe": "CWE-200",
+  "cwe_name": "Information exposure: data reaches someone who shouldn't see it",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "int digest_generic_verify(struct digest *d, const unsigned char *md)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "\tint ret;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "\tint len = digest_length(d);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "\tunsigned char *tmp;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "\ttmp = xmalloc(len);",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\tret = digest_final(d, tmp);",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "\tif (ret)",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "\t\tgoto end;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "\tret = memcmp(md, tmp, len);",
+     "changed": true
+    },
+    {
+     "n": 14,
+     "text": "\tret = ret ? -EINVAL : 0;",
+     "changed": true
+    },
+    {
+     "n": 15,
+     "text": "end:",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "\tfree(tmp);",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "\treturn ret;",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "The expected digest/MAC (md) is compared with memcmp, which returns as soon as a differing byte is found, so verification time depends on how many leading bytes match. An attacker able to measure that timing can recover the secret digest byte by byte; a constant-time comparison is missing.",
+   "cwe": "CWE-208",
+   "flagged": [
+    13
+   ],
+   "seconds": 136,
+   "lookups": 1
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "int digest_generic_verify(struct digest *d, const unsigned char *md)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "\tint ret;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "\tint len = digest_length(d);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "\tunsigned char *tmp;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "\ttmp = xmalloc(len);",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\tret = digest_final(d, tmp);",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "\tif (ret)",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "\t\tgoto end;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "\tif (crypto_memneq(md, tmp, len))",
+     "changed": true
+    },
+    {
+     "n": 14,
+     "text": "\t\tret = -EINVAL;",
+     "changed": true
+    },
+    {
+     "n": 15,
+     "text": "\telse",
+     "changed": true
+    },
+    {
+     "n": 16,
+     "text": "\t\tret = 0;",
+     "changed": true
+    },
+    {
+     "n": 17,
+     "text": "end:",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "\tfree(tmp);",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "\treturn ret;",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": true,
+   "rationale": "The buffer is sized from digest_length(d) and both the digest_final write and the crypto_memneq compare use that same len, so no overflow; the compare is constant-time, all paths set ret, and tmp is freed exactly once. Remaining concerns (NULL md, zero digest_size) depend on caller/algorithm state outside this function.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 72,
+   "lookups": 0
+  },
+  "right": true,
+  "first": "patched"
+ },
+ {
+  "id": "primevul-holdout-73",
+  "project": "deark",
+  "file": "fmtutil.c",
+  "commit_url": "https://github.com/jsummers/deark/commit/62acb7753b0e3c0d3ab3c15057b0a65222313334",
+  "cwe": "CWE-369",
+  "cwe_name": "Divide By Zero",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "void fmtutil_macbitmap_read_pixmap_only_fields(deark *c, dbuf *f, struct fmtutil_macbitmap_info *bi,",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "\ti64 pos)",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "\ti64 pixmap_version;",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "\ti64 pack_size;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "\ti64 plane_bytes;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "\ti64 n;",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\tde_dbg(c, \"additional PixMap header fields, at %d\", (int)pos);",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "\tde_dbg_indent(c, 1);",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "\tpixmap_version = dbuf_getu16be(f, pos+0);",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "\tde_dbg(c, \"pixmap version: %d\", (int)pixmap_version);",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "\tbi->packing_type = dbuf_getu16be(f, pos+2);",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "\tde_dbg(c, \"packing type: %d\", (int)bi->packing_type);",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "\tpack_size = dbuf_getu32be(f, pos+4);",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "\tde_dbg(c, \"pixel data length: %d\", (int)pack_size);",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 21,
+     "text": "\tbi->hdpi = pict_read_fixed(f, pos+8);",
+     "changed": false
+    },
+    {
+     "n": 22,
+     "text": "\tbi->vdpi = pict_read_fixed(f, pos+12);",
+     "changed": false
+    },
+    {
+     "n": 23,
+     "text": "\tde_dbg(c, \"dpi: %.2f\"DE_CHAR_TIMES\"%.2f\", bi->hdpi, bi->vdpi);",
+     "changed": false
+    },
+    {
+     "n": 24,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 25,
+     "text": "\tbi->pixeltype = dbuf_getu16be(f, pos+16);",
+     "changed": false
+    },
+    {
+     "n": 26,
+     "text": "\tbi->pixelsize = dbuf_getu16be(f, pos+18);",
+     "changed": false
+    },
+    {
+     "n": 27,
+     "text": "\tbi->cmpcount = dbuf_getu16be(f, pos+20);",
+     "changed": false
+    },
+    {
+     "n": 28,
+     "text": "\tbi->cmpsize = dbuf_getu16be(f, pos+22);",
+     "changed": false
+    },
+    {
+     "n": 29,
+     "text": "\tde_dbg(c, \"pixel type=%d, bits/pixel=%d, components/pixel=%d, bits/comp=%d\",",
+     "changed": false
+    },
+    {
+     "n": 30,
+     "text": "\t\t(int)bi->pixeltype, (int)bi->pixelsize, (int)bi->cmpcount, (int)bi->cmpsize);",
+     "changed": false
+    },
+    {
+     "n": 31,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 32,
+     "text": "\tbi->pdwidth = (bi->rowbytes*8)/bi->pixelsize;",
+     "changed": true
+    },
+    {
+     "n": 33,
+     "text": "\tif(bi->pdwidth < bi->npwidth) {",
+     "changed": false
+    },
+    {
+     "n": 34,
+     "text": "\t\tbi->pdwidth = bi->npwidth;",
+     "changed": false
+    },
+    {
+     "n": 35,
+     "text": "\t}",
+     "changed": false
+    },
+    {
+     "n": 36,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 37,
+     "text": "\tplane_bytes = dbuf_getu32be(f, pos+24);",
+     "changed": false
+    },
+    {
+     "n": 38,
+     "text": "\tde_dbg(c, \"plane bytes: %d\", (int)plane_bytes);",
+     "changed": false
+    },
+    {
+     "n": 39,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 40,
+     "text": "\tbi->pmTable = (u32)dbuf_getu32be(f, pos+28);",
+     "changed": false
+    },
+    {
+     "n": 41,
+     "text": "\tde_dbg(c, \"pmTable: 0x%08x\", (unsigned int)bi->pmTable);",
+     "changed": false
+    },
+    {
+     "n": 42,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 43,
+     "text": "\tn = dbuf_getu32be(f, pos+32);",
+     "changed": false
+    },
+    {
+     "n": 44,
+     "text": "\tde_dbg(c, \"pmReserved: 0x%08x\", (unsigned int)n);",
+     "changed": false
+    },
+    {
+     "n": 45,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 46,
+     "text": "\tde_dbg_indent(c, -1);",
+     "changed": false
+    },
+    {
+     "n": 47,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "bi->pixelsize is taken verbatim from the file at pos+18 (dbuf_getu16be returns 0 for a zero field) and is used as the divisor in (bi->rowbytes*8)/bi->pixelsize with no zero check on any path, so a crafted PixMap with bits/pixel=0 causes an integer division by zero and crashes the parser.",
+   "cwe": "CWE-369",
+   "flagged": [
+    32
+   ],
+   "seconds": 86,
+   "lookups": 1
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "void fmtutil_macbitmap_read_pixmap_only_fields(deark *c, dbuf *f, struct fmtutil_macbitmap_info *bi,",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "\ti64 pos)",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "\ti64 pixmap_version;",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "\ti64 pack_size;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "\ti64 plane_bytes;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "\ti64 n;",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\tde_dbg(c, \"additional PixMap header fields, at %d\", (int)pos);",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "\tde_dbg_indent(c, 1);",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "\tpixmap_version = dbuf_getu16be(f, pos+0);",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "\tde_dbg(c, \"pixmap version: %d\", (int)pixmap_version);",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "\tbi->packing_type = dbuf_getu16be(f, pos+2);",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "\tde_dbg(c, \"packing type: %d\", (int)bi->packing_type);",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "\tpack_size = dbuf_getu32be(f, pos+4);",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "\tde_dbg(c, \"pixel data length: %d\", (int)pack_size);",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 21,
+     "text": "\tbi->hdpi = pict_read_fixed(f, pos+8);",
+     "changed": false
+    },
+    {
+     "n": 22,
+     "text": "\tbi->vdpi = pict_read_fixed(f, pos+12);",
+     "changed": false
+    },
+    {
+     "n": 23,
+     "text": "\tde_dbg(c, \"dpi: %.2f\"DE_CHAR_TIMES\"%.2f\", bi->hdpi, bi->vdpi);",
+     "changed": false
+    },
+    {
+     "n": 24,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 25,
+     "text": "\tbi->pixeltype = dbuf_getu16be(f, pos+16);",
+     "changed": false
+    },
+    {
+     "n": 26,
+     "text": "\tbi->pixelsize = dbuf_getu16be(f, pos+18);",
+     "changed": false
+    },
+    {
+     "n": 27,
+     "text": "\tbi->cmpcount = dbuf_getu16be(f, pos+20);",
+     "changed": false
+    },
+    {
+     "n": 28,
+     "text": "\tbi->cmpsize = dbuf_getu16be(f, pos+22);",
+     "changed": false
+    },
+    {
+     "n": 29,
+     "text": "\tde_dbg(c, \"pixel type=%d, bits/pixel=%d, components/pixel=%d, bits/comp=%d\",",
+     "changed": false
+    },
+    {
+     "n": 30,
+     "text": "\t\t(int)bi->pixeltype, (int)bi->pixelsize, (int)bi->cmpcount, (int)bi->cmpsize);",
+     "changed": false
+    },
+    {
+     "n": 31,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 32,
+     "text": "\tif(bi->pixelsize>0) {",
+     "changed": true
+    },
+    {
+     "n": 33,
+     "text": "\t\tbi->pdwidth = (bi->rowbytes*8)/bi->pixelsize;",
+     "changed": true
+    },
+    {
+     "n": 34,
+     "text": "\t}",
+     "changed": true
+    },
+    {
+     "n": 35,
+     "text": "\tif(bi->pdwidth < bi->npwidth) {",
+     "changed": false
+    },
+    {
+     "n": 36,
+     "text": "\t\tbi->pdwidth = bi->npwidth;",
+     "changed": false
+    },
+    {
+     "n": 37,
+     "text": "\t}",
+     "changed": false
+    },
+    {
+     "n": 38,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 39,
+     "text": "\tplane_bytes = dbuf_getu32be(f, pos+24);",
+     "changed": false
+    },
+    {
+     "n": 40,
+     "text": "\tde_dbg(c, \"plane bytes: %d\", (int)plane_bytes);",
+     "changed": false
+    },
+    {
+     "n": 41,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 42,
+     "text": "\tbi->pmTable = (u32)dbuf_getu32be(f, pos+28);",
+     "changed": false
+    },
+    {
+     "n": 43,
+     "text": "\tde_dbg(c, \"pmTable: 0x%08x\", (unsigned int)bi->pmTable);",
+     "changed": false
+    },
+    {
+     "n": 44,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 45,
+     "text": "\tn = dbuf_getu32be(f, pos+32);",
+     "changed": false
+    },
+    {
+     "n": 46,
+     "text": "\tde_dbg(c, \"pmReserved: 0x%08x\", (unsigned int)n);",
+     "changed": false
+    },
+    {
+     "n": 47,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 48,
+     "text": "\tde_dbg_indent(c, -1);",
+     "changed": false
+    },
+    {
+     "n": 49,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": true,
+   "rationale": "All field reads go through the bounds-checked dbuf accessors, and the only arithmetic hazard, the division by bi->pixelsize, is guarded by pixelsize>0 (the value comes from a u16 read, so it cannot be negative). No unchecked copy, size computation or dereference exists in this function.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 38,
+   "lookups": 0
+  },
+  "right": true,
+  "first": "vulnerable"
+ },
+ {
+  "id": "primevul-holdout-51",
+  "project": "v4l2loopback",
+  "file": "v4l2loopback.c",
+  "commit_url": "https://github.com/umlaeute/v4l2loopback/commit/e4cd225557486c420f6a34411f98c575effd43dd",
+  "cwe": "CWE-134",
+  "cwe_name": "Use of Externally-Controlled Format String",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "static int vidioc_querycap(struct file *file, void *priv,",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "\t\t\t   struct v4l2_capability *cap)",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "\tstruct v4l2_loopback_device *dev = v4l2loopback_getdevice(file);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "\tint labellen = (sizeof(cap->card) < sizeof(dev->card_label)) ?",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "\t\t\t       sizeof(cap->card) :",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "\t\t\t\t     sizeof(dev->card_label);",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "\tint device_nr =",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\t\t((struct v4l2loopback_private *)video_get_drvdata(dev->vdev))",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "\t\t\t->device_nr;",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "\t__u32 capabilities = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "\tstrlcpy(cap->driver, \"v4l2 loopback\", sizeof(cap->driver));",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "\tsnprintf(cap->card, labellen, dev->card_label);",
+     "changed": true
+    },
+    {
+     "n": 15,
+     "text": "\tsnprintf(cap->bus_info, sizeof(cap->bus_info),",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "\t\t \"platform:v4l2loopback-%03d\", device_nr);",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 1, 0)",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "\t/* since 3.1.0, the v4l2-core system is supposed to set the version */",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "\tcap->version = V4L2LOOPBACK_VERSION_CODE;",
+     "changed": false
+    },
+    {
+     "n": 21,
+     "text": "#endif",
+     "changed": false
+    },
+    {
+     "n": 22,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 23,
+     "text": "#ifdef V4L2_CAP_VIDEO_M2M",
+     "changed": false
+    },
+    {
+     "n": 24,
+     "text": "\tcapabilities |= V4L2_CAP_VIDEO_M2M;",
+     "changed": false
+    },
+    {
+     "n": 25,
+     "text": "#endif /* V4L2_CAP_VIDEO_M2M */",
+     "changed": false
+    },
+    {
+     "n": 26,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 27,
+     "text": "\tif (dev->announce_all_caps) {",
+     "changed": false
+    },
+    {
+     "n": 28,
+     "text": "\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT;",
+     "changed": false
+    },
+    {
+     "n": 29,
+     "text": "\t} else {",
+     "changed": false
+    },
+    {
+     "n": 30,
+     "text": "\t\tif (dev->ready_for_capture) {",
+     "changed": false
+    },
+    {
+     "n": 31,
+     "text": "\t\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE;",
+     "changed": false
+    },
+    {
+     "n": 32,
+     "text": "\t\t}",
+     "changed": false
+    },
+    {
+     "n": 33,
+     "text": "\t\tif (dev->ready_for_output) {",
+     "changed": false
+    },
+    {
+     "n": 34,
+     "text": "\t\t\tcapabilities |= V4L2_CAP_VIDEO_OUTPUT;",
+     "changed": false
+    },
+    {
+     "n": 35,
+     "text": "\t\t}",
+     "changed": false
+    },
+    {
+     "n": 36,
+     "text": "\t}",
+     "changed": false
+    },
+    {
+     "n": 37,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 38,
+     "text": "#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)",
+     "changed": false
+    },
+    {
+     "n": 39,
+     "text": "\tdev->vdev->device_caps =",
+     "changed": false
+    },
+    {
+     "n": 40,
+     "text": "#endif /* >=linux-4.7.0 */",
+     "changed": false
+    },
+    {
+     "n": 41,
+     "text": "\t\tcap->device_caps = cap->capabilities = capabilities;",
+     "changed": false
+    },
+    {
+     "n": 42,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 43,
+     "text": "#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)",
+     "changed": false
+    },
+    {
+     "n": 44,
+     "text": "\tcap->capabilities |= V4L2_CAP_DEVICE_CAPS;",
+     "changed": false
+    },
+    {
+     "n": 45,
+     "text": "#endif",
+     "changed": false
+    },
+    {
+     "n": 46,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 47,
+     "text": "\tmemset(cap->reserved, 0, sizeof(cap->reserved));",
+     "changed": false
+    },
+    {
+     "n": 48,
+     "text": "\treturn 0;",
+     "changed": false
+    },
+    {
+     "n": 49,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "snprintf(cap->card, labellen, dev->card_label) passes the device's card_label (settable from outside this function) as the format string instead of as a \"%s\" argument, so embedded specifiers like %s/%n are interpreted, causing stack reads or writes. The labellen clamp does not address this.",
+   "cwe": "CWE-134",
+   "flagged": [
+    14
+   ],
+   "seconds": 117,
+   "lookups": 1
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "static int vidioc_querycap(struct file *file, void *priv,",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "\t\t\t   struct v4l2_capability *cap)",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "\tstruct v4l2_loopback_device *dev = v4l2loopback_getdevice(file);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "\tint labellen = (sizeof(cap->card) < sizeof(dev->card_label)) ?",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "\t\t\t       sizeof(cap->card) :",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "\t\t\t\t     sizeof(dev->card_label);",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "\tint device_nr =",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\t\t((struct v4l2loopback_private *)video_get_drvdata(dev->vdev))",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "\t\t\t->device_nr;",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "\t__u32 capabilities = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "\tstrlcpy(cap->driver, \"v4l2 loopback\", sizeof(cap->driver));",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "\tsnprintf(cap->card, labellen, \"%s\", dev->card_label);",
+     "changed": true
+    },
+    {
+     "n": 15,
+     "text": "\tsnprintf(cap->bus_info, sizeof(cap->bus_info),",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "\t\t \"platform:v4l2loopback-%03d\", device_nr);",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 1, 0)",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "\t/* since 3.1.0, the v4l2-core system is supposed to set the version */",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "\tcap->version = V4L2LOOPBACK_VERSION_CODE;",
+     "changed": false
+    },
+    {
+     "n": 21,
+     "text": "#endif",
+     "changed": false
+    },
+    {
+     "n": 22,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 23,
+     "text": "#ifdef V4L2_CAP_VIDEO_M2M",
+     "changed": false
+    },
+    {
+     "n": 24,
+     "text": "\tcapabilities |= V4L2_CAP_VIDEO_M2M;",
+     "changed": false
+    },
+    {
+     "n": 25,
+     "text": "#endif /* V4L2_CAP_VIDEO_M2M */",
+     "changed": false
+    },
+    {
+     "n": 26,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 27,
+     "text": "\tif (dev->announce_all_caps) {",
+     "changed": false
+    },
+    {
+     "n": 28,
+     "text": "\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT;",
+     "changed": false
+    },
+    {
+     "n": 29,
+     "text": "\t} else {",
+     "changed": false
+    },
+    {
+     "n": 30,
+     "text": "\t\tif (dev->ready_for_capture) {",
+     "changed": false
+    },
+    {
+     "n": 31,
+     "text": "\t\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE;",
+     "changed": false
+    },
+    {
+     "n": 32,
+     "text": "\t\t}",
+     "changed": false
+    },
+    {
+     "n": 33,
+     "text": "\t\tif (dev->ready_for_output) {",
+     "changed": false
+    },
+    {
+     "n": 34,
+     "text": "\t\t\tcapabilities |= V4L2_CAP_VIDEO_OUTPUT;",
+     "changed": false
+    },
+    {
+     "n": 35,
+     "text": "\t\t}",
+     "changed": false
+    },
+    {
+     "n": 36,
+     "text": "\t}",
+     "changed": false
+    },
+    {
+     "n": 37,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 38,
+     "text": "#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)",
+     "changed": false
+    },
+    {
+     "n": 39,
+     "text": "\tdev->vdev->device_caps =",
+     "changed": false
+    },
+    {
+     "n": 40,
+     "text": "#endif /* >=linux-4.7.0 */",
+     "changed": false
+    },
+    {
+     "n": 41,
+     "text": "\t\tcap->device_caps = cap->capabilities = capabilities;",
+     "changed": false
+    },
+    {
+     "n": 42,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 43,
+     "text": "#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)",
+     "changed": false
+    },
+    {
+     "n": 44,
+     "text": "\tcap->capabilities |= V4L2_CAP_DEVICE_CAPS;",
+     "changed": false
+    },
+    {
+     "n": 45,
+     "text": "#endif",
+     "changed": false
+    },
+    {
+     "n": 46,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 47,
+     "text": "\tmemset(cap->reserved, 0, sizeof(cap->reserved));",
+     "changed": false
+    },
+    {
+     "n": 48,
+     "text": "\treturn 0;",
+     "changed": false
+    },
+    {
+     "n": 49,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": true,
+   "rationale": "All writes into the caller-supplied `cap` are size-bounded: `labellen` is the minimum of the destination and source array sizes, `bus_info`/`driver` use sizeof, and `reserved` is zeroed. The only unchecked pointers (dev, drvdata) are established during device setup/open, not attacker-controlled values.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 82,
+   "lookups": 0
+  },
+  "right": true,
+  "first": "patched"
+ },
+ {
+  "id": "primevul-holdout-5",
+  "project": "gpac",
+  "file": "hint_track.c",
+  "commit_url": "https://github.com/gpac/gpac/commit/ad18ece95fa064efc0995c4ab2c985f77fb166ec",
+  "cwe": "CWE-476",
+  "cwe_name": "Null pointer dereference: a missing pointer is used as if it were there",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "u32 GetHintFormat(GF_TrackBox *trak)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "\tGF_HintMediaHeaderBox *hmhd = (GF_HintMediaHeaderBox *)trak->Media->information->InfoHeader;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "\tif (hmhd->type != GF_ISOM_BOX_TYPE_HMHD)",
+     "changed": true
+    },
+    {
+     "n": 5,
+     "text": "\t\treturn 0;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "\t\t",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "\tif (!hmhd || !hmhd->subType) {",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "\t\tGF_Box *a = (GF_Box *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, 0);",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\t\tif (!hmhd) return a ? a->type : 0;",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "\t\tif (a) hmhd->subType = a->type;",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "\t\treturn hmhd->subType;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "\t}",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "\treturn hmhd->subType;",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "hmhd is taken from trak->Media->information->InfoHeader and dereferenced at line 4 (hmhd->type) before the NULL test at line 7, which itself shows a NULL InfoHeader is expected. A NULL value therefore causes a null-pointer dereference before any guard runs.",
+   "cwe": "CWE-476",
+   "flagged": [
+    4
+   ],
+   "seconds": 66,
+   "lookups": 0
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "u32 GetHintFormat(GF_TrackBox *trak)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "\tGF_HintMediaHeaderBox *hmhd = (GF_HintMediaHeaderBox *)trak->Media->information->InfoHeader;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "\tif (!hmhd || (hmhd->type != GF_ISOM_BOX_TYPE_HMHD))",
+     "changed": true
+    },
+    {
+     "n": 5,
+     "text": "\t\treturn 0;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "\t\t",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "\tif (!hmhd || !hmhd->subType) {",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "\t\tGF_Box *a = (GF_Box *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, 0);",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "\t\tif (!hmhd) return a ? a->type : 0;",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "\t\tif (a) hmhd->subType = a->type;",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "\t\treturn hmhd->subType;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "\t}",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "\treturn hmhd->subType;",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": false,
+   "rationale": "Line 3 walks trak->Media->information->InfoHeader with no NULL test on trak, Media or information; a file whose trak box lacks a mdia/info child (or a NULL trak argument) makes this chained dereference fault before any of the later hmhd guards run.",
+   "cwe": "CWE-476",
+   "flagged": [
+    3
+   ],
+   "seconds": 198,
+   "lookups": 1
+  },
+  "right": false,
+  "first": "vulnerable"
+ },
+ {
+  "id": "primevul-holdout-61",
+  "project": "qemu",
+  "file": "virtio-serial-bus.c",
+  "commit_url": "https://github.com/bonzini/qemu/commit/7882080388be5088e72c425b02223c02e6cb4295",
+  "cwe": "CWE-787",
+  "cwe_name": "Out-of-bounds write: data is written past the end of a buffer",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "static size_t send_control_msg(VirtIOSerial *vser, void *buf, size_t len)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "    VirtQueueElement elem;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "    VirtQueue *vq;",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "    vq = vser->c_ivq;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "    if (!virtio_queue_ready(vq)) {",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "        return 0;",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "    if (!virtqueue_pop(vq, &elem)) {",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "        return 0;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "    memcpy(elem.in_sg[0].iov_base, buf, len);",
+     "changed": true
+    },
+    {
+     "n": 15,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "    virtqueue_push(vq, &elem, len);",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "    virtio_notify(VIRTIO_DEVICE(vser), vq);",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "    return len;",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "The caller-controlled length `len` is copied into the guest-supplied buffer elem.in_sg[0].iov_base with no comparison against elem.in_sg[0].iov_len (the descriptor's actual size), so an oversized len writes past the end of the mapped buffer, causing a heap/out-of-bounds write.",
+   "cwe": "CWE-787",
+   "flagged": [
+    13
+   ],
+   "seconds": 98,
+   "lookups": 1
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "static size_t send_control_msg(VirtIOSerial *vser, void *buf, size_t len)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "    VirtQueueElement elem;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "    VirtQueue *vq;",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "    vq = vser->c_ivq;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "    if (!virtio_queue_ready(vq)) {",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "        return 0;",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "    if (!virtqueue_pop(vq, &elem)) {",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "        return 0;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "    /* TODO: detect a buffer that's too short, set NEEDS_RESET */",
+     "changed": true
+    },
+    {
+     "n": 15,
+     "text": "    iov_from_buf(elem.in_sg, elem.in_num, 0, buf, len);",
+     "changed": true
+    },
+    {
+     "n": 16,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "    virtqueue_push(vq, &elem, len);",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "    virtio_notify(VIRTIO_DEVICE(vser), vq);",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "    return len;",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": false,
+   "rationale": "The guest-controlled destination scatter/gather total (elem.in_num/in_sg) is never compared against len before iov_from_buf, and virtqueue_push unconditionally reports len bytes written, so a short guest buffer yields an unchecked/short write with the full length claimed (the TODO admits the missing check).",
+   "cwe": "CWE-119",
+   "flagged": [
+    15,
+    17
+   ],
+   "seconds": 338,
+   "lookups": 1
+  },
+  "right": false,
+  "first": "vulnerable"
+ },
+ {
+  "id": "primevul-holdout-54",
+  "project": "tensorflow",
+  "file": "common.c",
+  "commit_url": "https://github.com/tensorflow/tensorflow/commit/a1e1511dde36b3f8aa27a6ec630838e7ea40e091",
+  "cwe": "CWE-190",
+  "cwe_name": "Integer overflow: a number grows past what its type can hold",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "TfLiteIntArray* TfLiteIntArrayCreate(int size) {",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "  int alloc_size = TfLiteIntArrayGetSizeInBytes(size);",
+     "changed": true
+    },
+    {
+     "n": 3,
+     "text": "  if (alloc_size <= 0) return NULL;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "  TfLiteIntArray* ret = (TfLiteIntArray*)malloc(alloc_size);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "  if (!ret) return ret;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "  ret->size = size;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "  return ret;",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": false,
+   "rationale": "The only untrusted value, `size`, is funnelled through TfLiteIntArrayGetSizeInBytes and gated by `alloc_size <= 0`, which rejects negative/overflowed-to-nonpositive results, and malloc's return is checked before `ret->size` is written. No unchecked copy, arithmetic or dereference is visible in this function; any truncation would live in the unseen helper.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 70,
+   "lookups": 0
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "TfLiteIntArray* TfLiteIntArrayCreate(int size) {",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "  size_t alloc_size = TfLiteIntArrayGetSizeInBytes(size);",
+     "changed": true
+    },
+    {
+     "n": 3,
+     "text": "  if (alloc_size <= 0) return NULL;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "  TfLiteIntArray* ret = (TfLiteIntArray*)malloc(alloc_size);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "  if (!ret) return ret;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "  ret->size = size;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "  return ret;",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": false,
+   "rationale": "Untrusted int `size` feeds the allocation-size computation; the only guard, `alloc_size <= 0`, compares an unsigned size_t, so it can never catch a wrapped/truncated value. A hostile size then yields a small malloc while ret->size records the large requested count, giving a heap buffer overflow on later data[] access.",
+   "cwe": "CWE-190",
+   "flagged": [
+    2,
+    3,
+    6
+   ],
+   "seconds": 123,
+   "lookups": 1
+  },
+  "right": false,
+  "first": "patched"
+ },
+ {
+  "id": "primevul-holdout-86",
+  "project": "mruby",
+  "file": "",
+  "commit_url": "https://github.com/mruby/mruby/commit/b1d0296a937fe278239bdfac840a3fd0e93b3ee9",
+  "cwe": "CWE-787",
+  "cwe_name": "Out-of-bounds write: data is written past the end of a buffer",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "mrb_remove_method(mrb_state *mrb, struct RClass *c, mrb_sym mid)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "  mt_tbl *h;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "  MRB_CLASS_ORIGIN(c);",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "  h = c->mt;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "  if (h && mt_del(mrb, h, mid)) return;",
+     "changed": true
+    },
+    {
+     "n": 9,
+     "text": "  mrb_name_error(mrb, mid, \"method '%n' not defined in %C\", mid, c);",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": false,
+   "rationale": "The method table pointer `h` is NULL-tested before `mt_del`, the format string passed to mrb_name_error is a compile-time literal (no format-string injection), and no size arithmetic, copy or unchecked dereference of attacker-controlled data occurs. Remaining concerns (NULL class, iclass state) are external program-state assumptions, not visible defects.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 43,
+   "lookups": 0
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "mrb_remove_method(mrb_state *mrb, struct RClass *c, mrb_sym mid)",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "{",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "  mt_tbl *h;",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "  MRB_CLASS_ORIGIN(c);",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "  h = c->mt;",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "  if (h && mt_del(mrb, h, mid)) {",
+     "changed": true
+    },
+    {
+     "n": 9,
+     "text": "    mrb_mc_clear_by_class(mrb, c);",
+     "changed": true
+    },
+    {
+     "n": 10,
+     "text": "    return;",
+     "changed": true
+    },
+    {
+     "n": 11,
+     "text": "  }",
+     "changed": true
+    },
+    {
+     "n": 12,
+     "text": "  mrb_name_error(mrb, mid, \"method '%n' not defined in %C\", mid, c);",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": true,
+   "rationale": "The method table pointer h is checked before mt_del, and every failure path ends in mrb_name_error raising an exception; there are no copies, size arithmetic, allocations or format-string inputs, and the only remaining concern (c being NULL) is an assumption about caller state, not a visible defect.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 205,
+   "lookups": 1
+  },
+  "right": false,
+  "first": "patched"
+ },
+ {
+  "id": "primevul-holdout-88",
+  "project": "tensorflow",
+  "file": "stage_op.cc",
+  "commit_url": "https://github.com/tensorflow/tensorflow/commit/cebe3c45d76357d201c65bdbbf0dbe6e8a63bbdb",
+  "cwe": "CWE-703",
+  "cwe_name": "Improper Check or Handling of Exceptional Conditions",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "  void Compute(OpKernelContext* ctx) override {",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "    Buffer* buf = nullptr;",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "    OP_REQUIRES_OK(ctx, GetBuffer(ctx, def(), &buf));",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "    core::ScopedUnref scope(buf);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "    Buffer::Tuple tuple;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "    std::size_t index = ctx->input(0).scalar<int>()();",
+     "changed": true
+    },
+    {
+     "n": 8,
+     "text": "",
+     "changed": true
+    },
+    {
+     "n": 9,
+     "text": "    OP_REQUIRES_OK(ctx, buf->Peek(index, &tuple));",
+     "changed": true
+    },
+    {
+     "n": 10,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "    OP_REQUIRES(",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "        ctx, tuple.size() == (size_t)ctx->num_outputs(),",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "        errors::InvalidArgument(\"Mismatch stage/unstage: \", tuple.size(),",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "                                \" vs. \", ctx->num_outputs()));",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "    for (size_t i = 0; i < tuple.size(); ++i) {",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "      ctx->set_output(i, tuple[i]);",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "  }",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": false,
+   "rationale": "The only externally controlled value, the int index widened to size_t, is passed to buf->Peek(), which reports out-of-range via status and is gated by OP_REQUIRES_OK; the output loop is bounded by tuple.size() matched against num_outputs(). No unchecked sink is visible.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 62,
+   "lookups": 0
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "  void Compute(OpKernelContext* ctx) override {",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "    Buffer* buf = nullptr;",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "    OP_REQUIRES_OK(ctx, GetBuffer(ctx, def(), &buf));",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "    core::ScopedUnref scope(buf);",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "    Buffer::Tuple tuple;",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "    buf->Get(&tuple);",
+     "changed": true
+    },
+    {
+     "n": 8,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "    OP_REQUIRES(",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "        ctx, tuple.size() == (size_t)ctx->num_outputs(),",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "        errors::InvalidArgument(\"Mismatch stage/unstage: \", tuple.size(),",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "                                \" vs. \", ctx->num_outputs()));",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "    for (size_t i = 0; i < tuple.size(); ++i) {",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "      ctx->set_output(i, tuple[i]);",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "  }",
+     "changed": false
+    }
+   ],
+   "verdict": "benign",
+   "right": true,
+   "rationale": "The only externally influenced loop bound, tuple.size(), is explicitly required to equal ctx->num_outputs() before the set_output loop, so no out-of-range index is reachable; buf is used only after OP_REQUIRES_OK succeeds, and no unchecked arithmetic or copy exists.",
+   "cwe": null,
+   "flagged": [],
+   "seconds": 80,
+   "lookups": 0
+  },
+  "right": false,
+  "first": "vulnerable"
+ },
+ {
+  "id": "primevul-holdout-16",
+  "project": "tensorflow",
+  "file": "common.h",
+  "commit_url": "https://github.com/tensorflow/tensorflow/commit/8c6f391a2282684a25cbfec7687bd5d35261a209",
+  "cwe": "CWE-369",
+  "cwe_name": "Divide By Zero",
+  "lang": "c",
+  "vulnerable": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "inline void BiasAndClamp(float clamp_min, float clamp_max, int bias_size,",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "                         const float* bias_data, int array_size,",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "                         float* array_data) {",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "  // Note: see b/132215220: in May 2019 we thought it would be OK to replace",
+     "changed": false
+    },
+    {
+     "n": 5,
+     "text": "  // this with the Eigen one-liner:",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "  //   return (array.colwise() + bias).cwiseMin(clamp_max).cwiseMin(clamp_max).",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "  // This turned out to severely regress performance: +4ms (i.e. 8%) on",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "  // MobileNet v2 / 1.0 / 224. So we keep custom NEON code for now.",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "  TFLITE_DCHECK_EQ((array_size % bias_size), 0);",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "#ifdef USE_NEON",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "  float* array_ptr = array_data;",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "  float* array_end_ptr = array_ptr + array_size;",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "  const auto clamp_min_vec = vdupq_n_f32(clamp_min);",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "  const auto clamp_max_vec = vdupq_n_f32(clamp_max);",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "  for (; array_ptr != array_end_ptr; array_ptr += bias_size) {",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "    int i = 0;",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "    for (; i <= bias_size - 16; i += 16) {",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "      auto b0 = vld1q_f32(bias_data + i);",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "      auto b1 = vld1q_f32(bias_data + i + 4);",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "      auto b2 = vld1q_f32(bias_data + i + 8);",
+     "changed": false
+    },
+    {
+     "n": 21,
+     "text": "      auto b3 = vld1q_f32(bias_data + i + 12);",
+     "changed": false
+    },
+    {
+     "n": 22,
+     "text": "      auto a0 = vld1q_f32(array_ptr + i);",
+     "changed": false
+    },
+    {
+     "n": 23,
+     "text": "      auto a1 = vld1q_f32(array_ptr + i + 4);",
+     "changed": false
+    },
+    {
+     "n": 24,
+     "text": "      auto a2 = vld1q_f32(array_ptr + i + 8);",
+     "changed": false
+    },
+    {
+     "n": 25,
+     "text": "      auto a3 = vld1q_f32(array_ptr + i + 12);",
+     "changed": false
+    },
+    {
+     "n": 26,
+     "text": "      auto x0 = vaddq_f32(a0, b0);",
+     "changed": false
+    },
+    {
+     "n": 27,
+     "text": "      auto x1 = vaddq_f32(a1, b1);",
+     "changed": false
+    },
+    {
+     "n": 28,
+     "text": "      auto x2 = vaddq_f32(a2, b2);",
+     "changed": false
+    },
+    {
+     "n": 29,
+     "text": "      auto x3 = vaddq_f32(a3, b3);",
+     "changed": false
+    },
+    {
+     "n": 30,
+     "text": "      x0 = vmaxq_f32(clamp_min_vec, x0);",
+     "changed": false
+    },
+    {
+     "n": 31,
+     "text": "      x1 = vmaxq_f32(clamp_min_vec, x1);",
+     "changed": false
+    },
+    {
+     "n": 32,
+     "text": "      x2 = vmaxq_f32(clamp_min_vec, x2);",
+     "changed": false
+    },
+    {
+     "n": 33,
+     "text": "      x3 = vmaxq_f32(clamp_min_vec, x3);",
+     "changed": false
+    },
+    {
+     "n": 34,
+     "text": "      x0 = vminq_f32(clamp_max_vec, x0);",
+     "changed": false
+    },
+    {
+     "n": 35,
+     "text": "      x1 = vminq_f32(clamp_max_vec, x1);",
+     "changed": false
+    },
+    {
+     "n": 36,
+     "text": "      x2 = vminq_f32(clamp_max_vec, x2);",
+     "changed": false
+    },
+    {
+     "n": 37,
+     "text": "      x3 = vminq_f32(clamp_max_vec, x3);",
+     "changed": false
+    },
+    {
+     "n": 38,
+     "text": "      vst1q_f32(array_ptr + i, x0);",
+     "changed": false
+    },
+    {
+     "n": 39,
+     "text": "      vst1q_f32(array_ptr + i + 4, x1);",
+     "changed": false
+    },
+    {
+     "n": 40,
+     "text": "      vst1q_f32(array_ptr + i + 8, x2);",
+     "changed": false
+    },
+    {
+     "n": 41,
+     "text": "      vst1q_f32(array_ptr + i + 12, x3);",
+     "changed": false
+    },
+    {
+     "n": 42,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 43,
+     "text": "    for (; i <= bias_size - 4; i += 4) {",
+     "changed": false
+    },
+    {
+     "n": 44,
+     "text": "      auto b = vld1q_f32(bias_data + i);",
+     "changed": false
+    },
+    {
+     "n": 45,
+     "text": "      auto a = vld1q_f32(array_ptr + i);",
+     "changed": false
+    },
+    {
+     "n": 46,
+     "text": "      auto x = vaddq_f32(a, b);",
+     "changed": false
+    },
+    {
+     "n": 47,
+     "text": "      x = vmaxq_f32(clamp_min_vec, x);",
+     "changed": false
+    },
+    {
+     "n": 48,
+     "text": "      x = vminq_f32(clamp_max_vec, x);",
+     "changed": false
+    },
+    {
+     "n": 49,
+     "text": "      vst1q_f32(array_ptr + i, x);",
+     "changed": false
+    },
+    {
+     "n": 50,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 51,
+     "text": "    for (; i < bias_size; i++) {",
+     "changed": false
+    },
+    {
+     "n": 52,
+     "text": "      array_ptr[i] = ActivationFunctionWithMinMax(array_ptr[i] + bias_data[i],",
+     "changed": false
+    },
+    {
+     "n": 53,
+     "text": "                                                  clamp_min, clamp_max);",
+     "changed": false
+    },
+    {
+     "n": 54,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 55,
+     "text": "  }",
+     "changed": false
+    },
+    {
+     "n": 56,
+     "text": "#else  // not NEON",
+     "changed": false
+    },
+    {
+     "n": 57,
+     "text": "  for (int array_offset = 0; array_offset < array_size;",
+     "changed": false
+    },
+    {
+     "n": 58,
+     "text": "       array_offset += bias_size) {",
+     "changed": false
+    },
+    {
+     "n": 59,
+     "text": "    for (int i = 0; i < bias_size; i++) {",
+     "changed": false
+    },
+    {
+     "n": 60,
+     "text": "      array_data[array_offset + i] = ActivationFunctionWithMinMax(",
+     "changed": false
+    },
+    {
+     "n": 61,
+     "text": "          array_data[array_offset + i] + bias_data[i], clamp_min, clamp_max);",
+     "changed": false
+    },
+    {
+     "n": 62,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 63,
+     "text": "  }",
+     "changed": false
+    },
+    {
+     "n": 64,
+     "text": "#endif",
+     "changed": false
+    },
+    {
+     "n": 65,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": true,
+   "rationale": "bias_size/array_size are caller-controlled and only guarded by TFLITE_DCHECK_EQ (debug-only, and it does not reject bias_size > array_size or a non-dividing stride). The outer loop at line 15 ends on exact pointer equality, so it walks past array_end_ptr and vst1q_f32/array_ptr[i] write past the end of array_data (also reading bias_data out of bounds).",
+   "cwe": "CWE-787",
+   "flagged": [
+    9,
+    15,
+    38,
+    39,
+    40,
+    41,
+    49,
+    52
+   ],
+   "seconds": 111,
+   "lookups": 1
+  },
+  "patched": {
+   "lines": [
+    {
+     "n": 1,
+     "text": "inline void BiasAndClamp(float clamp_min, float clamp_max, int bias_size,",
+     "changed": false
+    },
+    {
+     "n": 2,
+     "text": "                         const float* bias_data, int array_size,",
+     "changed": false
+    },
+    {
+     "n": 3,
+     "text": "                         float* array_data) {",
+     "changed": false
+    },
+    {
+     "n": 4,
+     "text": "  if (bias_size == 0) return;",
+     "changed": true
+    },
+    {
+     "n": 5,
+     "text": "  // Note: see b/132215220: in May 2019 we thought it would be OK to replace",
+     "changed": false
+    },
+    {
+     "n": 6,
+     "text": "  // this with the Eigen one-liner:",
+     "changed": false
+    },
+    {
+     "n": 7,
+     "text": "  //   return (array.colwise() + bias).cwiseMin(clamp_max).cwiseMin(clamp_max).",
+     "changed": false
+    },
+    {
+     "n": 8,
+     "text": "  // This turned out to severely regress performance: +4ms (i.e. 8%) on",
+     "changed": false
+    },
+    {
+     "n": 9,
+     "text": "  // MobileNet v2 / 1.0 / 224. So we keep custom NEON code for now.",
+     "changed": false
+    },
+    {
+     "n": 10,
+     "text": "  TFLITE_DCHECK_EQ((array_size % bias_size), 0);",
+     "changed": false
+    },
+    {
+     "n": 11,
+     "text": "#ifdef USE_NEON",
+     "changed": false
+    },
+    {
+     "n": 12,
+     "text": "  float* array_ptr = array_data;",
+     "changed": false
+    },
+    {
+     "n": 13,
+     "text": "  float* array_end_ptr = array_ptr + array_size;",
+     "changed": false
+    },
+    {
+     "n": 14,
+     "text": "  const auto clamp_min_vec = vdupq_n_f32(clamp_min);",
+     "changed": false
+    },
+    {
+     "n": 15,
+     "text": "  const auto clamp_max_vec = vdupq_n_f32(clamp_max);",
+     "changed": false
+    },
+    {
+     "n": 16,
+     "text": "  for (; array_ptr != array_end_ptr; array_ptr += bias_size) {",
+     "changed": false
+    },
+    {
+     "n": 17,
+     "text": "    int i = 0;",
+     "changed": false
+    },
+    {
+     "n": 18,
+     "text": "    for (; i <= bias_size - 16; i += 16) {",
+     "changed": false
+    },
+    {
+     "n": 19,
+     "text": "      auto b0 = vld1q_f32(bias_data + i);",
+     "changed": false
+    },
+    {
+     "n": 20,
+     "text": "      auto b1 = vld1q_f32(bias_data + i + 4);",
+     "changed": false
+    },
+    {
+     "n": 21,
+     "text": "      auto b2 = vld1q_f32(bias_data + i + 8);",
+     "changed": false
+    },
+    {
+     "n": 22,
+     "text": "      auto b3 = vld1q_f32(bias_data + i + 12);",
+     "changed": false
+    },
+    {
+     "n": 23,
+     "text": "      auto a0 = vld1q_f32(array_ptr + i);",
+     "changed": false
+    },
+    {
+     "n": 24,
+     "text": "      auto a1 = vld1q_f32(array_ptr + i + 4);",
+     "changed": false
+    },
+    {
+     "n": 25,
+     "text": "      auto a2 = vld1q_f32(array_ptr + i + 8);",
+     "changed": false
+    },
+    {
+     "n": 26,
+     "text": "      auto a3 = vld1q_f32(array_ptr + i + 12);",
+     "changed": false
+    },
+    {
+     "n": 27,
+     "text": "      auto x0 = vaddq_f32(a0, b0);",
+     "changed": false
+    },
+    {
+     "n": 28,
+     "text": "      auto x1 = vaddq_f32(a1, b1);",
+     "changed": false
+    },
+    {
+     "n": 29,
+     "text": "      auto x2 = vaddq_f32(a2, b2);",
+     "changed": false
+    },
+    {
+     "n": 30,
+     "text": "      auto x3 = vaddq_f32(a3, b3);",
+     "changed": false
+    },
+    {
+     "n": 31,
+     "text": "      x0 = vmaxq_f32(clamp_min_vec, x0);",
+     "changed": false
+    },
+    {
+     "n": 32,
+     "text": "      x1 = vmaxq_f32(clamp_min_vec, x1);",
+     "changed": false
+    },
+    {
+     "n": 33,
+     "text": "      x2 = vmaxq_f32(clamp_min_vec, x2);",
+     "changed": false
+    },
+    {
+     "n": 34,
+     "text": "      x3 = vmaxq_f32(clamp_min_vec, x3);",
+     "changed": false
+    },
+    {
+     "n": 35,
+     "text": "      x0 = vminq_f32(clamp_max_vec, x0);",
+     "changed": false
+    },
+    {
+     "n": 36,
+     "text": "      x1 = vminq_f32(clamp_max_vec, x1);",
+     "changed": false
+    },
+    {
+     "n": 37,
+     "text": "      x2 = vminq_f32(clamp_max_vec, x2);",
+     "changed": false
+    },
+    {
+     "n": 38,
+     "text": "      x3 = vminq_f32(clamp_max_vec, x3);",
+     "changed": false
+    },
+    {
+     "n": 39,
+     "text": "      vst1q_f32(array_ptr + i, x0);",
+     "changed": false
+    },
+    {
+     "n": 40,
+     "text": "      vst1q_f32(array_ptr + i + 4, x1);",
+     "changed": false
+    },
+    {
+     "n": 41,
+     "text": "      vst1q_f32(array_ptr + i + 8, x2);",
+     "changed": false
+    },
+    {
+     "n": 42,
+     "text": "      vst1q_f32(array_ptr + i + 12, x3);",
+     "changed": false
+    },
+    {
+     "n": 43,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 44,
+     "text": "    for (; i <= bias_size - 4; i += 4) {",
+     "changed": false
+    },
+    {
+     "n": 45,
+     "text": "      auto b = vld1q_f32(bias_data + i);",
+     "changed": false
+    },
+    {
+     "n": 46,
+     "text": "      auto a = vld1q_f32(array_ptr + i);",
+     "changed": false
+    },
+    {
+     "n": 47,
+     "text": "      auto x = vaddq_f32(a, b);",
+     "changed": false
+    },
+    {
+     "n": 48,
+     "text": "      x = vmaxq_f32(clamp_min_vec, x);",
+     "changed": false
+    },
+    {
+     "n": 49,
+     "text": "      x = vminq_f32(clamp_max_vec, x);",
+     "changed": false
+    },
+    {
+     "n": 50,
+     "text": "      vst1q_f32(array_ptr + i, x);",
+     "changed": false
+    },
+    {
+     "n": 51,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 52,
+     "text": "    for (; i < bias_size; i++) {",
+     "changed": false
+    },
+    {
+     "n": 53,
+     "text": "      array_ptr[i] = ActivationFunctionWithMinMax(array_ptr[i] + bias_data[i],",
+     "changed": false
+    },
+    {
+     "n": 54,
+     "text": "                                                  clamp_min, clamp_max);",
+     "changed": false
+    },
+    {
+     "n": 55,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 56,
+     "text": "  }",
+     "changed": false
+    },
+    {
+     "n": 57,
+     "text": "#else  // not NEON",
+     "changed": false
+    },
+    {
+     "n": 58,
+     "text": "  for (int array_offset = 0; array_offset < array_size;",
+     "changed": false
+    },
+    {
+     "n": 59,
+     "text": "       array_offset += bias_size) {",
+     "changed": false
+    },
+    {
+     "n": 60,
+     "text": "    for (int i = 0; i < bias_size; i++) {",
+     "changed": false
+    },
+    {
+     "n": 61,
+     "text": "      array_data[array_offset + i] = ActivationFunctionWithMinMax(",
+     "changed": false
+    },
+    {
+     "n": 62,
+     "text": "          array_data[array_offset + i] + bias_data[i], clamp_min, clamp_max);",
+     "changed": false
+    },
+    {
+     "n": 63,
+     "text": "    }",
+     "changed": false
+    },
+    {
+     "n": 64,
+     "text": "  }",
+     "changed": false
+    },
+    {
+     "n": 65,
+     "text": "#endif",
+     "changed": false
+    },
+    {
+     "n": 66,
+     "text": "}",
+     "changed": false
+    }
+   ],
+   "verdict": "vulnerable",
+   "right": false,
+   "rationale": "bias_size/array_size are caller-supplied; the NEON outer loop ends on pointer equality (line 21) and writes via vst1q_f32 (39-42). Any value making array_ptr step over array_end_ptr (negative bias_size or array_size, which still satisfies the divisibility DCHECK) walks past array_data, writing out of bounds in an endless loop.",
+   "cwe": "CWE-787",
+   "flagged": [
+    21,
+    22,
+    39,
+    40,
+    41,
+    42
+   ],
+   "seconds": 167,
+   "lookups": 1
+  },
+  "right": false,
+  "first": "vulnerable"
+ }
+]
